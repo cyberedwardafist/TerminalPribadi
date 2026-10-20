@@ -18,11 +18,11 @@ try {
 } catch { /* tanpa .env */ }
 
 const url = process.env.DATABASE_URL;
-const hasPsql = spawnSync('psql', ['--version'], { shell: true }).status === 0;
+const hasPsql = spawnSync('psql', ['--version']).status === 0;
 if (url && hasPsql) {
   for (const f of files) {
     console.log(`> ${f}`);
-    const r = spawnSync('psql', [url, '-v', 'ON_ERROR_STOP=1', '-f', path.join(dir, f)], { stdio: 'inherit', shell: true });
+    const r = spawnSync('psql', [url, '-v', 'ON_ERROR_STOP=1', '-f', path.join(dir, f)], { stdio: 'inherit' });
     if (r.status !== 0) { console.error(`Gagal di ${f}. Perbaiki lalu ulangi (aman diulang).`); process.exit(1); }
   }
   console.log('Selesai. Cek: https://ALAMAT-ANDA/api/health?deep=1 -> "db":"ok"');
