@@ -1,10 +1,10 @@
 # Terminal Chart — Backend (Vercel + Supabase)
 
-Satu project Vercel: frontend statis di `public/`, seluruh API di **satu** Vercel Function (`api/[...path].js`, router internal di `lib/`). Tanpa dependensi npm. Database Supabase Postgres lewat PostgREST (service role, hanya dari server).
+Satu project Vercel: frontend statis di `public/`, seluruh API di **satu** Vercel Function (`api/index.js`, router internal di `lib/`). Tanpa dependensi npm. Database Supabase Postgres lewat PostgREST (service role, hanya dari server).
 
 ```
 public/            frontend (index.html, auth/, apps/, core/, shared/)
-api/[...path].js   pintu masuk semua /api/*
+api/index.js   pintu masuk semua /api/*
 lib/               router, auth, db, cache, data pasar, berita, kalender, indikator
 lib/routes/        auth, user, market, content, notes, chart, system
 supabase/migrations/001_init.sql          skema + RLS (jalankan sekali)
