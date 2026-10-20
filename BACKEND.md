@@ -28,7 +28,9 @@ AUDIT.md           hasil audit keamanan + kecocokan kode dengan skema, dan rekom
 6. Isi data awal: `curl -X POST https://APP.vercel.app/api/admin/refresh -H "x-admin-token: $ADMIN_TOKEN" -H "content-type: application/json" -d '{"what":"all"}'` (berita, kalender, pemanasan cache).
 7. (Disarankan) Aktifkan `pg_cron` + `pg_net` di Supabase lalu jalankan `002_schedule_optional.sql` (ganti `YOUR-APP` dan `CRON_SECRET`). Vercel Hobby hanya mengizinkan cron 1x/hari, jadi alert harga (tiap menit) dan berita (tiap 15 menit) dijadwalkan dari Supabase. Di Vercel Pro cukup ubah `crons` di `vercel.json`.
 
-Uji lokal: `npm test`. Jalankan penuh: `vercel dev` (butuh `.env`).
+Uji lokal: `npm test`. Jalankan penuh di komputer sendiri: `npm run dev` (butuh `.env`, tanpa Vercel CLI) lalu buka `http://localhost:3000`; halaman dan `/api` satu port. Tanpa Supabase: `npm run dev:fake` (data tiruan, kode OTP dicetak di terminal). `npm run dev:vercel` tetap ada bila memakai Vercel CLI.
+
+**Error `404` pada `/api/auth/register` (atau endpoint `/api/*` lain tanpa pesan JSON)** berarti alamat yang dibuka tidak menjalankan backend: server statis (Live Server, `python -m http.server`) atau deploy yang tidak menyertakan folder `api/`. Backend sendiri membalas 404 dengan JSON `{"message":...}`. Cek `https://ALAMAT/api/health`: harus `{"ok":true,...}`. Di Vercel, Root Directory harus folder yang berisi `api/`, `lib/` dan `public/` (bukan folder induknya).
 
 ## Kontrak umum
 - JSON, pesan error: `{ "message": "..." }` (bahasa Indonesia, ditampilkan langsung oleh klien). Status: 400 validasi, 401 sesi, 403, 404, 409, 413, 429 (+header `Retry-After`), 502 sumber data down.

@@ -306,3 +306,13 @@ test('daftar: email yang sama tidak bisa memicu email OTP berulang (anti banjir 
     assert.equal(r.status, 429); assert.equal(outbox.length, n0 + 1, 'hanya satu email terkirim');
   } finally { token = saved; }
 });
+
+test('evaluateAlerts: alert di atas 1000 baris tetap diperiksa', async () => {
+  const { evaluateAlerts } = await import('../lib/routes/user.js');
+  const uid = '00000000-0000-4000-8000-000000000001';
+  const rows = Array.from({ length: 1200 }, (_, i) => ({ id: crypto.randomUUID(), user_id: uid, symbol: 'ZZZTEST' + (i % 3), direction: 'above', price: 1e12, active: true, created_at: new Date(Date.now() - (1200 - i) * 1000).toISOString() }));
+  fdb.tbl('alerts').push(...rows);
+  const r = await evaluateAlerts().catch(e => ({ error: e.message }));
+  assert.ok(r.checked >= 1200 || r.error, 'seluruh halaman dibaca: ' + JSON.stringify(r));
+  fdb.t.alerts = fdb.tbl('alerts').filter(a => !a.symbol.startsWith('ZZZTEST'));
+});

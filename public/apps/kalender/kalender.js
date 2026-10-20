@@ -103,7 +103,7 @@ async function fetchMonth(y,m){
   let r;
   try{r=await apiFetch('/api/calendar?month='+y+'-'+pad(m+1))}
   catch(e){throw new Error(e.name==='AbortError'?'Timeout, server tidak menjawab':'Tidak terjangkau (cek URL, server, atau CORS)')}
-  if(!r.ok)throw new Error('Server membalas HTTP '+r.status);
+  if(!r.ok)throw new Error(apiHttpMsg(r.status));
   try{d=norm(await r.json())}catch(e){throw new Error('Respons server bukan JSON yang valid')}
  }else d=dummy(y,m);
  return CACHE[k]=d

@@ -40,7 +40,7 @@ const Auth=(()=>{
   let r;try{r=await apiFetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})}
   catch(e){throw new Error(e.name==='AbortError'?'Timeout, server tidak menjawab':'Server tidak terjangkau (cek Base URL atau CORS)')}
   let j={};try{j=await r.json()}catch(e){}
-  if(!r.ok)throw Object.assign(new Error(j.message||'Server membalas HTTP '+r.status),{unverified:!!j.unverified,email:j.email});return j}
+  if(!r.ok)throw Object.assign(new Error(j.message||apiHttpMsg(r.status)),{unverified:!!j.unverified,email:j.email});return j}
 
  const session=()=>rd(SK)||rd(SK,true);
  const setSession=(user,remember,token)=>{rm(SK);wr(SK,{user,token:token||null,mode:token?'live':'dummy',at:Date.now()},!remember)};
