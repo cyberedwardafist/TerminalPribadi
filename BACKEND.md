@@ -13,7 +13,7 @@ supabase/migrations/003_user_state.sql    tabel state per app (sudah termasuk di
 supabase/migrations/004_journal_image_ids.sql   id gambar jurnal jadi teks (hanya bila 001 Anda versi lama)
 supabase/migrations/005_background_image.sql    kolom user_settings.bg_image + bucket 'backgrounds' (hanya bila 001 Anda versi lama)
 supabase/migrations/006_service_role_grants.sql hak akses service_role (wajib di project Supabase baru; sudah termasuk di 001 versi ini)
-tests/             55 test (database dan sumber pasar ditiru di memori)
+tests/             76 test (database dan sumber pasar ditiru di memori)
 AUDIT.md           hasil audit keamanan + kecocokan kode dengan skema, dan rekomendasi yang belum dikerjakan
 ```
 
@@ -177,8 +177,22 @@ Heatmap: bobot kapitalisasi IHSG, saham luar, komoditas, dan forex/indeks masih 
 - HTML catatan disaring ulang di server. Kode indikator custom **hanya disimpan**; harus dijalankan di sandbox klien (Web Worker), tidak pernah dieksekusi server.
 - Gambar jurnal: bucket privat, dicek magic byte (PNG/JPEG/WebP), maks 3 MB.
 
-## Menyiapkan app Chart ala TradingView (tahap berikutnya)
-Sudah tersedia di backend: candle historis dengan paging mundur (`to=`, sampai 5000 bar), 16 indikator bawaan + `compute`, daftar indikator (`/api/indicators/builtin`), layout bernama, drawing per simbol, template, indikator custom (simpan, versi, publik, fork), pencarian simbol, dan datafeed **UDF** (`/api/udf/*`) bila ingin memakai TradingView Charting Library (lisensi terpisah dari TradingView).
+## App Chart (sudah dibangun: mesin canvas sendiri, tanpa lisensi TradingView)
+Kode di `public/apps/chart/`:
+
+| File | Isi |
+|---|---|
+| `ind.js` | 21 indikator bawaan (rumus sama dengan `lib/indicators.js`, dijaga tes paritas klien-server) + Donchian, Keltner, Parabolic SAR, MFI |
+| `draw.js` | 20 alat gambar: tren, ray, garis diperpanjang, horizontal/vertikal/silang, kanal, pitchfork, Fibonacci retracement/extension, kotak, elips, segitiga, kuas, panah, teks, pengukur, posisi long/short. Titik disimpan `{t,p}` (waktu, harga) |
+| `render.js` | Panel harga + panel indikator terpisah, skala linear/log/persen, 7 tipe candle, crosshair, hitung mundur candle, alert |
+| `custom.js` + `worker.js` | Indikator custom JS atau subset Pine v5. Kode pengguna hanya berjalan di Web Worker (`worker.js`), batas 5 detik |
+| `chart.js` | Tab, interaksi, legenda, dialog, layout/template, alert, sinkron gambar |
+
+Penyimpanan: tab + indikator terpasang di `tc.chart.tabs` (ikut sinkron akun lewat `state/chart.tabs`); gambar per simbol di `tc.chart.drw` dan `PUT /api/chart/drawings/:symbol` (server menang bila `updatedAt` lebih baru); layout bernama `/api/chart/layouts`; template indikator `/api/chart/templates?kind=indicators`; indikator custom `/api/indicators`. Tanpa login semuanya jatuh ke localStorage. Alert memakai `tc.watchlist.al` (satu alert per simbol) sehingga ikut dikirim ke `/api/alerts` oleh `live.js`; yang memicu tetap cron server.
+
+Batas yang disengaja: penanda sinyal indikator custom hanya digambar untuk indikator overlay; Pine hanya mendukung ekspresi per baris (tanpa `if`/`for`/fungsi buatan/`strategy`); satu alert per simbol; candle terakhir diperbarui lewat polling 15 detik (belum WebSocket).
+
+Keamanan indikator custom: `worker.js` dimuat sebagai berkas terpisah sehingga `vercel.json` memberinya CSP sendiri (`default-src 'none'; script-src 'self' 'unsafe-eval'; connect-src 'none'`): worker tidak bisa memakai jaringan sama sekali, dan `'unsafe-eval'` (dibutuhkan `new Function`) tidak perlu dibuka untuk halaman utama. Saat CSP halaman diubah dari Report-Only ke enforce, tidak ada yang perlu ditambah selain `worker-src 'self'` yang sudah ada. Worker tidak jalan dari `file://`; buka lewat server (`npm run dev`, Live Server, atau Vercel).
 
 ## Integrasi frontend (mode Live)
 `public/shared/live.js` + loader di `public/index.html` menyambungkan app yang sudah ada tanpa mengubah tampilannya. Aktif otomatis saat dipasang di domain sungguhan dan sudah login; di `localhost`/`file://` tetap Dummy (bisa dipaksa di Setting → API).

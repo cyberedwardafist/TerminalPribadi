@@ -66,6 +66,8 @@ Cakupan: seluruh `lib/`, `api/`, `supabase/migrations/`, `vercel.json`, serta fr
 - Tanpa dependensi npm (tidak ada risiko rantai pasok).
 
 ## E. Batas audit
+- Chart baru: dijalankan di Chromium nyata (Playwright) pada mode Dummy; sinkron gambar/layout ke server hanya diuji lewat tes rute, bukan dari UI chart.
+- Kode indikator custom dieksekusi hanya di Web Worker (`public/apps/chart/worker.js`). `vercel.json` memberi berkas itu CSP sendiri dengan `connect-src 'none'` (tanpa jaringan) dan `'unsafe-eval'` terbatas di berkas tersebut; fetch/XMLHttpRequest/WebSocket juga dimatikan di dalam worker dan eksekusi dibatasi 5 detik. Kebijakan Report-Only halaman utama ditambah `worker-src 'self'`.
 - Tidak dijalankan terhadap Supabase/PostgREST sungguhan. Perilaku PostgREST (mis. bulk insert dengan kunci tidak seragam, pesan galat) dinilai dari kode, bukan dieksekusi.
 - Frontend diuji lewat `vm` dengan stub (`live.js`), bukan di browser nyata; tampilan, animasi background, dan kedipan tema saat hidrasi belum dilihat langsung.
 - Audit ini tidak menggantikan uji penetrasi.
