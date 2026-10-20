@@ -1,0 +1,45 @@
+/* Note: kerangka (rail folder + area tampilan) dan komponen yang dipakai kedua tampilan. Kelas berawalan nt-/nj-/nn- */
+.nt-w{flex:1;min-height:0;container:nt/inline-size}
+.nt{height:100%;display:grid;grid-template-columns:184px minmax(0,1fr);background:var(--win)}
+.nt>*{min-width:0;min-height:0}
+.nt-main{position:relative;min-width:0;min-height:0}
+.nt-v{height:100%}
+.nt svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.nt [hidden]{display:none!important}
+
+/* rail */
+.nt-rail{display:flex;flex-direction:column;gap:2px;padding:10px 8px;overflow:auto;background:var(--win2);border-right:1px solid var(--line)}
+.nt-f{display:flex;align-items:center;gap:8px;width:100%;padding:6px 8px;border:0;border-radius:8px;background:transparent;text-align:left}
+.nt-f:hover{background:rgba(128,136,150,.14)}.nt-f small{margin-left:auto;color:var(--mute);font-size:12px}
+.nt-f[aria-pressed=true]{background:color-mix(in srgb,var(--acc) 24%,transparent)}
+.nt-sec{margin:14px 8px 5px;color:var(--mute);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.nt-tgs{display:flex;flex-wrap:wrap;gap:5px;padding:0 2px}
+.nt-tg{padding:2px 9px;border:1px solid var(--line);border-radius:99px;background:transparent;font-size:12px;color:var(--mute)}
+.nt-tg:hover{border-color:var(--acc)}.nt-tg[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:#1a1405}
+.nt-nt{color:var(--mute);font-size:12px;padding:0 4px}
+.nt-io{display:flex;gap:6px;margin-top:auto;padding-top:14px}
+.nt-msg{min-height:14px;margin-top:6px;color:var(--mute);font-size:11px}
+
+/* komponen bersama */
+.nt-in{box-sizing:border-box;min-width:0;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--win2);color:var(--ink);font:inherit;font-size:13px}
+.nt-in:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+textarea.nt-in{width:100%;resize:vertical;line-height:1.5}
+.nt-lb{display:flex;align-items:center;gap:6px;padding:0;color:var(--mute);font-size:12px}
+.nt-sp{flex:1}
+.nt-c{padding:0 6px;border-radius:5px;background:rgba(128,136,150,.2);color:var(--mute);font-size:11px;line-height:17px}
+.nt-c.jurnal,.nt-c.ilmu{color:var(--ink)}
+.nt-c.ilmu{background:color-mix(in srgb,#0a84ff 24%,transparent)}.nt-c.umum{background:color-mix(in srgb,var(--acc) 22%,transparent);color:var(--ink)}
+.nt-c.up{background:color-mix(in srgb,var(--up) 22%,transparent)}.nt-c.dn{background:color-mix(in srgb,var(--dn) 22%,transparent)}
+.nt-rt{display:none;width:34px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--win2);place-items:center}
+
+/* sedang: rail lebih sempit */
+@container nt (max-width:900px){.nt{grid-template-columns:164px minmax(0,1fr)}}
+/* sempit / HP: rail jadi panel yang dibuka tombol filter */
+@container nt (max-width:700px){
+ .nt{display:flex;flex-direction:column}
+ .nt-rail{display:none;flex:none;max-height:52%;border-right:0;border-bottom:1px solid var(--line)}
+ .nt[data-rail=true] .nt-rail{display:flex}
+ .nt-main{flex:1}
+ .nt-rt{display:grid}
+}
+@media (prefers-reduced-motion:reduce){.nt *{transition:none!important}}

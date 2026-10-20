@@ -1,0 +1,23 @@
+/* Lonceng + panel + toast notifikasi. Kelas berawalan .nf-, id #nbell #npanel #ntoasts */
+#nbell{position:relative;display:inline-flex;align-items:center;justify-content:center;width:24px;height:22px;padding:0;border:0;border-radius:6px;background:transparent;color:#d4d8de;cursor:pointer}
+#nbell:hover,#nbell[aria-expanded=true]{background:rgba(255,255,255,.14)}
+#nbell svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#nbadge{position:absolute;top:-2px;right:-4px;min-width:14px;height:14px;padding:0 3px;box-sizing:border-box;border-radius:7px;background:var(--dn);color:#fff;font:600 10px/14px system-ui,sans-serif;text-align:center;font-style:normal}
+#npanel{position:fixed;top:calc(env(safe-area-inset-top,0px) + 34px);right:12px;z-index:9999;width:340px;max-width:calc(100vw - 16px);max-height:min(70vh,520px);display:flex;flex-direction:column;background:var(--win);color:var(--ink);border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.45);overflow:hidden}
+#npanel[hidden]{display:none}
+.nf-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:var(--win2);border-bottom:1px solid var(--line)}
+.nf-a{border:0;background:transparent;color:var(--acc);font-size:12px;cursor:pointer;padding:2px 4px}.nf-a:disabled{color:var(--mute);cursor:default}
+.nf-l{overflow:auto;overscroll-behavior:contain}
+.nf-i{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer}
+.nf-i:last-child{border-bottom:0}.nf-i:hover{background:var(--win2)}
+.nf-d{flex:none;width:7px;height:7px;margin-top:6px;border-radius:50%;background:transparent}.nf-i.un .nf-d{background:var(--acc)}
+.nf-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;font-size:13px}.nf-i:not(.un) .nf-t b{font-weight:500;color:var(--mute)}
+.nf-t span{color:var(--mute);font-size:12px;overflow-wrap:anywhere}.nf-t small{color:var(--mute);font-size:11px}
+.nf-x{flex:none;border:0;background:transparent;color:var(--mute);font-size:16px;line-height:1;padding:0 4px;border-radius:4px;cursor:pointer}.nf-x:hover{color:var(--dn)}
+.nf-em{padding:22px 16px;text-align:center;color:var(--mute);font-size:12px}
+#ntoasts{position:fixed;top:calc(env(safe-area-inset-top,0px) + 38px);right:12px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.nf-toast{pointer-events:auto;display:flex;flex-direction:column;gap:2px;width:280px;max-width:calc(100vw - 24px);box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:10px;background:var(--win);color:var(--ink);box-shadow:0 12px 34px rgba(0,0,0,.4);font-size:13px;cursor:pointer;animation:nfin .22s ease-out}
+.nf-toast span{color:var(--mute);font-size:12px}
+@keyframes nfin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.nf-toast{animation:none}}
+@media (max-width:700px){#npanel{left:8px;right:8px;width:auto}}

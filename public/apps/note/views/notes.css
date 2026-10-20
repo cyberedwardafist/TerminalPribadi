@@ -1,0 +1,53 @@
+/* Note > tampilan catatan: daftar + editor */
+.nn{height:100%;display:grid;grid-template-columns:262px minmax(0,1fr)}
+.nn>*{min-width:0;min-height:0}
+.nt-list{display:flex;flex-direction:column;border-right:1px solid var(--line)}
+.nt-lh{flex:none;display:flex;flex-direction:column;gap:8px;padding:10px 10px 8px}
+.nt-q{display:flex;align-items:center;gap:7px;padding:0 9px;border:1px solid var(--line);border-radius:8px;background:var(--win2);color:var(--mute)}
+.nt-q:focus-within{border-color:var(--acc)}
+.nt-q input{flex:1;min-width:0;padding:6px 0;border:0;outline:0;background:transparent;color:var(--ink);font:inherit}
+.nt-new{display:flex;gap:6px}
+.nt-new .btn{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;margin:0;padding:5px 8px}
+.nt-lt{flex:none;padding:2px 14px 6px}.nt-lt b{display:block;font-size:15px}.nt-lt small{color:var(--mute);font-size:12px}
+.nt-items{flex:1;min-height:0;overflow:auto;padding:0 6px 8px}
+.nt-items .empty{margin:8px 4px;padding:16px;font-size:13px}
+.nt-it{display:flex;flex-direction:column;gap:2px;width:100%;padding:8px 10px;border:0;border-radius:9px;background:transparent;text-align:left}
+.nt-it+.nt-it{margin-top:1px}
+.nt-it:hover{background:rgba(128,136,150,.12)}
+.nt-it[aria-selected=true]{background:color-mix(in srgb,var(--acc) 26%,transparent)}
+.nt-t{display:flex;align-items:center;gap:5px;font-weight:600;font-size:13.5px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.nt-pn{display:inline-grid;color:var(--acc)}.nt-pn svg{width:12px;height:12px}
+.nt-m{display:flex;gap:8px;font-size:12px;color:var(--mute);min-width:0}
+.nt-m>span:first-child{flex:none;color:var(--ink);opacity:.75}
+.nt-s{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.nt-b{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+
+.nt-ed{display:flex;flex-direction:column}
+.nt-tb{flex:none;display:flex;align-items:center;gap:2px;padding:6px 10px;border-bottom:1px solid var(--line);overflow-x:auto}
+.nt-tb button{display:grid;place-items:center;min-width:30px;height:28px;padding:0 6px;border:0;border-radius:7px;background:transparent;color:var(--mute);white-space:nowrap}
+.nt-tb button:hover{background:rgba(128,136,150,.18);color:var(--ink)}
+.nt-tb button[aria-pressed=true]{background:color-mix(in srgb,var(--acc) 28%,transparent);color:var(--ink)}
+.nt-tb [data-del].arm{background:var(--dn);color:#fff}
+.nt-st{padding:0 8px;color:var(--mute);font-size:12px;white-space:nowrap}
+.nt-back{display:none!important;grid-auto-flow:column;align-items:center;gap:2px;color:var(--acc)!important}
+.nt-meta{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:8px 14px;border-bottom:1px solid var(--line)}
+.nt-tl{flex:1 1 180px}.nt-tl .nt-in{flex:1}
+.nt-body{flex:1;min-height:0;overflow:auto;padding:16px 24px 32px;outline:0;font-size:14.5px;line-height:1.65;overflow-wrap:anywhere}
+.nt-body h3{margin:0 0 8px;font-size:22px;line-height:1.25}
+.nt-body ul{margin:4px 0;padding-left:22px}
+.nt-body ul.cl{list-style:none;padding-left:0}
+.nt-body ul.cl li{position:relative;margin:3px 0;padding-left:28px}
+.nt-body ul.cl li::before{content:"";position:absolute;left:4px;top:.3em;width:15px;height:15px;box-sizing:border-box;border:1.6px solid var(--mute);border-radius:50%;cursor:pointer}
+.nt-body ul.cl li.done{color:var(--mute);text-decoration:line-through}
+.nt-body ul.cl li.done::before{border-color:var(--acc);background:var(--acc) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a1405' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7'/%3E%3C/svg%3E") center/10px no-repeat}
+.nt-none{display:none;flex:1;padding:24px;align-items:center;justify-content:center}.nt-none .empty{max-width:280px}
+.nt-ed[data-empty=true] .nt-tb,.nt-ed[data-empty=true] .nt-meta,.nt-ed[data-empty=true] .nt-body{display:none}
+.nt-ed[data-empty=true] .nt-none{display:flex}
+
+@container nt (max-width:900px){.nn{grid-template-columns:224px minmax(0,1fr)}}
+@container nt (max-width:700px){
+ .nn{display:flex}
+ .nt-list,.nt-ed{flex:1;border-right:0}
+ .nn[data-view=list] .nt-ed,.nn[data-view=edit] .nt-list{display:none}
+ .nt-back{display:grid!important}
+}

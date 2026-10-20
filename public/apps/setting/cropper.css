@@ -1,0 +1,7 @@
+/* Penyunting crop gambar (cropper.js) */
+.crop{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px;overflow:auto;background:var(--win)}
+.crop h3{margin:0;font-size:16px}
+.crop canvas{flex:none;border-radius:12px;touch-action:none;cursor:grab;background:#111}.crop canvas.grab{cursor:grabbing}
+.zm{display:flex;align-items:center;gap:10px;width:min(100%,280px);padding:0;color:var(--mute)}.zm input{flex:1;min-width:0;accent-color:var(--acc)}
+.crop .m{margin:0;font-size:12px}.crop .sact{margin:0}
+.crop .gt{display:flex;align-items:center;gap:8px;padding:0;color:var(--mute);font-size:12px;cursor:pointer}.crop .gt input{accent-color:var(--acc)}

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Verifikasi OTP · Terminal Chart</title>
+<link rel="stylesheet" href="auth.css"></head><body>
+<header class="top"><b>Terminal Chart</b><time id="clk"></time><span class="tray" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 9a15 15 0 0120 0M5 12.5a10 10 0 0114 0M8.5 16a5 5 0 017 0"/><circle cx="12" cy="19" r="1"/></svg><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 010 6"/></svg><svg viewBox="0 0 24 24"><path d="M12 3v9M6.5 6.5a8 8 0 1011 0"/></svg></span></header>
+<main>
+<section class="panel">
+ <a class="back" id="bk" href="login.html">← Kembali</a>
+ <h1 id="ttl">Verifikasi</h1><p class="sub" id="info"></p>
+ <div class="dev" id="dev" hidden><span id="dvt"></span><b id="code"></b></div>
+ <form id="f" novalidate>
+  <div class="otp" role="group" aria-label="Kode OTP 6 digit"></div>
+  <button class="go" type="submit">Verifikasi</button>
+  <p class="err" role="alert"></p>
+  <p class="hint" id="tm" role="timer" style="text-align:center"></p>
+  <button class="go ghost" type="button" id="rs">Kirim ulang kode</button>
+ </form>
+ <div class="done" id="done" role="status" hidden>
+  <svg class="ck" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M14 27l8 8 16-17"/></svg>
+  <b id="dn">Terverifikasi</b><span class="sub" id="dn2"></span>
+ </div>
+</section>
+</main>
+<script src="../shared/config.js"></script>
+<script src="auth.js"></script>
+<script>
+(()=>{
+const q=s=>document.querySelector(s);Auth.scene();Auth.clock('clk');
+const eye=(b,i)=>b.onclick=()=>{const on=i.type==='password';i.type=on?'text':'password';b.textContent=on?'Sembunyikan':'Tampilkan';b.setAttribute('aria-pressed',on)};
+
+const P=new URLSearchParams(location.search),purpose=P.get('p'),mail=(P.get('e')||'').toLowerCase();
+if(!['register','reset'].includes(purpose)||Auth.V.email(mail)){location.replace('login.html');return}
+const isReg=purpose==='register',f=q('#f'),box=q('.otp'),go=q('.go'),err=q('.err'),rs=q('#rs'),tm=q('#tm');
+q('#ttl').textContent=isReg?'Verifikasi akun':'Verifikasi untuk reset password';
+q('#info').textContent='Masukkan 6 digit kode yang dikirim ke '+mail+'.';
+q('#bk').href=isReg?'register.html':'forgot.html';
+box.innerHTML=[0,1,2,3,4,5].map(i=>`<input class="in o" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="${i?'off':'one-time-code'}" aria-label="Digit ${i+1}">`).join('');
+const ds=[...box.children],val=()=>ds.map(d=>d.value).join('');
+const fill=(i,t)=>{const x=t.replace(/\D/g,'').slice(0,6-i);[...x].forEach((c,k)=>ds[i+k].value=c);const n=Math.min(i+x.length,5);ds[n].focus();if(val().length===6)f.requestSubmit()};
+ds.forEach((d,i)=>{
+ d.oninput=()=>{if(d.value.length>1)return fill(i,d.value);d.value=d.value.replace(/\D/g,'');if(d.value&&i<5)ds[i+1].focus();if(val().length===6)f.requestSubmit()};
+ d.onkeydown=e=>{if(e.key==='Backspace'&&!d.value&&i>0){ds[i-1].value='';ds[i-1].focus()}if(e.key==='ArrowLeft'&&i>0)ds[i-1].focus();if(e.key==='ArrowRight'&&i<5)ds[i+1].focus()};
+ d.onpaste=e=>{e.preventDefault();fill(i,(e.clipboardData||window.clipboardData).getData('text'))};
+ d.onfocus=()=>d.select()});
+ds[0].focus();
+const mmss=n=>String(n/60|0).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
+const tick=()=>{const st=Auth.otpState(purpose,mail);
+ tm.textContent=st.left?'Kode berlaku '+mmss(st.left):'Kode kedaluwarsa atau belum dikirim. Klik "Kirim ulang kode" untuk mendapat kode baru.';
+ rs.disabled=st.cool>0;rs.textContent=st.cool?'Kirim ulang kode ('+st.cool+')':'Kirim ulang kode';
+ const dv=q('#dev'),cd=q('#code');
+ if(Auth.live()){dv.hidden=true;return}
+ // mode dummy: tampilkan kode, atau alasan kenapa kode tidak ada
+ let t='',c='';
+ if(isReg&&!Auth.pending(mail))t='Mode dummy: di browser ini tidak ada pendaftaran yang menunggu verifikasi untuk email ini. Akun mungkin sudah aktif, coba login. Atau daftar ulang.';
+ else if(st.left&&st.code){t='Mode dummy: tidak ada email sungguhan, jadi kode ditampilkan di sini.';c=st.code}
+ else if(st.left)t='Mode dummy: email ini belum terdaftar di browser ini, jadi tidak ada kode. Daftar akun dulu.';
+ else t='Mode dummy: belum ada kode aktif. Klik "Kirim ulang kode", kodenya muncul di sini.';
+ q('#dvt').textContent=t;cd.textContent=c;cd.hidden=!c;dv.hidden=false};
+tick();const iv=setInterval(tick,1000);
+rs.onclick=async()=>{err.textContent='';try{await Auth.sendOtp(purpose,mail);ds.forEach(d=>d.value='');ds[0].focus();tick()}catch(x){err.textContent=x.message}};
+f.onsubmit=async e=>{e.preventDefault();err.textContent='';const c=val();
+ if(c.length<6){err.textContent='Isi 6 digit kode';return}
+ go.disabled=true;go.textContent='Memeriksa…';
+ try{const r=await Auth.verifyOtp(purpose,mail,c);
+  const to=isReg?'login.html?verified=1&u='+encodeURIComponent(r.user.username):'reset.html?e='+encodeURIComponent(mail);
+  clearInterval(iv);f.hidden=true;q('#bk').hidden=true;q('#dev').hidden=true;q('#info').hidden=true;
+  q('#dn2').textContent=isReg?'Akun aktif, mengarahkan ke login…':'Lanjut membuat password baru…';
+  q('#done').hidden=false;setTimeout(()=>location.replace(to),1500)}
+ catch(x){err.textContent=x.message;go.textContent='Verifikasi';
+  box.classList.remove('bad');void box.offsetWidth;box.classList.add('bad');   // merah + bergetar
+  ds.forEach(d=>{d.disabled=true;d.setAttribute('aria-invalid','true')});
+  setTimeout(()=>{ds.forEach(d=>{d.value='';d.disabled=false;d.removeAttribute('aria-invalid')});box.classList.remove('bad');go.disabled=false;ds[0].focus()},750)}};
+
+})();
+</script></body></html>

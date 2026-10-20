@@ -1,0 +1,25 @@
+/* Gaya app Home. Semua kelas berawalan .hm- */
+.hm{display:flex;flex-direction:column;gap:16px}
+.hm-hd{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:8px 16px}
+.hm-hd h2{margin:0;font-size:20px}.hm-hd p{margin:2px 0 0;color:var(--mute);font-size:13px}
+.hm-st{display:flex;gap:6px;flex-wrap:wrap}
+.hm-pl{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border:1px solid var(--line);border-radius:999px;font-size:12px;color:var(--mute)}
+.hm-pl i{width:7px;height:7px;border-radius:50%;background:var(--mute)}.hm-pl.on i{background:var(--up)}.hm-pl.on{color:var(--ink)}
+.hm h3{margin:0 0 8px;font-size:12px;font-weight:600;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
+.hm-ix{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px}
+.hm-c{display:flex;flex-direction:column;gap:2px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--win2);text-align:left}
+.hm-c:hover{border-color:var(--acc)}.hm-c b{font-size:12px}.hm-c span{font-size:15px;font-variant-numeric:tabular-nums}.hm-c small{font-size:12px;font-variant-numeric:tabular-nums}
+.hm-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.hm-bx{border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+.hm-r{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;padding:6px 6px;border:0;border-radius:6px;background:transparent;text-align:left;font-size:13px}
+.hm-r:hover{background:var(--win2)}.hm-r b{min-width:74px}.hm-r span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mute)}.hm-r em{font-style:normal;font-variant-numeric:tabular-nums}
+.hm-sc{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+.hm-sc .btn{display:flex;align-items:center;gap:8px;margin:0}.hm-sc svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;color:var(--acc)}
+.hm-em{color:var(--mute);font-size:12px;padding:6px}
+.hm-tg{display:flex;flex-wrap:wrap;gap:6px}.hm-tg .btn{margin:0;padding:3px 10px;font-size:12px}
+.hm-kv{display:flex;gap:16px;flex-wrap:wrap;font-size:13px}.hm-kv div{display:flex;flex-direction:column}.hm-kv small{color:var(--mute);font-size:11px}.hm-kv b{font-size:18px}
+.hm-ac[hidden]{display:none}
+.hm-ar{display:flex;align-items:baseline;gap:10px;padding:5px 6px;font-size:13px}
+.hm-ar em{flex:none;min-width:70px;font-style:normal;font-size:11px;color:var(--acc);text-transform:uppercase;letter-spacing:.03em}
+.hm-ar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hm-ar small{flex:none;color:var(--mute);font-size:11px}

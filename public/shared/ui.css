@@ -1,0 +1,22 @@
+/* Komponen UI yang dipakai banyak app: tipografi dasar, tombol, segmented, empty state, form. */
+code{font:12px ui-monospace,Menlo,Consolas,monospace;color:var(--acc)}
+h2{margin:0 0 4px;font-size:18px}p.m{margin:0 0 14px;color:var(--mute)}
+.tag{display:inline-block;margin-left:6px;color:var(--mute);font-size:12px;font-weight:400}
+.up{color:var(--up)}.dn{color:var(--dn)}
+.btn{border:1px solid var(--line);background:var(--win2);border-radius:8px;padding:7px 12px;margin:0 8px 8px 0}.btn:hover{border-color:var(--acc)}
+.empty{padding:22px;border:1px dashed var(--line);border-radius:10px;color:var(--mute);text-align:center}
+.seg{display:flex;gap:4px}.seg button{border:0;background:transparent;border-radius:6px;padding:3px 9px;color:var(--mute)}
+.seg button[aria-pressed=true]{background:var(--acc);color:#1a1405}
+fieldset{border:1px solid var(--line);border-radius:10px;margin:0 0 14px;padding:10px 14px}legend{padding:0 6px;color:var(--mute);font-size:12px}
+label{display:flex;gap:8px;align-items:center;padding:4px 0}
+.btn:disabled{opacity:.5;cursor:not-allowed}.btn:disabled:hover{border-color:var(--line)}
+.btn.dng{color:var(--dn)}.btn.dng:hover{border-color:var(--dn)}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#1a1405;font-weight:600}
+/* Dialog buatan sendiri (shared/dialog.js) */
+.dlg-bd{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:16px;background:rgba(8,10,14,.5);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.dlg{width:min(340px,100%);box-sizing:border-box;padding:18px;border-radius:14px;background:var(--win);color:var(--ink);border:1px solid var(--line);box-shadow:0 24px 60px rgba(0,0,0,.55);animation:dlgin .16s ease-out}
+.dlg h3{margin:0 0 6px;font-size:15px}.dlg p{margin:0 0 12px;color:var(--mute);font-size:13px}
+.dlg-in{width:100%;box-sizing:border-box;margin:8px 0 14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--win2);color:var(--ink);font:inherit;outline:0}.dlg-in:focus{border-color:var(--acc)}
+.dlg-ft{display:flex;justify-content:flex-end;gap:8px}.dlg-ft .btn{margin:0}
+.btn.pri.dng{background:var(--dn);border-color:var(--dn);color:#fff}
+@keyframes dlgin{from{opacity:0;transform:scale(.96)}}@media (prefers-reduced-motion:reduce){.dlg{animation:none}}
