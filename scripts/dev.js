@@ -11,14 +11,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const fake = process.argv.includes('--fake');
 const PORT = Number(process.env.PORT) || 3000;
 
-// .env sederhana (KEY=VALUE, komentar #). Variabel yang sudah ada di lingkungan tidak ditimpa.
-try {
-  for (const line of fs.readFileSync(path.join(root, '.env'), 'utf8').split(/\r?\n/)) {
-    const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/.exec(line);
-    if (!m || m[1] in process.env) continue;
-    process.env[m[1]] = m[2].replace(/\s+#.*$/, '').replace(/^(['"])(.*)\1$/, '$2');
-  }
-} catch { /* tanpa .env */ }
+import './load-env.js';
 
 if (fake) {
   Object.assign(process.env, {
