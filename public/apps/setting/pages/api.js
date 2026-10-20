@@ -26,9 +26,5 @@ Setting.page({id:'api',title:'API',color:'#30b158',icon:"<rect x=\"3\" y=\"4\" w
   const sh=q('[data-show]');sh.onclick=()=>{const k=q('[data-a=key]'),on=k.type==='password';k.type=on?'text':'password';sh.textContent=on?'Sembunyikan':'Tampilkan';sh.setAttribute('aria-pressed',on)};
   q('[data-test]').onclick=async e=>{const b=e.currentTarget;b.disabled=true;say('Menguji…');try{const ms=await apiPing();say('Terhubung · '+ms+' ms','up')}catch(x){say(x.message,'dn')}b.disabled=false};
   q('[data-apireset]').onclick=()=>{CFG.api={...CFG_DEF.api,mode:CFG.api.mode};cfgSave();fill();say('Alamat dan key dikosongkan')};
- },
- notes:[
-  '<code>GET /api/health</code> : dipanggil tombol "Tes koneksi", cukup balas 200 (butuh CORS untuk origin klien)',
-  'Mode Live: semua request lewat <code>apiFetch(path)</code> di <code>shared/config.js</code> (menambah Base URL, header Bearer, dan timeout). WebSocket memakai <code>CFG.api.ws</code>',
-  'API key jangan disimpan di klien untuk produksi: tukar login jadi token sesi dari server']});
+ }});
 })();

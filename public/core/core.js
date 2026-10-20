@@ -1,6 +1,6 @@
 // Inti: state bersama, registry app, window manager, tata letak (snap).
 // Tidak tahu isi app apa pun. Tiap app mendaftar sendiri lewat registerApp() di js/apps/<nama>.js
-// Kontrak app: {t, w, h, flush?, icon (string path SVG atau fungsi), html(), init(win)?, show(win)?, notes[]}
+// Kontrak app: {t, w, h, flush?, icon (string path SVG atau fungsi), html(), init(win)?, show(win)?}
 //   css: path css milik app (opsional)
 //   show(win) dipanggil saat window yang sudah terbuka dibuka lagi dari app lain (mis. ganti simbol chart)
 const $=(s,e=document)=>e.querySelector(s),$$=(s,e=document)=>[...e.querySelectorAll(s)];
@@ -18,13 +18,12 @@ function upd(){$$('.d').forEach(b=>{const g=grp(b.dataset.k).map(i=>S.wins[i]),a
 function focus(id){const w=S.wins[id];if(!w)return;w.el.style.zIndex=++S.z;S.act=id;upd()}
 function open(id){let w=S.wins[id];if(w){if(w.min)restore(id);focus(id);APPS[base(id)].show&&APPS[base(id)].show(w.el);return w.el}
  const A=APPS[base(id)],el=document.createElement('div');el.className='win';el.setAttribute('role','dialog');el.setAttribute('aria-label',A.t);el.tabIndex=-1;
- el.innerHTML=`<div class="tbar"><div class="lights"><button class="l r" aria-label="Tutup"><i>\u00d7</i></button><button class="l y" aria-label="Sembunyikan"><i>\u2212</i></button><button class="l g" aria-label="Layar penuh"><i>+</i></button></div><span class="ttl">${A.t}</span><button class="nb" aria-pressed="false">Catatan backend</button><button class="nb tl" aria-label="Tata letak window">Tata letak</button></div><div class="app${A.flush?' flush':''}">${A.html()}</div><div class="notes"><h4>Catatan backend (${A.t})</h4><ul>${A.notes.map(n=>`<li>${n}</li>`).join('')}</ul></div>`;
+ el.innerHTML=`<div class="tbar"><div class="lights"><button class="l r" aria-label="Tutup"><i>\u00d7</i></button><button class="l y" aria-label="Sembunyikan"><i>\u2212</i></button><button class="l g" aria-label="Layar penuh"><i>+</i></button></div><span class="ttl">${A.t}</span><button class="nb tl" aria-label="Tata letak window">Tata letak</button></div><div class="app${A.flush?' flush':''}">${A.html()}</div>`;
  el.style.cssText=`width:${Math.min(A.w,innerWidth-60)}px;height:${Math.min(A.h,innerHeight-200)}px;left:${40+(S.n%6)*30}px;top:${50+(S.n%6)*28}px`;S.n++;
  document.body.append(el);w=S.wins[id]={el,min:false,full:false};genie(id,true).onfinish=()=>{el.style.transformOrigin=''};
  const tb=$('.tbar',el);
  $('.r',el).onclick=()=>close(id);const gb=$('.g',el);gb.onmouseenter=()=>{keep();st=setTimeout(()=>showSnap(id,gb),350)};gb.onmouseleave=later;$('.tl',el).onclick=e=>showSnap(id,e.currentTarget);$('.y',el).onclick=()=>minimize(id);$('.g',el).onclick=()=>full(id);tb.ondblclick=e=>{if(!e.target.closest('button'))full(id)};
- const nb=$('.nb',el);nb.onclick=()=>{const on=el.classList.toggle('sn');nb.setAttribute('aria-pressed',on)};
- el.addEventListener('pointerdown',()=>focus(id));el.onkeydown=e=>{if(e.key==='Escape')close(id)};
+  el.addEventListener('pointerdown',()=>focus(id));el.onkeydown=e=>{if(e.key==='Escape')close(id)};
  tb.addEventListener('pointerdown',e=>{if(e.target.closest('button')||w.full)return;const r=el.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;tb.setPointerCapture(e.pointerId);const mv=v=>{el.style.left=Math.max(120-r.width,Math.min(innerWidth-80,v.clientX-dx))+'px';el.style.top=Math.max(30,Math.min(innerHeight-120,v.clientY-dy))+'px';edge(v)};const up=()=>{edgeApply(id);tb.removeEventListener('pointermove',mv);tb.removeEventListener('pointerup',up)};tb.addEventListener('pointermove',mv);tb.addEventListener('pointerup',up)});
  A.init&&A.init(el);$$('[data-go]',el).forEach(b=>b.onclick=()=>{open(b.dataset.go)});
  if(innerWidth<700)full(id,true);focus(id);el.focus({preventScroll:true});return el}

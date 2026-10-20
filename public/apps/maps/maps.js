@@ -27,8 +27,10 @@ function dummy(mk,rg){const day=Math.floor(Date.now()/864e5),vol=MKT.find(m=>m[0
  return DATA[mk].split('|').map(g=>{const[n,l]=g.split(':'),gd=(rng(hs(n+day+rg))()-.5)*vol*.7;
   return{n,it:l.split(',').map(x=>{const[s,v]=x.split('='),r=rng(hs(s+day+rg)),st=STABLE.includes(s);return{s,v:+v,c:+(st?(r()-.5)*.06:gd+(r()+r()+r()-1.5)*vol*1.1).toFixed(2)}})}})}
 async function load(){const k=M.mk+'|'+M.rg;if(CACHE[k])return CACHE[k];let g;
- if(apiOn()){try{const j=await(await apiFetch(`/api/heatmap?market=${M.mk}&range=${M.rg.toLowerCase()}`)).json(),m={};j.forEach(x=>(m[x.group]=m[x.group]||[]).push({s:x.sym,v:x.cap,c:x.changePct}));g=Object.entries(m).map(([n,it])=>({n,it}))}catch(e){}}
- return CACHE[k]=g&&g.length?g:dummy(M.mk,M.rg)}
+ if(apiOn()){try{const r=await apiFetch(`/api/heatmap?market=${M.mk}&range=${M.rg.toLowerCase()}`);if(!r.ok)throw 0;const j=await r.json(),m={};j.forEach(x=>(m[x.group]=m[x.group]||[]).push({s:x.sym,v:x.cap,c:x.changePct}));g=Object.entries(m).map(([n,it])=>({n,it}))}catch(e){g=null}
+  return g&&g.length?(CACHE[k]=g):null}   // Live: tidak pernah jatuh ke data dummy; gagal = null (tidak di-cache)
+ return CACHE[k]=dummy(M.mk,M.rg)}
+const loadErr=w=>{const e=$('.mp-map,.mp-two,.mp-sec',w);if(e)e.innerHTML='<p class="mp-ft">Data pasar live tidak bisa dimuat. Coba lagi beberapa saat.</p>'};
 
 // ---------- treemap (squarified) ----------
 function squarify(items,x,y,w,h){const tot=items.reduce((a,i)=>a+i.v,0),out=[];if(!tot||w<=0||h<=0)return out;
@@ -54,15 +56,15 @@ const seg=(a,items,v)=>`<div class="seg" data-seg="${a}">${items.map(([k,l])=>`<
 const bar=(mk,rg,leg)=>`<div class="mp-tb">${mk?seg('mk',MKT.map(m=>[m[0],m[1]]),M.mk):''}${rg?seg('rg',Object.keys(RG).map(k=>[k,k]),M.rg):''}${leg?`<span class="mp-leg"><i>\u2212</i><s></s><i>+</i></span>`:''}</div>`;
 const row=(r,max)=>`<button class="mp-row" data-s="${r.s}"><b>${r.s}</b><span>${r.g}</span><em class="${cls(r.c)}">${pc(r.c)}</em></button>`;
 const PG={
- async map(w,main,tk){main.innerHTML=bar(1,1,1)+`<div class="mp-map"></div><p class="mp-ft">Data dummy \u00b7 ukuran = kapitalisasi, warna = perubahan ${M.rg} \u00b7 klik tile untuk buka di Chart</p>`;
-  const g=await load();if(tk!==w._tk)return;const draw=()=>paint(w,g);draw();w._ro&&w._ro.disconnect();w._ro=new ResizeObserver(draw);w._ro.observe($('.mp-map',w))},
+ async map(w,main,tk){main.innerHTML=bar(1,1,1)+`<div class="mp-map"></div><p class="mp-ft">${apiOn()?'Data live':'Data dummy'} \u00b7 ukuran = kapitalisasi, warna = perubahan ${M.rg} \u00b7 klik tile untuk buka di Chart</p>`;
+  const g=await load();if(tk!==w._tk)return;if(!g){loadErr(w);return}const draw=()=>paint(w,g);draw();w._ro&&w._ro.disconnect();w._ro=new ResizeObserver(draw);w._ro.observe($('.mp-map',w))},
  async sum(w,main,tk){main.innerHTML=bar(0,1,0)+`<div class="mp-cards">${SUM.map(([n,v])=>{const r=rng(hs(n+M.rg+Math.floor(Date.now()/864e5))),vol=(n==='BTCUSDT'||n==='ETHUSDT'?.04:.012)*RG[M.rg]**.7,pts=[v];for(let i=0;i<29;i++)pts.unshift(pts[0]/(1+(r()-.5)*2*vol/5.4));
    const mn=Math.min(...pts),mx=Math.max(...pts),c=(v/pts[0]-1)*100,d=pts.map((p,i)=>`${i*5},${(30-(p-mn)/((mx-mn)||1)*28).toFixed(1)}`).join(' ');
    return`<div class="mp-card"><span>${n}</span><b>${f(v)}</b><em class="${cls(c)}">${pc(c)}</em><svg viewBox="0 0 145 32" preserveAspectRatio="none"><polyline points="${d}" fill="none" stroke="var(--${c>=0?'up':'dn'})" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>`}).join('')}</div><p class="mp-ft">Data dummy \u00b7 perubahan dihitung dari rentang ${M.rg}</p>`},
- async mov(w,main,tk){main.innerHTML=bar(1,1,0)+`<div class="mp-two"></div>`;const g=await load();if(tk!==w._tk)return;
+ async mov(w,main,tk){main.innerHTML=bar(1,1,0)+`<div class="mp-two"></div>`;const g=await load();if(tk!==w._tk)return;if(!g){loadErr(w);return}
   const all=g.flatMap(x=>x.it.map(i=>({...i,g:x.n}))).sort((a,b)=>b.c-a.c),top=all.slice(0,10),low=all.slice(-10).reverse();
   $('.mp-two',w).innerHTML=`<div><h3>Naik terbanyak</h3>${top.map(row).join('')}</div><div><h3>Turun terbanyak</h3>${low.map(row).join('')}</div>`},
- async sec(w,main,tk){main.innerHTML=bar(1,1,0)+`<div class="mp-sec"></div>`;const g=await load();if(tk!==w._tk)return;
+ async sec(w,main,tk){main.innerHTML=bar(1,1,0)+`<div class="mp-sec"></div>`;const g=await load();if(tk!==w._tk)return;if(!g){loadErr(w);return}
   const r=g.map(x=>{const t=x.it.reduce((a,i)=>a+i.v,0);return{n:x.n,c:x.it.reduce((a,i)=>a+i.c*i.v,0)/t}}).sort((a,b)=>b.c-a.c),mx=Math.max(...r.map(x=>Math.abs(x.c)),.01);
   $('.mp-sec',w).innerHTML=r.map(x=>`<div class="mp-bar"><span>${x.n}</span><div><i class="${cls(x.c)}" style="width:${Math.abs(x.c)/mx*50}%;margin-${x.c>=0?'left':'right'}:50%;background:var(--${x.c>=0?'up':'dn'});${x.c<0?'margin-left:auto;':''}"></i></div><em class="${cls(x.c)}">${pc(x.c)}</em></div>`).join('')+`<p class="mp-ft">Rata-rata berbobot kapitalisasi per sektor \u00b7 data dummy</p>`}};
 function show(w){const tk=w._tk=(w._tk||0)+1,main=$('.mp-main',w);
@@ -77,6 +79,5 @@ registerApp('maps',{css:'apps/maps/maps.css',icon:"<rect x=\"3\" y=\"3\" width=\
    tip.innerHTML=`<b>${t.dataset.s}</b> <em class="${cls(c)}">${pc(c)}</em><br><span>${t.dataset.g} \u00b7 kap. ${fcap(+t.dataset.v)}</span>`;tip.hidden=false;
    tip.style.left=Math.min(b.width-180,e.clientX-b.left+14)+'px';tip.style.top=Math.min(b.height-60,e.clientY-b.top+14)+'px'});
   root.addEventListener('pointerleave',()=>{tip.hidden=true});
-  show(w)},
- notes:['<code>GET /api/heatmap?market=ihsg|kripto|komoditas|luar|lain&range=1d|1w|1m</code> : <code>[{group, sym, cap, changePct}]</code>. Bila API Live mati atau gagal, dipakai data dummy berbenih (berubah per hari)','Ukuran tile = <code>cap</code>, warna = <code>changePct</code>; skala warna penuh di \u00b13% (IHSG, komoditas, saham luar), \u00b18% (kripto), \u00b11,2% (lainnya)','Ringkasan Pasar: <code>GET /api/quotes?symbols=...&range=</code> dan sparkline dari <code>/api/candles</code> (TODO, sekarang dummy)','Top Movers dan Performa Sektor dihitung di klien dari data heatmap yang sama','Klik tile membuka simbol di app Chart lewat state <code>S.go</code>; pilihan halaman, pasar, dan rentang tersimpan di localStorage <code>tc.maps</code>']});
+  show(w)}});
 })();

@@ -33,9 +33,6 @@ button{font:inherit;color:inherit;cursor:pointer}
 .nb[aria-pressed=true]{border-color:var(--acc);color:var(--ink)}
 .app{flex:1;min-height:0;overflow:auto;padding:16px}
 .app.flush{padding:0;display:flex;flex-direction:column}
-.notes{display:none;flex:none;max-height:42%;overflow:auto;padding:10px 14px;background:var(--win2);border-top:1px solid var(--line);font-size:12px;color:var(--mute)}
-.win.sn .notes{display:block}
-.notes h4{margin:0 0 6px;color:var(--ink);font-size:12px}.notes ul{margin:0;padding-left:16px}.notes li{margin:3px 0}
 #snap{position:fixed;z-index:9997;display:none;width:316px;padding:12px;border-radius:14px;background:var(--win);border:1px solid var(--line);box-shadow:0 18px 50px rgba(0,0,0,.5)}
 .lays{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .lay{position:relative;height:56px;border:1px solid var(--line);border-radius:6px;background:var(--win2)}

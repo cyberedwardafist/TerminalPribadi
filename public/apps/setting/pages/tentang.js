@@ -5,7 +5,7 @@ Setting.page({id:'tentang',title:'Tentang',color:'#636366',icon:"<circle cx=\"12
  html:()=>`
   <div class="grp">
    ${row('Aplikasi','','Terminal Chart')}
-   ${row('Tahap','','Tampilan (data dummy)')}
+   ${row('Tahap','',(window.Live&&Live.on?'Live (data nyata)':'Tampilan (data dummy)'))}
    ${row('Penyimpanan','Semua pengaturan ada di browser ini','localStorage')}
   </div>
   <div class="grp">${row('Reset semua pengaturan','Kembali ke bawaan, halaman dimuat ulang','<button type="button" class="btn dng" data-reset>Reset…</button>')}</div>

@@ -13,6 +13,5 @@ Setting.page({id:'umum',title:'Umum',color:'#8e8e93',icon:"<path d=\"M4 7h10M18 
   bindSeg(qa,'theme',()=>CFG.theme,v=>{CFG.theme=v;applyTheme()});
   bindSeg(qa,'tf',()=>CFG.tf,v=>{CFG.tf=v});
   const sy=q('[data-k=sym]');sy.value=WATCH.some(r=>r[0]===CFG.sym)?CFG.sym:WATCH[0][0];sy.onchange=()=>{CFG.sym=sy.value;cfgSave()};
- },
- notes:['Tersambung: <code>GET/PUT /api/settings/preferences</code> <code>{theme, defaultSymbol, defaultTf, background, reduceMotion}</code>. Tersimpan di localStorage (<code>tc.cfg</code>, <code>bg</code>) dan disalin ke server (ditunda 1,5 dtk); saat masuk di perangkat lain, nilai server dipakai. Blok <code>api</code> (alamat, key) tidak pernah dikirim.']});
+ }});
 })();

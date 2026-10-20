@@ -117,7 +117,7 @@ const arrow=d=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+d+'"/></s
 registerApp('kalender',{css:'apps/kalender/kalender.css',icon:()=>"<rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"3\"/><path d=\"M3 10h18M8 3v4M16 3v4\"/><text x=\"12\" y=\"18.2\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\" stroke=\"none\" font-weight=\"700\">"+new Date().getDate()+"</text>",t:'Kalender',w:980,h:620,flush:true,
 html:()=>`<div class="kl-w"><div class="kl">
  <section class="kl-c" aria-label="Kalender">
-  <div class="kl-h"><h2 class="kl-mon" aria-live="polite"></h2><span class="tag">Data dummy</span>
+  <div class="kl-h"><h2 class="kl-mon" aria-live="polite"></h2><span class="tag">${window.Live&&Live.on?'Live':'Data dummy'}</span>
    <div class="kl-nav"><button type="button" class="kl-ib" data-mv="-1" aria-label="Bulan sebelumnya" title="Bulan sebelumnya">${arrow('M15 6l-6 6 6 6')}</button><button type="button" class="btn kl-td" data-today>Hari ini</button><button type="button" class="kl-ib" data-mv="1" aria-label="Bulan berikutnya" title="Bulan berikutnya">${arrow('M9 6l6 6-6 6')}</button></div></div>
   <div class="kl-wd" aria-hidden="true">${WD.map(x=>`<span>${x}</span>`).join('')}</div>
   <div class="kl-cal" role="group" aria-label="Pilih tanggal"></div>
@@ -274,6 +274,5 @@ init(w){
  S.day=Math.min(S.day,nd());
  buildGrid();paintFilters();load()
 },
-show(w){w._kl&&w._kl.sync()},
-notes:['<code>GET /api/calendar?month=YYYY-MM</code> : <code>{events:[{id,date,time,cat,type,title,sym,imp,detail,prev,fc,act,aff}],news:[{id,date,time,cat,type,imp,h,src,sum}]}</code>','<code>cat</code>: <code>idx</code> (IHSG), <code>kom</code> (komoditas), <code>fx</code> (forex dan makro). <code>type</code> idx: rups, div, lap, aksi. kom: emas, perak, minyak. fx: kode mata uang. <code>imp</code>: 1 rendah, 2 sedang, 3 tinggi','Satu request per bulan, di-cache per bulan di klien. Filter kelompok, jenis, dampak, dan kata kunci dikerjakan di klien. <code>time</code> dalam WIB (HH:mm), kosong berarti seharian','Sumber yang direncanakan: jadwal RUPS dan dividen dari IDX/KSEI, kalender ekonomi dan komoditas ala Forex Factory. Respons gagal memunculkan state error dengan tombol Coba lagi','Mode Dummy memakai data contoh yang dibuat di <code>kalender.js</code> (bentuknya sama dengan respons API)']});
+show(w){w._kl&&w._kl.sync()}});
 })();

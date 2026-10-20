@@ -36,6 +36,5 @@ Setting.page({id:'bg',title:'Background',color:'#0a84ff',css:'apps/setting/pages
   drop.addEventListener('drop',e=>{const f=e.dataTransfer&&e.dataTransfer.files[0];if(f)bgSave(()=>Cropper.shrink(f))});
   bgPaint();
   const st=q('[data-k=still]');st.checked=!!S.still;st.onchange=()=>{S.still=st.checked;CFG.still=st.checked;cfgSave()};
- },
- notes:['Tersambung: pilihan background dan <code>reduceMotion</code> lewat <code>PUT /api/settings/preferences</code>. Gambar sendiri: <code>PUT/GET/DELETE /api/settings/background-image</code> (body mentah PNG/JPEG/WebP, maks 3 MB, satu per akun, bucket privat <code>backgrounds</code>). Perangkat lain mengunduhnya sekali, lalu hanya bila berubah.']});
+ }});
 })();

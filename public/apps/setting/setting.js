@@ -22,7 +22,4 @@ registerApp('setting',{css:'apps/setting/setting.css',icon:"<path d=\"M4 7h10M18
   const go=(p,f)=>{S.setTab=p;tabs.forEach(t=>{const on=t.dataset.p===p;t.setAttribute('aria-selected',on);t.tabIndex=on?0:-1;if(on&&f)t.focus()});panes.forEach(x=>x.hidden=x.dataset.p!==p);head.textContent=Setting.pages.find(x=>x.id===p).title};
   tabs.forEach((t,i)=>{t.onclick=()=>go(t.dataset.p);t.onkeydown=e=>{const d={ArrowDown:1,ArrowRight:1,ArrowUp:-1,ArrowLeft:-1}[e.key];if(d){e.preventDefault();go(tabs[(i+d+tabs.length)%tabs.length].dataset.p,true)}}});
   Setting.pages.forEach(p=>p.init&&p.init({w,q,qa}));
-  go(Setting.pages.some(p=>p.id===S.setTab)?S.setTab:Setting.pages[0].id)},
-
- get notes(){return[...Setting.pages.flatMap(p=>p.notes||[]),
-  '<code>PUT /api/settings/layout</code> : posisi dan status window (opsional, supaya desktop pulih saat login)']}});
+  go(Setting.pages.some(p=>p.id===S.setTab)?S.setTab:Setting.pages[0].id)}});

@@ -29,6 +29,5 @@ Setting.page({id:'akun',title:'Akun',color:'#ff9f0a',icon:"<circle cx=\"12\" cy=
    ab.onclick=async()=>{say('');try{const img=await Cropper.pick(q('.st'));if(!img)return;await Auth.setAvatar(u.id,img);paint();say('Foto profil diperbarui')}catch(e){say(e.message,true)}};
    del.onclick=async()=>{try{await Auth.setAvatar(u.id,null);paint();say('Foto dihapus')}catch(e){say(e.message,true)}}}
   qa('[data-logout]').forEach(b=>b.onclick=()=>{Auth.logout();location.replace('auth/login.html')});
- },
- notes:['<code>GET /api/auth/me</code> : data akun di tab Akun (sekarang dibaca dari sesi lokal); login, daftar, lupa password: lihat komentar di <code>auth/auth.js</code>']});
+ }});
 })();

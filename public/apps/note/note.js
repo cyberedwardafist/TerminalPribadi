@@ -63,11 +63,5 @@ registerApp('note',{css:'apps/note/note.css',icon:"<path d=\"M6 3h9l4 4v14H6z\"/
   });
 
   Object.values(Note.views).forEach(v=>v.mount(ctx));
-  go(st.f,true)},
-
- notes:[
-  '<b>Jurnal trading</b> : <code>GET/POST /api/journal/trades</code>, <code>PUT/DELETE /api/journal/trades/:id</code>. Bentuk trade <code>{id, date, time, timeEnd, sym, side: buy|sell, res: profit|loss|impas, amount (Rupiah, selalu positif), method, fields:[{k,v}], note, eval, imgs[], cre, upd}</code>. Net harian = jumlah profit dikurangi loss pada tanggal itu',
-  '<b>Gambar bukti</b> : <code>POST /api/journal/images</code> (multipart) lalu simpan id di <code>imgs[]</code>; <code>GET /api/journal/images/:id</code>. Maks 8 per jurnal, otomatis diperkecil ke 1400px. Mode Dummy: hanya di IndexedDB browser. Mode Live: IndexedDB jadi cache, gambar diunggah ke server dengan id yang sama (<code>POST /api/journal/images?id=ID</code>, antrean + ulang otomatis bila offline) dan diunduh di perangkat lain saat dibuka',
-  '<b>Catatan ilmu/umum</b> : <code>GET /api/notes?cat=&tag=&q=</code>, <code>POST /api/notes</code>, <code>PUT/DELETE /api/notes/:id</code>; bentuk <code>{id, cat: ilmu|umum, html, tags[], pin, cre, upd}</code>. Isi HTML terbatas; server wajib menyaring ulang',
-  'Mode Dummy: semua di browser (localStorage <code>tc.notes</code>, <code>tc.journal</code>, IndexedDB <code>tc-journal</code>). Tombol Ekspor/Impor JSON (termasuk gambar) dipakai sebagai cadangan dan pindah perangkat']});
+  go(st.f,true)}});
 })();

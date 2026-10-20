@@ -83,7 +83,7 @@ const seed=()=>{const t=Date.now();return[normNote({id:uid(),cat:'ilmu',html:'<h
 function load(){
  const tj=readJson(KJ);S.trades=(tj&&Array.isArray(tj.trades)?tj.trades:[]).map(normTrade).filter(Boolean);
  const nj=readJson(KN);
- if(nj===undefined){S.notes=seed();saveNotes();return}
+ if(nj===undefined){S.notes=window.Live&&Live.on?[]:seed();saveNotes();return}
  const arr=nj&&Array.isArray(nj.notes)?nj.notes:[];let mig=false;S.notes=[];
  arr.forEach(r=>{
   if(r&&r.cat==='jurnal'){const t=fromOld(r);if(t&&!S.trades.some(x=>x.id===t.id))S.trades.push(t);mig=true}
