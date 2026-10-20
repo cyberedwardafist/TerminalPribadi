@@ -12,18 +12,19 @@ supabase/migrations/002_schedule_optional.sql   jadwal pg_cron (alert tiap menit
 supabase/migrations/003_user_state.sql    tabel state per app (sudah termasuk di 001 versi ini)
 supabase/migrations/004_journal_image_ids.sql   id gambar jurnal jadi teks (hanya bila 001 Anda versi lama)
 supabase/migrations/005_background_image.sql    kolom user_settings.bg_image + bucket 'backgrounds' (hanya bila 001 Anda versi lama)
-tests/             44 test (database dan sumber pasar ditiru di memori)
+supabase/migrations/006_service_role_grants.sql hak akses service_role (wajib di project Supabase baru; sudah termasuk di 001 versi ini)
+tests/             54 test (database dan sumber pasar ditiru di memori)
 AUDIT.md           hasil audit keamanan + kecocokan kode dengan skema, dan rekomendasi yang belum dikerjakan
 ```
 
 ## Deploy (±15 menit)
 
 1. **Supabase**: buat project (region Singapore). SQL Editor → tempel isi `supabase/migrations/001_init.sql` → Run.
-   Ambil `Project URL` dan `service_role` key dari Settings → API.
-2. **Resend** (email OTP): buat API key. Untuk mengirim ke email siapa pun, verifikasi domain Anda dulu (tanpa itu hanya bisa ke email pemilik akun Resend). Alternatif: Brevo, atau **Gmail SMTP** (tanpa domain): aktifkan Verifikasi 2 Langkah di akun Google → buat *App Password* di myaccount.google.com/apppasswords → isi `GMAIL_USER` dan `GMAIL_APP_PASSWORD` (spasi boleh). Email terkirim dari akun Gmail itu sendiri (Google mengabaikan `MAIL_FROM` lain); batas harian ±500 email.
+   Lalu tempel dan Run `supabase/migrations/006_service_role_grants.sql` (hak akses `service_role`; project Supabase baru tidak lagi memberikannya otomatis untuk tabel buatan SQL Editor; aman diulang). Ambil `Project URL` dan key dari Settings → API (key **secret** `sb_secret_...` atau `service_role` `eyJ...`; bukan anon/publishable).
+2. **Email OTP lewat SMTP** (utama): isi `SMTP_HOST`, `SMTP_PORT` (465 TLS atau 587 STARTTLS), `SMTP_USER`, `SMTP_PASS` (dan `SMTP_FROM` bila pengirim berbeda dari `SMTP_USER`). Gmail: `smtp.gmail.com`, port 465, `SMTP_USER` = alamat Gmail, `SMTP_PASS` = *App Password* 16 huruf dari myaccount.google.com/apppasswords (wajib Verifikasi 2 Langkah; spasi boleh). Batas Gmail ±500 email/hari. Resend, Brevo, dan `GMAIL_USER`/`GMAIL_APP_PASSWORD` tetap didukung sebagai cadangan, hanya dipakai bila `SMTP_HOST` kosong (atau paksa dengan `MAIL_PROVIDER`).
 3. **Vercel**: Import repo ini. Framework: *Other*. Tidak perlu build command. Isi Environment Variables dari `.env.example`
-   (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET`, `CRON_SECRET`, `ADMIN_TOKEN`, `RESEND_API_KEY` atau `GMAIL_USER` + `GMAIL_APP_PASSWORD`, `MAIL_FROM`). Deploy.
-4. Buka `https://APP.vercel.app/api/health?deep=1` → harus `{"ok":true,"db":"ok"}`.
+   (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET`, `CRON_SECRET`, `ADMIN_TOKEN`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`). Deploy.
+4. Buka `https://APP.vercel.app/api/health?deep=1` → harus `{"ok":true,"db":"ok",...}`. Bila `db` = `error`, field `db_hint` menyebut penyebabnya (key salah, tabel belum dibuat, hak akses). Field `config` menunjukkan variabel mana yang sudah terisi (tanpa nilainya). Tes email: `curl -X POST https://APP.vercel.app/api/admin/mail-test -H "x-admin-token: $ADMIN_TOKEN" -H "content-type: application/json" -d '{"to":"emailanda@gmail.com"}'`; bila gagal, `error` berisi galat asli SMTP. Setelah mengubah Environment Variables di Vercel, **Redeploy** dulu.
 5. Buka `https://APP.vercel.app` → Daftar → OTP masuk email → Login. Frontend otomatis mode **Live** ke server yang sama saat dipasang di domain sungguhan (di `localhost` tetap Dummy).
 6. Isi data awal: `curl -X POST https://APP.vercel.app/api/admin/refresh -H "x-admin-token: $ADMIN_TOKEN" -H "content-type: application/json" -d '{"what":"all"}'` (berita, kalender, pemanasan cache).
 7. (Disarankan) Aktifkan `pg_cron` + `pg_net` di Supabase lalu jalankan `002_schedule_optional.sql` (ganti `YOUR-APP` dan `CRON_SECRET`). Vercel Hobby hanya mengizinkan cron 1x/hari, jadi alert harga (tiap menit) dan berita (tiap 15 menit) dijadwalkan dari Supabase. Di Vercel Pro cukup ubah `crons` di `vercel.json`.
@@ -141,6 +142,7 @@ GET /api/cron/cleanup
 GET /api/cron/daily
 POST /api/admin/refresh
 POST /api/admin/calendar
+POST /api/admin/mail-test
 ```
 Catatan rute: `/api/indicators/builtin` dan `/api/indicators/compute` didaftarkan sebelum `/api/indicators/:id`; `/api/news/saved` sebelum `/api/news/:id`.
 

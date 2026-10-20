@@ -275,6 +275,17 @@ end $$;
 revoke all on function public.rate_hit(text, int, int) from public, anon, authenticated;
 grant execute on function public.rate_hit(text, int, int) to service_role;
 
+-- ===================== hak akses service_role (backend) =====================
+-- Project Supabase baru tidak lagi memberi hak otomatis pada tabel buatan SQL Editor; tanpa ini PostgREST membalas 42501 "permission denied" untuk service_role.
+grant usage on schema public to service_role;
+grant all on all tables in schema public to service_role;
+grant all on all sequences in schema public to service_role;
+grant execute on all functions in schema public to service_role;
+alter default privileges in schema public grant all on tables to service_role;
+alter default privileges in schema public grant all on sequences to service_role;
+alter default privileges in schema public grant execute on functions to service_role;
+notify pgrst, 'reload schema';
+
 -- ===================== keamanan: tutup Data API untuk anon/authenticated =====================
 do $$ declare t record; begin
   for t in select tablename from pg_tables where schemaname = 'public' loop

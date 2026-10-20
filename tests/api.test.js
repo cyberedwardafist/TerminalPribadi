@@ -316,3 +316,27 @@ test('evaluateAlerts: alert di atas 1000 baris tetap diperiksa', async () => {
   assert.ok(r.checked >= 1200 || r.error, 'seluruh halaman dibaca: ' + JSON.stringify(r));
   fdb.t.alerts = fdb.tbl('alerts').filter(a => !a.symbol.startsWith('ZZZTEST'));
 });
+
+test('health?deep=1: status DB dan konfigurasi (tanpa nilai rahasia)', async () => {
+  const r = await call('GET', '/api/health?deep=1');
+  assert.equal(r.status, 200); assert.equal(r.body.db, 'ok');
+  assert.equal(r.body.config.jwt_secret, true); assert.equal(r.body.config.mail_provider, 'memory');
+  assert.ok(!JSON.stringify(r.body).includes('c'.repeat(20)) && !JSON.stringify(r.body).includes('j'.repeat(48)));
+});
+test('galat konfigurasi Supabase -> 503 jelas (bukan 500 generik) dan petunjuk di health', async () => {
+  const db = await import('../lib/db.js');
+  db.setFetch(async () => new Response(JSON.stringify({ message: 'Invalid API key' }), { status: 401 }));
+  try {
+    const r = await call('POST', '/api/auth/register', { name: 'Ani', username: 'ani.x', email: 'ani@mail.id', password: 'rahasia123' });
+    assert.equal(r.status, 503); assert.match(r.body.message, /Database belum siap/);
+    const h = await call('GET', '/api/health?deep=1');
+    assert.equal(h.status, 503); assert.match(h.body.db_hint, /Key ditolak/);
+  } finally { db.setFetch((...a) => fetch(...a)); }
+});
+test('admin mail-test: butuh token admin dan mengirim lewat provider aktif', async () => {
+  let r = await call('POST', '/api/admin/mail-test', { to: 'x@mail.id' });
+  assert.ok([401, 403].includes(r.status));
+  const n = outbox.length;
+  r = await call('POST', '/api/admin/mail-test', { to: 'x@mail.id' }, { 'x-admin-token': 'a'.repeat(20) });
+  assert.equal(r.status, 200); assert.equal(r.body.provider, 'memory'); assert.equal(outbox.length, n + 1);
+});
