@@ -39,7 +39,7 @@ try {
   for (const f of files) {
     const v = f.replace(/\.sql$/, '');
     if (only.length ? !only.some(o => f.startsWith(o)) : done.has(v)) continue;
-    if (optional(f) && !only.length) { console.log(`- ${f} dilewati (opsional, jalankan manual setelah diedit; lihat BACKEND.md)`); continue; }
+    if (optional(f) && !only.length) { console.log(`- ${f} dilewati (opsional, jalankan manual setelah diedit; lihat README.md, bagian Deploy)`); continue; }
     process.stdout.write('> ' + f + ' ... ');
     try {
       await c.query('begin');
