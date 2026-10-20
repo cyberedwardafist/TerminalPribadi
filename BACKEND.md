@@ -13,7 +13,7 @@ supabase/migrations/003_user_state.sql    tabel state per app (sudah termasuk di
 supabase/migrations/004_journal_image_ids.sql   id gambar jurnal jadi teks (hanya bila 001 Anda versi lama)
 supabase/migrations/005_background_image.sql    kolom user_settings.bg_image + bucket 'backgrounds' (hanya bila 001 Anda versi lama)
 supabase/migrations/006_service_role_grants.sql hak akses service_role (wajib di project Supabase baru; sudah termasuk di 001 versi ini)
-tests/             54 test (database dan sumber pasar ditiru di memori)
+tests/             55 test (database dan sumber pasar ditiru di memori)
 AUDIT.md           hasil audit keamanan + kecocokan kode dengan skema, dan rekomendasi yang belum dikerjakan
 ```
 
@@ -21,9 +21,9 @@ AUDIT.md           hasil audit keamanan + kecocokan kode dengan skema, dan rekom
 
 1. **Supabase**: buat project (region Singapore). SQL Editor → tempel isi `supabase/migrations/001_init.sql` → Run.
    Lalu tempel dan Run `supabase/migrations/006_service_role_grants.sql` (hak akses `service_role`; project Supabase baru tidak lagi memberikannya otomatis untuk tabel buatan SQL Editor; aman diulang). Ambil `Project URL` dan key dari Settings → API (key **secret** `sb_secret_...` atau `service_role` `eyJ...`; bukan anon/publishable).
-2. **Email OTP lewat SMTP** (utama): isi `SMTP_HOST`, `SMTP_PORT` (465 TLS atau 587 STARTTLS), `SMTP_USER`, `SMTP_PASS` (dan `SMTP_FROM` bila pengirim berbeda dari `SMTP_USER`). Gmail: `smtp.gmail.com`, port 465, `SMTP_USER` = alamat Gmail, `SMTP_PASS` = *App Password* 16 huruf dari myaccount.google.com/apppasswords (wajib Verifikasi 2 Langkah; spasi boleh). Batas Gmail ±500 email/hari. Resend, Brevo, dan `GMAIL_USER`/`GMAIL_APP_PASSWORD` tetap didukung sebagai cadangan, hanya dipakai bila `SMTP_HOST` kosong (atau paksa dengan `MAIL_PROVIDER`).
+2. **Email OTP lewat SMTP**: satu variabel, `SMTP_URL`. Gmail: `smtps://akun%40gmail.com:APP_PASSWORD@smtp.gmail.com:465` (`APP_PASSWORD` = App Password 16 huruf dari myaccount.google.com/apppasswords, wajib Verifikasi 2 Langkah; `@` di USER ditulis `%40`). Port 587: `smtp://USER:PASSWORD@HOST:587` (STARTTLS otomatis). Batas Gmail ±500 email/hari. Pengirim memakai USER (atau `MAIL_FROM` bila diisi). Cadangan lama tetap jalan bila `SMTP_URL` kosong: `SMTP_HOST`+`SMTP_USER`+`SMTP_PASS`, `GMAIL_USER`+`GMAIL_APP_PASSWORD`, `RESEND_API_KEY`, `BREVO_API_KEY`.
 3. **Vercel**: Import repo ini. Framework: *Other*. Tidak perlu build command. Isi Environment Variables dari `.env.example`
-   (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET`, `CRON_SECRET`, `ADMIN_TOKEN`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`). Deploy.
+   (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET`, `SMTP_URL` (`CRON_SECRET` dan `ADMIN_TOKEN` opsional; tanpa keduanya cron/admin tertutup)). Deploy.
 4. Buka `https://APP.vercel.app/api/health?deep=1` → harus `{"ok":true,"db":"ok",...}`. Bila `db` = `error`, field `db_hint` menyebut penyebabnya (key salah, tabel belum dibuat, hak akses). Field `config` menunjukkan variabel mana yang sudah terisi (tanpa nilainya). Tes email: `curl -X POST https://APP.vercel.app/api/admin/mail-test -H "x-admin-token: $ADMIN_TOKEN" -H "content-type: application/json" -d '{"to":"emailanda@gmail.com"}'`; bila gagal, `error` berisi galat asli SMTP. Setelah mengubah Environment Variables di Vercel, **Redeploy** dulu.
 5. Buka `https://APP.vercel.app` → Daftar → OTP masuk email → Login. Frontend otomatis mode **Live** ke server yang sama saat dipasang di domain sungguhan (di `localhost` tetap Dummy).
 6. Isi data awal: `curl -X POST https://APP.vercel.app/api/admin/refresh -H "x-admin-token: $ADMIN_TOKEN" -H "content-type: application/json" -d '{"what":"all"}'` (berita, kalender, pemanasan cache).

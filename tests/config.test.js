@@ -52,3 +52,16 @@ test('supabase: petunjuk galat konfigurasi', () => {
   assert.equal(db.dbHint(E(409, '23505', 'duplicate key')), null);
   assert.equal(db.dbHint(new Error('x')), null);
 });
+
+test('email: SMTP_URL satu baris (smtps = TLS 465, smtp = STARTTLS 587, URL-encode, From dari USER)', () => {
+  let c = mailConfig({ SMTP_URL: 'smtps://akun%40gmail.com:abcd%20efgh%20ijkl%20mnop@smtp.gmail.com:465', RESEND_API_KEY: 'k' });
+  assert.equal(c.provider, 'smtp'); assert.deepEqual([c.smtp.host, +c.smtp.port, c.smtp.user, c.smtp.pass], ['smtp.gmail.com', 465, 'akun@gmail.com', 'abcdefghijklmnop']);
+  assert.equal(c.from, 'Terminal Chart <akun@gmail.com>');
+  c = mailConfig({ SMTP_URL: 'smtp://u:p%40ss@mail.x.id:587' });
+  assert.equal(+c.smtp.port, 587); assert.equal(c.smtp.pass, 'p@ss'); assert.equal(c.smtp.secure, false);
+  assert.equal(mailConfig({ SMTP_URL: 'smtps://u:p@h:2465' }).smtp.secure, true);
+  assert.equal(+mailConfig({ SMTP_URL: 'smtps://u:p@mail.x.id' }).smtp.port, 465);
+  assert.equal(+mailConfig({ SMTP_URL: 'smtp://u:p@mail.x.id' }).smtp.port, 587);
+  assert.match(mailConfig({ SMTP_URL: 'bukan-url' }).urlError, /SMTP_URL tidak valid/);
+  assert.equal(mailConfig({ SMTP_URL: 'smtp://u:p@h', SMTP_HOST: 'lain' }).smtp.host, 'h');   // SMTP_URL menang atas SMTP_HOST
+});
