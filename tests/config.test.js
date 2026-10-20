@@ -72,3 +72,23 @@ test('email: pengirim contoh (domainmu.id, alamat@...) diabaikan; Gmail selalu m
   assert.equal(g.from, 'Terminal Chart <me@gmail.com>');
   assert.equal(mailConfig({ SMTP_URL: 'smtps://me%40gmail.com:abcd@smtp.gmail.com:465', MAIL_FROM: 'Terminal Pribadi <other@brand.id>' }).from, 'Terminal Pribadi <me@gmail.com>');
 });
+
+test('email: kutip/spasi dari panel Vercel dibuang (SMTP_URL, SMTP_PASS)', () => {
+  let c = mailConfig({ SMTP_URL: '  "smtps://akun%40gmail.com:abcdabcdabcdabcd@smtp.gmail.com:465"  ' });
+  assert.equal(c.provider, 'smtp'); assert.equal(c.smtp.host, 'smtp.gmail.com'); assert.equal(c.urlError, '');
+  c = mailConfig({ SMTP_HOST: 'mail.x.id', SMTP_USER: "'me@x.id'", SMTP_PASS: '"rahasia #1"' });
+  assert.equal(c.smtp.user, 'me@x.id'); assert.equal(c.smtp.pass, 'rahasia #1');
+});
+test('email: petunjuk galat SMTP', async () => {
+  const { smtpHint } = await import('../lib/mail.js');
+  assert.match(smtpHint(Object.assign(new Error('SMTP AUTH: 535-5.7.8 Username and Password not accepted'), { code: 535 })), /App Password/);
+  assert.match(smtpHint(new Error('connect ECONNREFUSED 127.0.0.1:1')), /SMTP_HOST dan SMTP_PORT/);
+  assert.match(smtpHint(new Error('error:0A00010B:SSL routines::wrong version number')), /SMTP_SECURE/);
+  assert.match(smtpHint(new Error('getaddrinfo ENOTFOUND smtp.gmial.com')), /SMTP_HOST tidak ditemukan/);
+  assert.equal(smtpHint(new Error('apa saja')), '');
+});
+test('.env: parser (export, kutip, komentar, CRLF, BOM, # di dalam kutip)', async () => {
+  const { parseEnv } = await import('../scripts/load-env.js');
+  const e = parseEnv('﻿# komentar\r\nA=1\r\nexport B = dua  # ket\r\nC="p #x y"\r\nD=\'q\'\r\nE=\r\nF=https://h/x#frag\r\n  G =  g  \r\nbukan valid\r\n');
+  assert.deepEqual(e, { A: '1', B: 'dua', C: 'p #x y', D: 'q', E: '', F: 'https://h/x#frag', G: 'g' });
+});

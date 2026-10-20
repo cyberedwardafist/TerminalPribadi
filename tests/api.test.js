@@ -340,3 +340,27 @@ test('admin mail-test: butuh token admin dan mengirim lewat provider aktif', asy
   r = await call('POST', '/api/admin/mail-test', { to: 'x@mail.id' }, { 'x-admin-token': 'a'.repeat(20) });
   assert.equal(r.status, 200); assert.equal(r.body.provider, 'memory'); assert.equal(outbox.length, n + 1);
 });
+
+test('daftar: email gagal terkirim -> akun dan kode dibuang, tidak ada jeda 30 detik, bisa langsung coba lagi', async () => {
+  const saved = token, old = { ...process.env }; token = '';
+  Object.assign(process.env, { MAIL_PROVIDER: 'smtp', SMTP_HOST: '127.0.0.1', SMTP_PORT: '1', SMTP_USER: 'a@x.id', SMTP_PASS: 'p' });
+  try {
+    const body = { name: 'Gagal', username: 'gagalkirim', email: 'gagal@mail.id', password: 'rahasia123' };
+    let r = await call('POST', '/api/auth/register', body);
+    assert.equal(r.status, 502); assert.match(r.body.message, /Email tidak bisa dikirim/);
+    assert.ok(!fdb.t.otps.some(o => o.email === 'gagal@mail.id'), 'kode OTP tidak boleh tersisa');
+    assert.ok(!fdb.t.users.some(u => u.email === 'gagal@mail.id'), 'akun belum terverifikasi dibuang');
+    process.env.MAIL_PROVIDER = 'memory';   // SMTP sudah diperbaiki -> langsung berhasil tanpa menunggu 30 detik
+    r = await call('POST', '/api/auth/register', body);
+    assert.equal(r.status, 200); assert.match(outbox.at(-1).text, /\d{6}/);
+  } finally { for (const k of ['MAIL_PROVIDER', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS']) old[k] === undefined ? delete process.env[k] : (process.env[k] = old[k]); token = saved; }
+});
+test('admin mail-test {verify:true}: galat SMTP + petunjuk, tanpa kirim email', async () => {
+  const old = { ...process.env };
+  Object.assign(process.env, { MAIL_PROVIDER: 'smtp', SMTP_HOST: '127.0.0.1', SMTP_PORT: '1', SMTP_USER: 'a@x.id', SMTP_PASS: 'p' });
+  try {
+    const r = await call('POST', '/api/admin/mail-test', { verify: true }, { 'x-admin-token': 'a'.repeat(20) });
+    assert.equal(r.status, 502); assert.equal(r.body.ok, false); assert.match(r.body.hint, /SMTP_HOST|SMTP_PORT/);
+    assert.ok(!JSON.stringify(r.body).includes('"p"'));
+  } finally { for (const k of ['MAIL_PROVIDER', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS']) old[k] === undefined ? delete process.env[k] : (process.env[k] = old[k]); }
+});

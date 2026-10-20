@@ -31,6 +31,11 @@ if (need.length) {
 }
 
 const { handle } = await import(pathToFileURL(path.join(root, 'lib/app.js')).href);
+{
+  const { mailConfig } = await import(pathToFileURL(path.join(root, 'lib/mail.js')).href), mc = mailConfig();
+  if (!fake && (!mc.provider || mc.provider === 'log')) console.warn(`[dev] PERINGATAN: email belum diatur (${mc.provider || 'kosong'}). Kode OTP TIDAK dikirim ke email${mc.provider === 'log' ? ', hanya dicetak di terminal ini' : ''}. Isi SMTP_* di .env lalu cek dengan "npm run mail:test".`);
+  else if (!fake) console.log(`[dev] Email OTP lewat ${mc.provider}, pengirim ${mc.from}. Cek koneksi: npm run mail:test`);
+}
 const pub = path.join(root, 'public');
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.ico': 'image/x-icon', '.md': 'text/plain; charset=utf-8', '.woff2': 'font/woff2' };
 
@@ -53,7 +58,11 @@ function stat(req, res) {
   if (!file.startsWith(pub)) { res.writeHead(403); return res.end('Forbidden'); }
   if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
   if (!fs.existsSync(file)) { res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }); return res.end('Tidak ditemukan'); }
-  res.writeHead(200, { 'content-type': MIME[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-cache' });
+  const type = MIME[path.extname(file)] || 'application/octet-stream';
+  // Halaman ini dilayani oleh server yang SAMA dengan /api, jadi frontend harus langsung mode Live (bukan Dummy). Dengan mode Dummy,
+  // akun dan OTP hanya ada di browser: backend tidak pernah dipanggil dan email tidak pernah dikirim.
+  if (p.endsWith('/shared/config.js')) { res.writeHead(200, { 'content-type': type, 'cache-control': 'no-cache' }); return res.end('window.TC_LIVE=true;\n' + fs.readFileSync(file, 'utf8')); }
+  res.writeHead(200, { 'content-type': type, 'cache-control': 'no-cache' });
   fs.createReadStream(file).pipe(res);
 }
 
