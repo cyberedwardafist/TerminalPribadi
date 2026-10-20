@@ -152,11 +152,15 @@ Catatan rute: `/api/indicators/builtin` dan `/api/indicators/compute` didaftarka
 | Kripto | Binance publik (`data-api.binance.vision`) | tanpa key, real-time, semua timeframe 1m–1M |
 | Saham IDX (`.JK`), saham AS, indeks, forex, komoditas | Yahoo Finance (endpoint tidak resmi) | tertunda ±15 menit untuk banyak bursa; 1m hanya 7 hari, 5m–30m 60 hari, 1h/4h 730 hari; 4h dibentuk dari 1h |
 | Emas/perak/minyak/dll | futures Yahoo (`GC=F`, `CL=F`, ...) | harga futures, bukan spot; sedikit berbeda dari XAUUSD spot |
+| Kapitalisasi kripto (peta pasar) | CoinGecko `/coins/markets` (`lib/providers/coingecko.js`) | tanpa key, di-cache 10 menit; gagal/429 → bobot statis `heat-data.js`. Atribusi "CoinGecko" wajib untuk paket gratis (sudah ada di Setting > Tentang) |
 | Berita | RSS (`lib/news.js` → `SOURCES`) | ringkasan dari RSS, bukan teks artikel penuh; sentimen berbasis kamus kata |
+| Berita tambahan (opsional) | Finnhub (`FINNHUB_API_KEY`), Alpha Vantage (`ALPHAVANTAGE_API_KEY`) | aktif hanya bila kunci diisi; Alpha Vantage memakai label sentimen dari API dan dibatasi 1x per 6 jam (jatah gratis 25/hari) |
 | Kalender | Forex Factory feed mingguan + ex-dividen Yahoo + input manual | RUPS/laporan keuangan/aksi korporasi tidak punya sumber gratis resmi: isi lewat `POST /api/admin/calendar` |
 
 Yahoo dan feed RSS bisa berubah atau memblokir sewaktu-waktu tanpa pemberitahuan. Penyedia ada di `lib/providers/`; untuk produksi serius ganti/tambah penyedia berlisensi (mis. Twelve Data, Polygon, EODHD, atau data resmi IDX) cukup dengan menambah satu modul dan mengubah `provider` di `lib/catalog.js`.
-Heatmap memakai bobot kapitalisasi statis di `lib/heat-data.js` (sama dengan frontend), perubahan harga yang live.
+Heatmap: bobot kapitalisasi IHSG, saham luar, komoditas, dan forex/indeks masih statis di `lib/heat-data.js` (sama dengan frontend); kripto memakai kapitalisasi live dari CoinGecko. Perubahan harga semuanya live.
+
+**Tidak dipakai (sengaja):** endpoint internal `idx.co.id` (tidak resmi, dilindungi anti-bot, bentuk JSON sering berubah dan tidak bisa diuji dari sini) serta pustaka Lightweight Charts (mesin chart canvas di `public/apps/chart/` sudah punya tab, drawing, dan indikator sendiri; menggantinya berarti menulis ulang app dan menambah skrip luar yang bertentangan dengan CSP ketat).
 
 ## Keterbatasan Vercel yang sudah disiasati
 - **WebSocket tidak didukung** di Vercel Functions. Pengganti: `GET /api/stream?symbols=..&token=..` (Server-Sent Events, ±55 dtik lalu `EventSource` tersambung ulang otomatis) untuk harga dan notifikasi. Untuk kripto, klien juga bisa langsung ke WebSocket Binance.
@@ -168,7 +172,8 @@ Heatmap memakai bobot kapitalisasi statis di `lib/heat-data.js` (sama dengan fro
 - Password: scrypt. OTP: 6 digit, HMAC, 10 menit, maks 5 salah, cooldown kirim ulang 30 dtik, tidak membocorkan email terdaftar. Login dibatasi (8 percobaan/menit per IP+akun), semua batas tersimpan di DB (atomik).
 - OTP: tiap tebakan mengambil jatah `tries` lewat update bersyarat sebelum dibandingkan, jadi permintaan paralel tidak bisa melewati batas 5. Pendaftaran memakai batas kirim OTP per email yang sama dengan `/otp/send`.
 - Rahasia cron hanya diterima lewat header `Authorization` (bukan `?secret=`).
-- Lihat `AUDIT.md` untuk temuan lengkap dan rekomendasi yang belum dikerjakan (CSP, `ALLOWED_ORIGINS`, token SSE di URL, dll).
+- Header `Content-Security-Policy-Report-Only` aktif di `vercel.json` (tidak memblokir apa pun; pelanggaran hanya muncul di Console browser). Buka semua app sekali, pastikan Console bersih, lalu ganti nama header menjadi `Content-Security-Policy`.
+- Lihat `AUDIT.md` untuk temuan lengkap dan rekomendasi yang belum dikerjakan (CSP enforce, `ALLOWED_ORIGINS`, token SSE di URL, dll).
 - HTML catatan disaring ulang di server. Kode indikator custom **hanya disimpan**; harus dijalankan di sandbox klien (Web Worker), tidak pernah dieksekusi server.
 - Gambar jurnal: bucket privat, dicek magic byte (PNG/JPEG/WebP), maks 3 MB.
 

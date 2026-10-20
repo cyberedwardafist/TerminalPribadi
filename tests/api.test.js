@@ -364,3 +364,41 @@ test('admin mail-test {verify:true}: galat SMTP + petunjuk, tanpa kirim email', 
     assert.ok(!JSON.stringify(r.body).includes('"p"'));
   } finally { for (const k of ['MAIL_PROVIDER', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS']) old[k] === undefined ? delete process.env[k] : (process.env[k] = old[k]); }
 });
+
+test('peta kripto: kapitalisasi dari CoinGecko, kode kembar memakai yang terbesar, gagal -> bobot statis', async () => {
+  const { clearCache } = await import('../lib/cache.js');
+  const fresh = () => { clearCache(); fdb.t.kv_cache = (fdb.t.kv_cache || []).filter(r => !/^heat:/.test(r.key)); };
+  fresh();
+  let r = await call('GET', '/api/heatmap?market=kripto&range=1d'); assert.equal(r.status, 200);
+  const cap = s => r.body.find(x => x.sym === s)?.cap;
+  assert.equal(cap('BTC'), 1500, 'USD miliar dari market_cap CoinGecko');
+  assert.equal(cap('ETH'), 420);
+  assert.equal(cap('SOL'), 80, 'koin yang tidak ada di respons CoinGecko tetap memakai bobot statis');
+  fresh(); state.cgFail = true;
+  r = await call('GET', '/api/heatmap?market=kripto&range=1d'); assert.equal(r.status, 200);
+  assert.equal(cap('BTC'), 1300, 'CoinGecko 429 -> bobot statis, peta tetap tampil');
+  state.cgFail = false; fresh();
+});
+
+test('berita: Finnhub dan Alpha Vantage aktif hanya bila kunci diisi; Alpha Vantage dibatasi 1x per 6 jam', async () => {
+  const { refreshNews } = await import('../lib/news.js');
+  const { clearCache } = await import('../lib/cache.js');
+  clearCache(); fdb.t.kv_cache = (fdb.t.kv_cache || []).filter(r => r.key !== 'news:av');
+  let rep = await refreshNews();
+  assert.ok(!rep.sources.some(s => /Finnhub|Alpha/.test(s.source)), 'tanpa kunci: tidak ada panggilan');
+  assert.equal(state.avCalls || 0, 0);
+  process.env.FINNHUB_API_KEY = 'fh-secret'; process.env.ALPHAVANTAGE_API_KEY = 'av-secret';
+  try {
+    rep = await refreshNews();
+    assert.equal(state.finnhubHeader, 'fh-secret', 'kunci Finnhub lewat header, bukan URL');
+    assert.ok(rep.sources.filter(s => /^Finnhub/.test(s.source)).every(s => s.ok && s.items === 1), 'baris tanpa judul dibuang');
+    const fh = fdb.t.news.find(n => n.url === 'https://fh.example/1');
+    assert.ok(fh, 'parameter utm_ dibuang dari URL'); assert.equal(fh.sentiment, 'pos'); assert.ok(fh.symbols.includes('BTCUSDT'));
+    const av = fdb.t.news.find(n => n.url === 'https://av.example/1');
+    assert.ok(av); assert.equal(av.category, 'us'); assert.equal(av.sentiment, 'pos', 'label Somewhat-Bullish');
+    assert.ok(av.symbols.includes('AAPL') && !av.symbols.includes('CRYPTO:BTC'), 'hanya ticker yang dikenal katalog');
+    assert.equal(state.avCalls, 1);
+    await refreshNews(); assert.equal(state.avCalls, 1, 'panggilan kedua dalam 6 jam dilewati');
+    assert.ok(!JSON.stringify(rep).includes('secret'), 'laporan cron tidak memuat kunci');
+  } finally { delete process.env.FINNHUB_API_KEY; delete process.env.ALPHAVANTAGE_API_KEY; }
+});
