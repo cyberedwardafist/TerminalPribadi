@@ -65,3 +65,10 @@ test('email: SMTP_URL satu baris (smtps = TLS 465, smtp = STARTTLS 587, URL-enco
   assert.match(mailConfig({ SMTP_URL: 'bukan-url' }).urlError, /SMTP_URL tidak valid/);
   assert.equal(mailConfig({ SMTP_URL: 'smtp://u:p@h', SMTP_HOST: 'lain' }).smtp.host, 'h');   // SMTP_URL menang atas SMTP_HOST
 });
+
+test('email: pengirim contoh (domainmu.id, alamat@...) diabaikan; Gmail selalu memakai akun login dengan nama dari MAIL_FROM', () => {
+  assert.equal(mailConfig({ SMTP_URL: 'smtp://u@x.id:p@mail.x.id:587', MAIL_FROM: 'TerminalPribadi <alamat@domainmu.id>' }).from, 'Terminal Chart <u@x.id>');
+  const g = mailConfig({ SMTP_URL: 'smtps://me%40gmail.com:abcd@smtp.gmail.com:465', MAIL_FROM: 'TerminalPribadi <alamat@domainmu.id>' });
+  assert.equal(g.from, 'Terminal Chart <me@gmail.com>');
+  assert.equal(mailConfig({ SMTP_URL: 'smtps://me%40gmail.com:abcd@smtp.gmail.com:465', MAIL_FROM: 'Terminal Pribadi <other@brand.id>' }).from, 'Terminal Pribadi <me@gmail.com>');
+});
