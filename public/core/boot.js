@@ -28,3 +28,6 @@ Sesi.restore()||open('home');Sesi.start();
   if(!dk.classList.contains('show'))return;
   const r=dk.getBoundingClientRect();(e.clientY>=r.top-16&&e.clientX>=r.left-24&&e.clientX<=r.right+24)?keep():later()});
  document.documentElement.addEventListener('mouseleave',()=>{if(dk.classList.contains('show'))later()})})();
+
+// Desktop siap: layar sambutan TerminalPribadi boleh pamit (kalau belum siap, animasinya diulang).
+typeof Hello!=='undefined'&&Hello.done();
