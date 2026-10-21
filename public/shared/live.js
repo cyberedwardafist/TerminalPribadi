@@ -21,10 +21,7 @@ async function pullQuotes(){
   const list=await api('/api/quotes?symbols='+syms.slice(i,i+50).join(','));
   for(const q of list){const r=WATCH.find(x=>x[0]===q.sym);if(!r||!(q.price>0))continue;r[2]=q.price;r[3]=q.changePct;Live.extra[q.sym]={vr:q.volRatio,rsi:q.rsi14,pos:q.pos52w,spark:q.spark};n++}}
  return n}
-// Live.err = galat terakhir pengambilan harga (null = sehat); Live.qAt = waktu pengambilan harga terakhir yang berhasil
-const quotesNow=async()=>{try{const n=await pullQuotes();if(n){Live.err=null;Live.qAt=Date.now();window.dispatchEvent(new Event('tc:quotes'))}else{Live.err=Status.mk('provider','Server menjawab tetapi tidak ada harga yang tersedia')}}catch(e){Live.err=e.kind?e:Status.mk(Status.classify(e),e.message,e.status)}window.dispatchEvent(new Event('tc:qstate'));return !Live.err};
-const quotesTick=async()=>{if(document.hidden)return;await quotesNow()};
-Live.retryQuotes=quotesNow;
+const quotesTick=async()=>{if(document.hidden)return;try{if(await pullQuotes())window.dispatchEvent(new Event('tc:quotes'))}catch(e){}};
 
 // ---------- pengaturan Umum + Background ----------
 // Server menyimpan {theme, defaultSymbol, defaultTf, background, reduceMotion} dan satu gambar background sendiri.
@@ -166,7 +163,7 @@ Live.ready=(async()=>{
  if(!on())return;
  Live.on=true;Live.status='memuat';
  try{
-  await Promise.race([Promise.all([quotesNow(),hydrate()]),new Promise((_,no)=>setTimeout(()=>no(new Error('timeout')),7000))]);
+  await Promise.race([Promise.all([pullQuotes().catch(()=>0),hydrate()]),new Promise((_,no)=>setTimeout(()=>no(new Error('timeout')),7000))]);
   Live.status='live'}
  catch(e){Live.status='sebagian: '+e.message;console.warn('[live]',e.message)}
  install();setInterval(quotesTick,10000);bgSync()})();

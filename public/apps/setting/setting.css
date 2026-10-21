@@ -1,38 +1,71 @@
-/* Setting: kerangka (sidebar, kartu grup, baris, input, switch). Gaya tiap tab ada di pages/<tab>.css */
-/* Setting ala macOS */
-.st{position:relative;flex:1;min-height:0;display:flex;container-type:inline-size}.sti{flex:1;min-width:0;display:flex}
-.sb{flex:none;width:178px;box-sizing:border-box;display:flex;flex-direction:column;gap:2px;padding:10px;background:var(--win2);border-right:1px solid var(--line);overflow:auto}
-.sb [role=tab]{display:flex;align-items:center;gap:9px;width:100%;padding:6px 8px;border:0;border-radius:8px;background:transparent;text-align:left;white-space:nowrap}
-.sb [role=tab]:hover{background:rgba(128,136,150,.14)}
-.sb [role=tab][aria-selected=true]{background:color-mix(in srgb,var(--acc) 24%,transparent)}
-.si{flex:none;width:24px;height:24px;border-radius:6px;background:var(--c);display:grid;place-items:center}
+/* Setting: gaya macOS System Settings (sidebar ikon berwarna, toolbar judul, grup baris membulat).
+   Gaya tiap tab ada di pages/<tab>.css */
+.st{--sbg:#1a1e25;--pbg:#171b21;--sg:#232830;--sgo:#4b5260;--trk:rgba(255,255,255,.08);--sep:rgba(255,255,255,.09)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .st{--sbg:#e9e8e3;--pbg:#f5f4f0;--sg:#fff;--sgo:#fff;--trk:rgba(0,0,0,.065);--sep:rgba(0,0,0,.09)}}
+:root[data-theme="light"] .st{--sbg:#e9e8e3;--pbg:#f5f4f0;--sg:#fff;--sgo:#fff;--trk:rgba(0,0,0,.065);--sep:rgba(0,0,0,.09)}
+.st,.st *{text-align:left}
+.st{position:relative;flex:1;min-height:0;width:100%;display:flex;container-type:inline-size;font-size:13px;background:var(--pbg)}
+.sti{flex:1;min-width:0;display:flex;align-items:stretch}
+
+/* sidebar */
+.sb{flex:none;width:224px;box-sizing:border-box;display:flex;flex-direction:column;gap:2px;padding:14px 10px;background:var(--sbg);border-right:1px solid var(--line);overflow:auto}
+.sb [role=tab]{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;padding:5px 8px;border:0;border-radius:8px;background:transparent;font-size:13px;line-height:1.3;text-align:left;white-space:nowrap;color:var(--ink)}
+.sb [role=tab]:hover{background:var(--trk)}
+.sb [role=tab][aria-selected=true]{background:var(--acc);color:#1a1405;font-weight:500}
+.si{flex:none;width:24px;height:24px;border-radius:6px;background:var(--c);display:grid;place-items:center;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.18)}
 .si svg{width:15px;height:15px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.sm{flex:1;min-width:0;overflow:auto;padding:16px 20px 24px}
-.sh{margin:0 0 14px;font-size:20px}
+.sb [data-p=akun]{margin-top:auto}
+
+/* panel kanan: toolbar judul + isi */
+.sm{flex:1;min-width:0;overflow:auto;background:var(--pbg);padding:0}
+.sm>.sh{position:sticky;top:0;z-index:2;margin:0;height:52px;box-sizing:border-box;padding:0 max(28px,calc((100% - 700px)/2 + 28px));display:flex;align-items:center;font-size:15px;font-weight:600;letter-spacing:.1px;background:color-mix(in srgb,var(--pbg) 86%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.sm>.pane{width:100%;max-width:700px;margin:0 auto;box-sizing:border-box;padding:20px 28px 36px}
 .pane[hidden]{display:none}
-.grp{margin:0 0 14px;background:var(--win2);border:1px solid var(--line);border-radius:10px}
+
+/* grup + baris */
+.grp{margin:0 0 20px;background:var(--sg);border:1px solid var(--sep);border-radius:10px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
 .grp.off{opacity:.5}
-.sr{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding:10px 14px}
-.sr+.sr{border-top:1px solid var(--line)}
+.sr{position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;min-height:44px;box-sizing:border-box;padding:10px 14px}
+.sr+.sr::before{content:"";position:absolute;top:0;left:14px;right:0;border-top:1px solid var(--sep)}
 .sr.col{display:block}
-.sl{flex:1 1 180px;min-width:0}.sl small{display:block;margin-top:1px;color:var(--mute);font-size:12px;line-height:1.35}
-.sc{display:flex;align-items:center;gap:8px;flex:0 1 auto;max-width:100%}
-.in{box-sizing:border-box;min-width:0;padding:5px 9px;border:1px solid var(--line);border-radius:6px;background:var(--win);color:var(--ink);font:inherit}
-.in.w{width:250px;max-width:100%}.in.n{width:110px}
+.sl{flex:1 1 180px;min-width:0;font-size:13px;color:var(--ink)}
+.sl small{display:block;margin-top:2px;color:var(--mute);font-size:11.5px;line-height:1.35}
+.sc{display:flex;align-items:center;gap:8px;flex:0 1 auto;max-width:100%;margin-left:auto;justify-content:flex-end}
+.sr.col .sc{margin-left:0;justify-content:flex-start}
+
+/* kontrol */
+.in{box-sizing:border-box;min-width:0;padding:4px 10px;border:1px solid var(--sep);border-radius:6px;background:var(--sgo);color:var(--ink);font:inherit;font-size:13px;box-shadow:0 1px 1px rgba(0,0,0,.06)}
+.in:focus{outline:0;border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 30%,transparent)}
+.in.w{width:230px;max-width:100%}.in.n{width:100px}.in.k{width:160px}
 .in[aria-invalid=true]{border-color:var(--dn)}
-.in:disabled{cursor:not-allowed}
-.sc .seg{padding:2px;border-radius:8px;background:var(--win);border:1px solid var(--line)}
-.sw{position:relative;display:block;width:40px;height:24px;padding:0;cursor:pointer}
+.in:disabled{cursor:not-allowed;opacity:.6}
+.st .btn{margin:0;padding:4px 12px;border:1px solid var(--sep);border-radius:6px;background:var(--sgo);font-size:13px;box-shadow:0 1px 1px rgba(0,0,0,.08)}
+.st .btn:hover{border-color:var(--sep);filter:brightness(.97)}
+.st .btn.pri{background:var(--acc);border-color:var(--acc);color:#1a1405}
+.st .btn.dng{color:var(--dn)}
+
+/* segmented control ala macOS */
+.sc .seg{gap:0;padding:2px;border-radius:8px;background:var(--trk);border:0}
+.sc .seg button{padding:3px 12px;border-radius:6px;font-size:13px;color:var(--ink);background:transparent}
+.sc .seg button[aria-pressed=true]{background:var(--sgo);color:var(--ink);font-weight:500;box-shadow:0 0 0 .5px rgba(0,0,0,.14),0 1px 3px rgba(0,0,0,.2)}
+
+/* switch hijau ala macOS */
+.sw{position:relative;display:block;width:38px;height:22px;padding:0;cursor:pointer}
 .sw input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
-.sw i{position:absolute;inset:0;border-radius:12px;background:rgba(128,136,150,.45);transition:background .18s;pointer-events:none}
-.sw i::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.35);transition:transform .18s}
+.sw i{position:absolute;inset:0;border-radius:11px;background:rgba(128,136,150,.4);transition:background .18s;pointer-events:none}
+.sw i::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.35);transition:transform .18s}
 .sw input:checked+i{background:var(--up)}.sw input:checked+i::after{transform:translateX(16px)}
 .sw input:focus-visible+i{outline:2px solid var(--acc);outline-offset:2px}
-.sact{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px}.sact .btn{margin:0}
+
+.sact{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px}
 .tst{font-size:12px;color:var(--mute)}.tst.up{color:var(--up)}.tst.dn{color:var(--dn)}
-.shint{margin:0;color:var(--mute);font-size:12px;line-height:1.45}
-@container (max-width:520px){.sti{flex-direction:column}.sb{width:auto;flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}.sb [role=tab]{width:auto}}
+.shint{margin:-8px 4px 20px;color:var(--mute);font-size:11.5px;line-height:1.45}
+.bgc,.bgc *{text-align:center}
+
+@container (max-width:560px){
+ .sti{flex-direction:column}
+ .sb{width:auto;flex-direction:row;overflow-x:auto;padding:8px 10px;border-right:0;border-bottom:1px solid var(--line)}
+ .sb [role=tab]{width:auto}.sb [data-p=akun]{margin-top:0;margin-left:auto}
+ .sm>.sh{padding:0 16px}.sm>.pane{padding:14px 16px 28px}
+}
 @media (prefers-reduced-motion:reduce){.sw i,.sw i::after{transition:none}}
-.in.k{width:160px}
-.sb [data-p=akun]{margin-top:auto}
-@container (max-width:520px){.sb [data-p=akun]{margin-top:0;margin-left:auto}}
