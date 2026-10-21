@@ -16,3 +16,14 @@ open('home');
  dk.addEventListener('pointermove',e=>{if(!ok(e))return;mx=e.clientX;go()});
  dk.addEventListener('pointerleave',()=>{mx=null;go()});
  dk.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'){mx=null;go()}})})();
+
+// Dock auto-hide: bila ada jendela fullscreen (desktop/mouse), dock sembunyi dan muncul lagi saat kursor menyentuh tepi bawah layar, lalu sembunyi saat kursor menjauh.
+(()=>{const dk=$('#dock'),fine=matchMedia('(hover:hover) and (pointer:fine)');let t=0;
+ const keep=()=>{clearTimeout(t);t=0},later=()=>{if(!t)t=setTimeout(()=>{t=0;dk.classList.remove('show')},350)};
+ const sync=()=>{const f=fine.matches&&Object.values(S.wins).some(w=>w.full&&!w.min);document.body.classList.toggle('has-full',f);if(!f){keep();if(dk.classList.contains('show'))dk.classList.remove('show')}};
+ new MutationObserver(sync).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});sync();
+ document.addEventListener('pointermove',e=>{if(e.pointerType==='touch'||!document.body.classList.contains('has-full'))return;
+  if(e.clientY>=innerHeight-4){keep();dk.classList.add('show');return}
+  if(!dk.classList.contains('show'))return;
+  const r=dk.getBoundingClientRect();(e.clientY>=r.top-16&&e.clientX>=r.left-24&&e.clientX<=r.right+24)?keep():later()});
+ document.documentElement.addEventListener('mouseleave',()=>{if(dk.classList.contains('show'))later()})})();
