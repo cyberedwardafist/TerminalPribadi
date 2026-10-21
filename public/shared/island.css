@@ -1,27 +1,27 @@
 /* Dynamic Island menempel di tepi atas layar (shared/island.js), menyatu dengan menubar seperti notch. Selalu gelap, apa pun tema.
    Id #isl, kelas berawalan .isl-. Ukuran dianimasikan lewat width/height (diukur di JS), jadi bentuknya "mengalir" antar isi. */
-#isl{--sp:.46s;--ez:cubic-bezier(.34,1.42,.5,1);--bg:#050607;--r:16px;--f:10px;
+#isl{--sp:.58s;--ez:cubic-bezier(.22,1,.36,1);--bg:#050607;--r:16px;--f:10px;
  position:fixed;z-index:9999;top:env(safe-area-inset-top,0px);left:50%;box-sizing:border-box;
  width:84px;height:22px;max-width:calc(100vw - 2*var(--f) - 8px);
  background:var(--bg);color:#f3f1ea;border-radius:0 0 var(--r) var(--r);
  box-shadow:inset 0 -1px 0 rgba(255,255,255,.07),0 8px 24px rgba(0,0,0,.45);
- transform:translateX(-50%) scale(.35);transform-origin:50% 0;opacity:0;pointer-events:none;
- transition:width var(--sp) var(--ez),height var(--sp) var(--ez),border-radius var(--sp) var(--ez),transform var(--sp) var(--ez),opacity .18s ease,box-shadow .3s}
+ transform:translateX(-50%);opacity:0;pointer-events:none;
+ transition:width var(--sp) var(--ez),height calc(var(--sp) + .06s) var(--ez) .05s,border-radius var(--sp) var(--ez),opacity .14s ease,box-shadow .3s}
 /* lengkung cekung di kiri/kanan atas: bikin island terlihat tumbuh dari tepi layar (menyatu, bukan pill melayang) */
 #isl::before,#isl::after{content:"";position:absolute;top:0;width:var(--f);height:var(--f);pointer-events:none;
  transition:opacity .2s ease}
 #isl::before{right:100%;background:radial-gradient(circle at 0 100%,transparent calc(var(--f) - .5px),var(--bg) var(--f))}
 #isl::after{left:100%;background:radial-gradient(circle at 100% 100%,transparent calc(var(--f) - .5px),var(--bg) var(--f))}
-#isl[data-s=on]{opacity:1;pointer-events:auto;transform:translateX(-50%) scale(1)}
+#isl[data-s=on]{opacity:1;pointer-events:auto}
 #isl[data-s=on][data-k=ask],#isl[data-s=on][data-k=panel]{--r:26px;box-shadow:inset 0 -1px 0 rgba(255,255,255,.09),0 22px 60px rgba(0,0,0,.6)}
 #isl[data-s=on][data-k=note]{--r:22px;max-width:min(400px,calc(100vw - 2*var(--f) - 8px))}
-#isl[data-s=off]{transition-duration:.24s,.24s,.24s,.24s,.18s,.3s;transition-timing-function:cubic-bezier(.5,0,.75,0)}
+#isl[data-s=off]{transition:width .36s cubic-bezier(.65,0,.35,1) .08s,height .36s cubic-bezier(.65,0,.35,1) .08s,border-radius .36s ease .08s,opacity .12s ease .34s,box-shadow .3s}
 #isl[data-tone=up]{box-shadow:inset 0 -1px 0 rgba(53,194,138,.5),0 8px 30px rgba(53,194,138,.24)}
 #isl[data-tone=down]{box-shadow:inset 0 -1px 0 rgba(239,106,94,.5),0 8px 30px rgba(239,106,94,.24)}
 #isl[data-tone=warn]{box-shadow:inset 0 -1px 0 rgba(232,163,61,.55),0 8px 30px rgba(232,163,61,.24)}
-.isl-c{height:100%;overflow:hidden;border-radius:inherit;opacity:0;transform:scale(.96);transform-origin:50% 0;transition:opacity .2s ease,transform .2s ease}
-#isl[data-s=on] .isl-c{opacity:1;transform:none;transition-delay:.12s}
-#isl.swap .isl-c{opacity:0;transform:scale(.97);transition-delay:0s;transition-duration:.09s}
+.isl-c{height:100%;overflow:hidden;border-radius:inherit;opacity:0;transition:opacity .1s ease}
+#isl[data-s=on] .isl-c{opacity:1;transition:opacity .25s ease .24s}
+#isl.swap .isl-c{opacity:0;transition-delay:0s;transition-duration:.09s}
 
 /* notifikasi / alert */
 .isl-n{position:relative;display:flex;align-items:center;gap:10px;padding:5px 14px 11px 12px;cursor:pointer;min-width:190px;outline-offset:-3px}

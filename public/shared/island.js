@@ -27,7 +27,7 @@ const rows=()=>typeof WATCH!=='undefined'?WATCH:[];
 const jl=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k)||'null');return v==null?d:v}catch(e){return d}};
 const js=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const nm=s=>String(s).replace(/USDT$/,'');
-const MAXW=4,CLOSE_MS=260;
+const MAXW=4,CLOSE_MS=440;
 let wl=[];                       // ticker yang dipantau (urutan = urutan di strip)
 const saveW=()=>js('tc.island',{w:wl});
 
@@ -104,7 +104,7 @@ function show(it,morph){
  el.dataset.s='off';el.style.width='';el.style.height='';
  setTimeout(()=>{if(n===seq)draw(it)},still()?0:CLOSE_MS)}
 function hide(){seq++;cur=null;teardown();el.dataset.s='off';el.style.width='';el.style.height='';clearTimeout(off);
- off=setTimeout(()=>{if(!cur){box.innerHTML='';el.dataset.tone='';el.removeAttribute('role')}},520)}
+ off=setTimeout(()=>{if(!cur){box.innerHTML='';el.dataset.tone='';el.removeAttribute('role')}},700)}
 const baseItem=()=>wl.length?{kind:'watch'}:hov&&armed?{kind:'hub'}:null;
 function next(){if(q.length)return show(q.shift());const b=baseItem();b?show(b):hide()}
 function finish(it,v){
