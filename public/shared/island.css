@@ -1,25 +1,30 @@
-/* Dynamic Island di tengah menubar (shared/island.js). Selalu gelap seperti aslinya, apa pun tema.
+/* Dynamic Island menempel di tepi atas layar (shared/island.js), menyatu dengan menubar seperti notch. Selalu gelap, apa pun tema.
    Id #isl, kelas berawalan .isl-. Ukuran dianimasikan lewat width/height (diukur di JS), jadi bentuknya "mengalir" antar isi. */
-#isl{--sp:.46s;--ez:cubic-bezier(.34,1.42,.5,1);
- position:fixed;z-index:9999;top:calc(env(safe-area-inset-top,0px) + 3px);left:50%;box-sizing:border-box;
- width:84px;height:22px;max-width:calc(100vw - 16px);overflow:hidden;
- background:#050607;color:#f3f1ea;border-radius:999px;
- box-shadow:0 0 0 1px rgba(255,255,255,.07),0 10px 30px rgba(0,0,0,.5);
+#isl{--sp:.46s;--ez:cubic-bezier(.34,1.42,.5,1);--bg:#050607;--r:16px;--f:10px;
+ position:fixed;z-index:9999;top:env(safe-area-inset-top,0px);left:50%;box-sizing:border-box;
+ width:84px;height:22px;max-width:calc(100vw - 2*var(--f) - 8px);
+ background:var(--bg);color:#f3f1ea;border-radius:0 0 var(--r) var(--r);
+ box-shadow:inset 0 -1px 0 rgba(255,255,255,.07),0 8px 24px rgba(0,0,0,.45);
  transform:translateX(-50%) scale(.35);transform-origin:50% 0;opacity:0;pointer-events:none;
  transition:width var(--sp) var(--ez),height var(--sp) var(--ez),border-radius var(--sp) var(--ez),transform var(--sp) var(--ez),opacity .18s ease,box-shadow .3s}
+/* lengkung cekung di kiri/kanan atas: bikin island terlihat tumbuh dari tepi layar (menyatu, bukan pill melayang) */
+#isl::before,#isl::after{content:"";position:absolute;top:0;width:var(--f);height:var(--f);pointer-events:none;
+ transition:opacity .2s ease}
+#isl::before{right:100%;background:radial-gradient(circle at 0 100%,transparent calc(var(--f) - .5px),var(--bg) var(--f))}
+#isl::after{left:100%;background:radial-gradient(circle at 100% 100%,transparent calc(var(--f) - .5px),var(--bg) var(--f))}
 #isl[data-s=on]{opacity:1;pointer-events:auto;transform:translateX(-50%) scale(1)}
-#isl[data-s=on][data-k=ask],#isl[data-s=on][data-k=panel]{border-radius:26px;box-shadow:0 0 0 1px rgba(255,255,255,.09),0 22px 60px rgba(0,0,0,.6)}
-#isl[data-s=on][data-k=note]{border-radius:22px;max-width:min(400px,calc(100vw - 16px))}
+#isl[data-s=on][data-k=ask],#isl[data-s=on][data-k=panel]{--r:26px;box-shadow:inset 0 -1px 0 rgba(255,255,255,.09),0 22px 60px rgba(0,0,0,.6)}
+#isl[data-s=on][data-k=note]{--r:22px;max-width:min(400px,calc(100vw - 2*var(--f) - 8px))}
 #isl[data-s=off]{transition-duration:.24s,.24s,.24s,.24s,.18s,.3s;transition-timing-function:cubic-bezier(.5,0,.75,0)}
-#isl[data-tone=up]{box-shadow:0 0 0 1px rgba(53,194,138,.45),0 10px 34px rgba(53,194,138,.22)}
-#isl[data-tone=down]{box-shadow:0 0 0 1px rgba(239,106,94,.45),0 10px 34px rgba(239,106,94,.22)}
-#isl[data-tone=warn]{box-shadow:0 0 0 1px rgba(232,163,61,.5),0 10px 34px rgba(232,163,61,.22)}
-.isl-c{opacity:0;transform:scale(.96);transform-origin:50% 0;transition:opacity .2s ease,transform .2s ease}
+#isl[data-tone=up]{box-shadow:inset 0 -1px 0 rgba(53,194,138,.5),0 8px 30px rgba(53,194,138,.24)}
+#isl[data-tone=down]{box-shadow:inset 0 -1px 0 rgba(239,106,94,.5),0 8px 30px rgba(239,106,94,.24)}
+#isl[data-tone=warn]{box-shadow:inset 0 -1px 0 rgba(232,163,61,.55),0 8px 30px rgba(232,163,61,.24)}
+.isl-c{height:100%;overflow:hidden;border-radius:inherit;opacity:0;transform:scale(.96);transform-origin:50% 0;transition:opacity .2s ease,transform .2s ease}
 #isl[data-s=on] .isl-c{opacity:1;transform:none;transition-delay:.12s}
 #isl.swap .isl-c{opacity:0;transform:scale(.97);transition-delay:0s;transition-duration:.09s}
 
 /* notifikasi / alert */
-.isl-n{position:relative;display:flex;align-items:center;gap:10px;padding:7px 10px 9px 8px;cursor:pointer;min-width:190px;outline-offset:-3px}
+.isl-n{position:relative;display:flex;align-items:center;gap:10px;padding:5px 14px 11px 12px;cursor:pointer;min-width:190px;outline-offset:-3px}
 .isl-i{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.12);color:#f3f1ea}
 .isl-i svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 [data-tone=up] .isl-i{background:rgba(53,194,138,.2);color:#35c28a}
@@ -35,7 +40,7 @@
 #isl[data-tone=up]{--tc:#35c28a}#isl[data-tone=down]{--tc:#ef6a5e}#isl[data-tone=warn]{--tc:#e8a33d}
 
 /* pertanyaan (pengganti prompt/confirm/alert) */
-.isl-q{display:flex;flex-direction:column;gap:8px;padding:14px 16px 14px;margin:0;width:min(340px,calc(100vw - 32px));box-sizing:border-box}
+.isl-q{display:flex;flex-direction:column;gap:8px;padding:12px 18px 16px;margin:0;width:min(340px,calc(100vw - 32px));box-sizing:border-box}
 .isl-h{display:flex;align-items:center;gap:10px}
 .isl-h b{font-size:14px;font-weight:600}
 .isl-q p{margin:0;color:#aeb4bd;font-size:13px}
@@ -52,8 +57,8 @@
 #isl.still,#isl.still .isl-c{transition:opacity .12s linear!important}#isl.still{transform:translateX(-50%)!important}#isl.still .isl-c{transform:none!important}#isl.still .isl-t{display:none}
 
 /* strip watch (standby): ticker + grafik mini, panjang mengikuti jumlah ticker */
-#isl[data-s=on][data-k=watch]{border-radius:24px;max-width:calc(100vw - 16px)}
-.isl-wt{display:flex;align-items:center;gap:2px;padding:4px 6px}
+#isl[data-s=on][data-k=watch]{--r:22px}
+.isl-wt{display:flex;align-items:center;gap:2px;padding:3px 10px 7px}
 .isl-w,.isl-mr{display:flex;align-items:center;gap:8px;border:0;border-radius:18px;padding:4px 10px;background:transparent;color:#f3f1ea;font:inherit;cursor:pointer;white-space:nowrap;font-variant-numeric:tabular-nums}
 .isl-w:hover,.isl-mr:hover{background:rgba(255,255,255,.1)}
 .isl-wl{display:flex;flex-direction:column;line-height:1.15;text-align:left}.isl-wl b{font-size:12px;font-weight:600}.isl-wl small{font-size:11px;color:#aeb4bd}
@@ -64,7 +69,7 @@
 @media (max-width:700px){.isl-w:nth-child(n+2){display:none}}
 
 /* hub opsi */
-.isl-hb{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:8px}
+.isl-hb{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:6px 10px 10px}
 .isl-hb button{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:9px;align-items:center;text-align:left;border:0;border-radius:18px;padding:8px 14px 8px 8px;background:rgba(255,255,255,.07);color:#f3f1ea;font:inherit;cursor:pointer}
 .isl-hb button:hover{background:rgba(255,255,255,.15)}
 .isl-hb .isl-i{grid-row:1/3}.isl-hb b{font-size:13px;font-weight:600}.isl-hb small{font-size:10.5px;color:#8f96a0;white-space:nowrap}
