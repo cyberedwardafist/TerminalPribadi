@@ -89,3 +89,5 @@ select.ct-b{appearance:none;padding-right:9px;color-scheme:dark light}
 .ct-rp .ct-eq{width:100%;height:74px;color:var(--accent,#4c9aff);background:rgba(128,128,128,.06);border-radius:6px;margin-bottom:8px}
 .ct-st{width:100%;border-collapse:collapse;font-size:12px}.ct-st td,.ct-st th{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left}.ct-st td:last-child,.ct-st th:last-child{text-align:right;font-variant-numeric:tabular-nums}
 .ct-tw{max-height:220px;overflow:auto}.ct-st .ct-up{color:#3ecf8e}.ct-st .ct-dn{color:#ff6b6b}
+
+.ct-rt{margin-left:10px;font-size:10px;color:#8a8f98;white-space:nowrap}.ct-rt[data-c=on]{color:#30b158}.ct-rt[data-c=wait]{color:#d9a23a}

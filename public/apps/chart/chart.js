@@ -27,9 +27,54 @@ if(typeof ChartCustom!=='undefined')ChartCustom.hook.fetch=async(sym,sec)=>{cons
 async function older(w,T){const D=T.D;if(!D||!D.live||T.busy||T.noMore||!apiOn())return;T.busy=true;
  try{const j=norm(await(await apiFetch(`/api/candles?symbol=${encodeURIComponent(T.sym)}&tf=${T.tf}&limit=${N}&to=${D[0].t-1}`)).json()).filter(x=>x.t<D[0].t);
   if(!j.length)T.noMore=true;else{D.unshift(...j);T.rb+=j.length}}catch(e){T.noMore=true}T.busy=false;sch(w)}
-async function poll(w){const R=w._r;if(!w.isConnected){clearInterval(R.pt);return}if(document.hidden||!apiOn())return;const T=cur(w);if(!T||!T.D||!T.D.live)return;
- try{const j=norm(await(await apiFetch(`/api/candles?symbol=${encodeURIComponent(T.sym)}&tf=${T.tf}&limit=3`)).json()),D=T.D;
-  for(const b of j){const l=D[D.length-1];if(b.t===l.t)D[D.length-1]=b;else if(b.t>l.t){D.push(b);if(T.rb>=D.length-1.5)T.rb++}}sch(w)}catch(e){}}
+// ---------- realtime: tick WebSocket/REST cepat -> candle terakhir (mesin: shared/rt.js) ----------
+// Candle terakhir digerakkan tick (ease ~100 ms supaya mulus). /api/candles hanya untuk rekonsiliasi: isi bar yang terlewat, koreksi bar yang baru tutup, dan cadangan bila tak ada sumber realtime.
+const paintD=D=>{for(const w of WINS)if(w.isConnected){const T=cur(w);if(T&&T.D===D)sch(w)}};
+function settle(D){const A=D._an;if(A&&A.on){A.on=false;A.bar.c=A.to}}
+function glide(D,bar,to){
+ const A=D._an||(D._an={on:false});A.bar=bar;A.to=to;if(A.on)return;A.on=true;
+ const step=()=>{if(!A.on)return;const d=A.to-A.bar.c;
+  if(Math.abs(d)<=Math.abs(A.to)*1e-9){A.bar.c=A.to;A.on=false;paintD(D);return}
+  A.bar.c+=d*.5;paintD(D);requestAnimationFrame(step)};
+ requestAnimationFrame(step)}
+const mergeBars=(D,j,live)=>typeof RT!=='undefined'?RT.bars.merge(D,j,live):(()=>{let n=0;for(const b of j){const l=D[D.length-1];if(b.t===l.t)D[D.length-1]=b;else if(b.t>l.t){D.push(b);n++}}return n})();
+const gapN=T=>{const D=T.D,l=D[D.length-1];return l?Math.min(300,Math.max(3,Math.ceil((Date.now()/1000-l.t)/ChartRender.TFS[T.tf])+2)):3};
+async function recon(w,T,n){
+ const D=T.D;if(!D||!D.live||!apiOn())return;const seq=T._ps=(T._ps||0)+1;     // nomor urut: respons lama (cache) tidak boleh menimpa yang lebih baru
+ try{const j=norm(await(await apiFetch(`/api/candles?symbol=${encodeURIComponent(T.sym)}&tf=${T.tf}&limit=${n||3}`,{cache:'no-store'})).json());
+  if(T.D!==D||seq<(T._pa||0))return;T._pa=seq;
+  const live=typeof RT!=='undefined'&&RT.info(T.sym,T.tf).live,atEnd=T.rb>=D.length-1.5;
+  settle(D);const add=mergeBars(D,j,live);if(add&&atEnd)T.rb+=add;paintD(D)}catch(e){}}
+function rtTick(w,T,key,tk){
+ const D=T.D;if(!D||!D.live||T.sym+'|'+T.tf!==key)return;
+ if(D._tid!==tk.id){D._tid=tk.id;const l=D[D.length-1];     // D dipakai bersama beberapa window: tiap tick diterapkan sekali
+  if(l){const c0=l.c,r=RT.bars.apply(D,ChartRender.TFS[T.tf],tk);
+   if(r==='new'){settle(D);if(T.rb>=D.length-1.5)T.rb++;T.rcAt=Date.now()+2000}     // bar baru: 2 dtk lagi cocokkan OHLC bar yang baru tutup dengan server
+   else if(r==='upd'&&!tk.k){const to=l.c;l.c=c0;glide(D,l,to)}}}
+ sch(w)}
+const rtEvt=(w,T,key,ev)=>{if(ev.type==='gap'&&T.sym+'|'+T.tf===key&&T.D)recon(w,T,gapN(T))};
+function rtSync(w){
+ const R=w._r,T=cur(w),key=T&&T.D&&T.D.live&&typeof RT!=='undefined'&&apiOn()?T.sym+'|'+T.tf:'';
+ if(R.rk===key)return;
+ if(R.roff){R.roff();R.roff=null}R.rk=key;if(!key)return;
+ R.roff=RT.sub(T.sym,T.tf,tk=>rtTick(w,T,key,tk),ev=>rtEvt(w,T,key,ev));
+ recon(w,T,gapN(T))}
+const RTN={binance:'Binance',finnhub:'Finnhub',tiingo:'Tiingo',yahoo:'Yahoo',goapi:'GoAPI',ohlcdev:'OHLC.dev'};
+function rtBadge(w,T){
+ const el=$('.ct-rt',w);if(!el)return;let txt='',c='';
+ if(T&&T.D&&T.D.live&&typeof RT!=='undefined'){const i=RT.info(T.sym,T.tf);
+  if(i.live){txt='● '+(RTN[i.leader]||i.leader)+(i.lag!=null&&i.lag<60000?' · '+(i.lag<1000?i.lag+' ms':(i.lag/1000).toFixed(1)+' dtk'):'');c='on'}
+  else if(i.has){txt='◌ menunggu tick…';c='wait'}else txt='○ REST'}
+ if(el.textContent!==txt)el.textContent=txt;if(el.dataset.c!==c)el.dataset.c=c}
+async function poll(w){      // dipanggil tiap 1 dtk
+ const R=w._r;if(!w.isConnected){clearInterval(R.pt);if(R.roff)R.roff();R.roff=null;return}
+ if(typeof RT!=='undefined')rtSync(w);const T=cur(w);rtBadge(w,T);
+ if(document.hidden){R.hid=1;return}
+ if(!apiOn()||!T||!T.D||!T.D.live)return;
+ const live=typeof RT!=='undefined'&&RT.info(T.sym,T.tf).live,t=Date.now();
+ if(R.hid){R.hid=0;R.lp=t;recon(w,T,gapN(T));return}                  // kembali dari tab tersembunyi: isi bar yang terlewat
+ if(T.rcAt&&t>=T.rcAt){T.rcAt=0;R.lp=t;recon(w,T,3);return}
+ if(t-(R.lp||0)>=(live?30000:4000)){R.lp=t;recon(w,T,3)}}              // tanpa sumber realtime: tiap 4 dtk (dulu 15 dtk)
 
 // ---------- gambar per simbol: lokal + sinkron server ----------
 const DRW=jl(DKEY,{}),HIST={},PULLED=new Set(),TMR={};
@@ -70,7 +115,7 @@ const tabJson=t=>({id:t.id,sym:t.sym,tf:t.tf,type:t.type,scale:t.scale,ind:t.ind
 function save(w){const R=w._r;if(!R.main)return;js(KEY,{v:2,act:R.act,uid:R.uid,tabs:R.tabs.map(tabJson)})}
 function addTab(w,sym,tf){const t=mk(w,sym,tf);w._r.tabs.push(t);act(w,t.id)}
 function act(w,id){const R=w._r;R.act=id;const T=cur(w);if(!T)return;S.sym=T.sym;S.tf=T.tf;closePop(w);sync(w);load(w,T);pullDrw(T.sym)}
-function load(w,T){if(T.D){sch(w);return}const k=T.sym+T.tf;data(T.sym,T.tf).then(d=>{if(T.sym+T.tf!==k)return;T.D=d;T.rb=d.length+7;T.noMore=false;sch(w)})}
+function load(w,T){if(T.D){rtSync(w);sch(w);return}const k=T.sym+T.tf;data(T.sym,T.tf).then(d=>{if(T.sym+T.tf!==k)return;T.D=d;T.rb=d.length+7;T.noMore=false;rtSync(w);sch(w)})}
 function removeTab(w,id){const R=w._r,i=R.tabs.findIndex(t=>t.id===id);if(i<0)return null;const[T]=R.tabs.splice(i,1);
  if(!R.tabs.length){save(w);close(R.inst);return T}
  if(R.act===id)act(w,R.tabs[Math.min(i,R.tabs.length-1)].id);else sync(w);save(w);return T}
@@ -193,7 +238,7 @@ function fromSaved(w,s){const R=w._r,t={...mk(w,s.sym,s.tf),type:TYPES[s.type]?s
 // ---------- legenda ----------
 function legend(w){const T=cur(w),box=$('.ct-lg',w);if(!T||!box)return;
  const key=T.sym+T.tf+T.type+T.ind.map(i=>i.id+i.on+instName(i)).join();if(w._lk===key)return;w._lk=key;
- box.innerHTML=`<div class="ct-lh"><b>${esc(T.sym)} · ${T.tf} · ${TYPES[T.type]}</b><span class="ct-ohlc"></span></div>`+T.ind.map(i=>`<div class="ct-li${i.on?'':' off'}${(defOf(i)||{}).overlay===false?' sub':''}" data-iid="${i.id}"><span class="ct-ln">${esc(instName(i))}</span><span class="ct-lv"></span><span class="ct-la"><button data-ia="eye" title="${i.on?'Sembunyikan':'Tampilkan'}" aria-label="Sembunyikan">◉</button><button data-ia="set" title="Pengaturan" aria-label="Pengaturan">⚙</button><button data-ia="rm" title="Hapus" aria-label="Hapus">×</button></span></div>`).join('')}
+ box.innerHTML=`<div class="ct-lh"><b>${esc(T.sym)} · ${T.tf} · ${TYPES[T.type]}</b><span class="ct-ohlc"></span><span class="ct-rt"></span></div>`+T.ind.map(i=>`<div class="ct-li${i.on?'':' off'}${(defOf(i)||{}).overlay===false?' sub':''}" data-iid="${i.id}"><span class="ct-ln">${esc(instName(i))}</span><span class="ct-lv"></span><span class="ct-la"><button data-ia="eye" title="${i.on?'Sembunyikan':'Tampilkan'}" aria-label="Sembunyikan">◉</button><button data-ia="set" title="Pengaturan" aria-label="Pengaturan">⚙</button><button data-ia="rm" title="Hapus" aria-label="Hapus">×</button></span></div>`).join('')}
 function updLegend(w,T,res){const box=$('.ct-lg',w),G=w._g;if(!box||!res||!G)return;const{hv,R,V,F}=res,k=V[hv],pk=V[hv-1]||k,ch=k.c-pk.c,up=k.c>=k.o;
  const o=$('.ct-ohlc',box);if(o){o.className='ct-ohlc '+(up?'up':'dn');o.textContent=`O ${F(k.o)}  H ${F(k.h)}  L ${F(k.l)}  C ${F(k.c)}  ${ch>=0?'+':'−'}${F(Math.abs(ch))} (${pc(ch/pk.c*100)})`}
  for(const row of $$('.ct-li',box)){const inst=T.ind.find(i=>i.id===row.dataset.iid),r=R.find(x=>x.i===inst),vl=$('.ct-lv',row);
@@ -372,7 +417,7 @@ registerApp('chart',{css:'apps/chart/chart.css',icon:"<path d=\"M7 3v18M17 5v15\
      else if(c.dataset.c==='cls')closeTab(w,id);
      else{R.tabs=[T];act(w,id);save(w)}}})});
   bind(w);new ResizeObserver(()=>sch(w)).observe($('.ct-cv',w));
-  R.pt=setInterval(()=>poll(w),15000);
+  R.pt=setInterval(()=>poll(w),1000);
   act(w,a.id);save(w)},
- notes:['<code>GET /api/candles?symbol&tf&limit=1000&to=</code> : <code>[{t,o,h,l,c,v}]</code>. Bar lama dimuat otomatis saat chart digeser ke kiri (parameter <code>to</code>); candle terakhir diperbarui tiap 15 detik. Bila API Live mati, chart memakai data acak berbenih','Indikator: 21 bawaan dihitung di klien (<code>apps/chart/ind.js</code>, rumus sama dengan <code>lib/indicators.js</code>), tiap indikator punya parameter, warna, dan tinggi panel sendiri; indikator custom (JS/Pine) berjalan di Web Worker (<code>custom.js</code>)','Alat gambar: 20 alat (<code>draw.js</code>), titik disimpan sebagai <code>{t,p}</code> (waktu, harga) per simbol di localStorage <code>tc.chart.drw</code> dan disinkronkan lewat <code>GET/PUT /api/chart/drawings/:symbol</code> (server menang bila lebih baru)','Tab, indikator terpasang, dan skala tersimpan di <code>tc.chart.tabs</code> (ikut sinkron akun). Layout bernama: <code>/api/chart/layouts</code>; template indikator: <code>/api/chart/templates?kind=indicators</code>; tanpa login disimpan di localStorage','Alert: klik kanan chart atau tombol Alert; memakai <code>tc.watchlist.al</code> (satu alert per simbol) sehingga ikut dikirim ke <code>/api/alerts</code> oleh Live. Pemicunya server (cron), bukan klien','Pintasan: Ctrl+Z / Ctrl+Y (urungkan gambar), Ctrl+D (duplikat), Del, Esc, Alt+T / Alt+W / Alt+panah (tab)','Window tambahan memakai id <code>chart#2</code>, <code>chart#3</code>; hanya window utama yang menyimpan tab ke localStorage','Klik baris di Watchlist membuka simbol sebagai tab baru (atau pindah ke tab yang sudah ada) lewat state <code>S.go</code>']});
+ notes:['<code>GET /api/candles?symbol&tf&limit=1000&to=</code> : <code>[{t,o,h,l,c,v}]</code>. Bar lama dimuat otomatis saat chart digeser ke kiri (parameter <code>to</code>); candle terakhir digerakkan tick realtime (<code>shared/rt.js</code>: Binance/Finnhub/Tiingo WebSocket, GoAPI + OHLC.dev lewat <code>/api/rt/quote</code>), sedangkan endpoint ini dipakai untuk rekonsiliasi dan cadangan (tiap 4 detik bila tak ada sumber realtime). Bila API Live mati, chart memakai data acak berbenih','Indikator: 21 bawaan dihitung di klien (<code>apps/chart/ind.js</code>, rumus sama dengan <code>lib/indicators.js</code>), tiap indikator punya parameter, warna, dan tinggi panel sendiri; indikator custom (JS/Pine) berjalan di Web Worker (<code>custom.js</code>)','Alat gambar: 20 alat (<code>draw.js</code>), titik disimpan sebagai <code>{t,p}</code> (waktu, harga) per simbol di localStorage <code>tc.chart.drw</code> dan disinkronkan lewat <code>GET/PUT /api/chart/drawings/:symbol</code> (server menang bila lebih baru)','Tab, indikator terpasang, dan skala tersimpan di <code>tc.chart.tabs</code> (ikut sinkron akun). Layout bernama: <code>/api/chart/layouts</code>; template indikator: <code>/api/chart/templates?kind=indicators</code>; tanpa login disimpan di localStorage','Alert: klik kanan chart atau tombol Alert; memakai <code>tc.watchlist.al</code> (satu alert per simbol) sehingga ikut dikirim ke <code>/api/alerts</code> oleh Live. Pemicunya server (cron), bukan klien','Pintasan: Ctrl+Z / Ctrl+Y (urungkan gambar), Ctrl+D (duplikat), Del, Esc, Alt+T / Alt+W / Alt+panah (tab)','Window tambahan memakai id <code>chart#2</code>, <code>chart#3</code>; hanya window utama yang menyimpan tab ke localStorage','Klik baris di Watchlist membuka simbol sebagai tab baru (atau pindah ke tab yang sudah ada) lewat state <code>S.go</code>']});
 })();

@@ -6,8 +6,8 @@ const CFG_KEY='tc.cfg';
 const DEPLOYED=/^https?:$/.test(location.protocol)&&!/^(localhost|127\.\d+\.\d+\.\d+|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|[^.]+\.local|.*\.localhost)$/.test(location.hostname);   // localhost, IP jaringan lokal (Live Server di HP/LAN), *.local = dev -> Dummy
 // window.TC_LIVE=true disuntikkan oleh "npm run dev" (halaman dan /api satu server): di situ Dummy tidak ada gunanya dan membuat OTP tidak pernah dikirim.
 const LIVE_HOST=DEPLOYED||window.TC_LIVE===true;
-const CFG_DEF={theme:'auto',sym:'BTCUSDT',tf:'1h',still:null,api:{mode:LIVE_HOST?'live':'dummy',base:'',ws:'',key:'',timeout:8000}};
-const CFG=(()=>{let s={};try{s=JSON.parse(localStorage.getItem(CFG_KEY)||'{}')||{}}catch(e){}const c={...CFG_DEF,...s,api:{...CFG_DEF.api,...(s.api||{})}};if(window.TC_LIVE===true&&!c.api.base)c.api.mode='live';return c})();
+const CFG_DEF={theme:'auto',sym:'BTCUSDT',tf:'1h',still:null,api:{mode:LIVE_HOST?'live':'dummy',base:'',ws:'',key:'',timeout:8000,rt:{finnhub:'',tiingo:''}}};
+const CFG=(()=>{let s={};try{s=JSON.parse(localStorage.getItem(CFG_KEY)||'{}')||{}}catch(e){}const c={...CFG_DEF,...s,api:{...CFG_DEF.api,...(s.api||{})}};c.api.rt={...CFG_DEF.api.rt,...(c.api.rt||{})};if(window.TC_LIVE===true&&!c.api.base)c.api.mode='live';return c})();
 const cfgSave=()=>{try{localStorage.setItem(CFG_KEY,JSON.stringify(CFG))}catch(e){}};
 const applyTheme=()=>{const r=document.documentElement;CFG.theme==='auto'?r.removeAttribute('data-theme'):r.setAttribute('data-theme',CFG.theme)};
 applyTheme();

@@ -15,7 +15,8 @@
     "dev:vercel": "vercel dev",
     "check": "npm test",
     "migrate:sql": "node scripts/setup-sql.js",
-    "mail:test": "node scripts/mail-test.js"
+    "mail:test": "node scripts/mail-test.js",
+    "rt:test": "node scripts/rt-test.js"
   },
   "devDependencies": {
     "pg": "^8.13.0"
