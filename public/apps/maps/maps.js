@@ -26,11 +26,21 @@ const CACHE={};
 function dummy(mk,rg){const day=Math.floor(Date.now()/864e5),vol=MKT.find(m=>m[0]===mk)[2]*RG[rg];
  return DATA[mk].split('|').map(g=>{const[n,l]=g.split(':'),gd=(rng(hs(n+day+rg))()-.5)*vol*.7;
   return{n,it:l.split(',').map(x=>{const[s,v]=x.split('='),r=rng(hs(s+day+rg)),st=STABLE.includes(s);return{s,v:+v,c:+(st?(r()-.5)*.06:gd+(r()+r()+r()-1.5)*vol*1.1).toFixed(2)}})}})}
-async function load0(){const k=M.mk+'|'+M.rg;if(CACHE[k])return CACHE[k];let g;
- if(apiOn()){try{const r=await apiFetch(`/api/heatmap?market=${M.mk}&range=${M.rg.toLowerCase()}`);if(!r.ok)throw 0;const j=await r.json(),m={};j.forEach(x=>(m[x.group]=m[x.group]||[]).push({s:x.sym,v:x.cap,c:x.changePct}));g=Object.entries(m).map(([n,it])=>({n,it}))}catch(e){g=null}
+async function load0(mk=M.mk,rg=M.rg,force=false){const k=mk+'|'+rg;if(CACHE[k]&&!force)return CACHE[k];let g;
+ if(apiOn()){try{const r=await apiFetch(`/api/heatmap?market=${mk}&range=${rg.toLowerCase()}`);if(!r.ok)throw 0;const j=await r.json(),m={};j.forEach(x=>(m[x.group]=m[x.group]||[]).push({s:x.sym,v:x.cap,c:x.changePct}));g=Object.entries(m).map(([n,it])=>({n,it}))}catch(e){g=null}
   return g&&g.length?(CACHE[k]=g):null}   // Live: tidak pernah jatuh ke data dummy; gagal = null (tidak di-cache)
- return CACHE[k]=dummy(M.mk,M.rg)}
-const load=async()=>{const g=await load0();if(g&&window.Ticker)Ticker.watch('maps',g.flatMap(x=>x.it.map(i=>i.s)));return g};
+ return CACHE[k]=dummy(mk,rg)}
+const load=()=>load0();
+// Running text menubar: semua simbol dari kelima pasar Maps (ubah% 1D)
+if(window.Ticker){
+ // Hanya data nyata dari server (/api/heatmap). Tanpa mode Live: kosong. Stablecoin dilewati (server memberi ubah% 0 sebagai penanda statis, bukan harga nyata)
+ const all=async()=>{if(!apiOn())return[];const o=[];for(const m of MKT){const g=await load0(m[0],'1D');if(g)g.forEach(x=>x.it.forEach(t=>{if(!STABLE.includes(t.s))o.push({s:t.s,c:t.c})}))}return o};
+ const snap=()=>{const o={};for(const k in CACHE)if(k.endsWith('|1D'))CACHE[k].forEach(x=>x.it.forEach(t=>o[k+t.s]=t.c));return o};
+ // true bila ada ubah% simbol Maps yang berbeda dari sebelumnya: ambil ulang /api/heatmap semua pasar (1D)
+ const refresh=async()=>{if(!apiOn())return false;await all();const before=snap();
+  for(const m of MKT){try{await load0(m[0],'1D',true)}catch(e){}}
+  const after=snap();return Object.keys(after).some(k=>k in before&&before[k]!==after[k])};
+ Ticker.source('maps',all,refresh)}
 const loadErr=w=>{const e=$('.mp-map,.mp-two,.mp-sec',w);if(e)e.innerHTML='<p class="mp-ft">Data pasar live tidak bisa dimuat. Coba lagi beberapa saat.</p>'};
 
 // ---------- treemap (squarified) ----------
