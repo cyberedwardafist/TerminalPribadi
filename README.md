@@ -34,7 +34,7 @@ Aset lintas-app:
 | Lokasi | Isi |
 |---|---|
 | `public/index.html` | Daftar `<script>`: tambah/hapus baris = tambah/hapus app dari dock; urutan = urutan dock/sidebar Setting |
-| `public/core/` | `core.js` state `S`, `APPS`/`registerApp`, window manager, snap, `loadCss` · `background.js` animasi canvas (Angin, Hutan, Laut, gambar sendiri; `Bg.load()`) · `boot.js` dock, jam, buka Home · `base.css` |
+| `public/core/` | `core.js` state `S`, `APPS`/`registerApp`, window manager, snap, `loadCss` · `background.js` animasi canvas (Angin, Hutan, Laut, gambar sendiri; `Bg.load()`) · `session.js` (`Sesi`) simpan & pulihkan tampilan terakhir saat refresh: window terbuka + posisi/ukuran/snap/minimize, isian teks yang belum disimpan, posisi scroll, state app lewat `w._ses={get,set}` (disimpan di `tc.ui`, dihapus saat logout, window tambahan `chart#N` tidak ikut) · `boot.js` dock, jam, pulihkan sesi atau buka Home · `base.css` |
 | `public/shared/` | `config.js` `CFG` (`tc.cfg`), tema, `apiFetch`/`apiPing` · `rt.js` mesin realtime (WebSocket paralel + pemimpin/failover + logika candle `RT.bars`, lihat §Realtime) · `data.js` dummy `WATCH` + format angka `f`,`pc`,`cls` · `ui.css` · `dialog.js` · `live.js` (mode Live, sinkron state/catatan/jurnal/alert, antrean gambar `Live.img`, `Live.applySettings()`) · `notif.js/.css` |
 
 **Cara menambah:** *app* → salin folder app mirip, ganti isi, tambah 1 baris `<script>` di `index.html`. *Tab Setting* → `apps/setting/pages/<tab>.js` memanggil `Setting.page({...})` + 1 baris `<script>`. *Endpoint* → tambah di `lib/routes/<grup>.js` (daftar: `lib/router.js`, `add/get/post/put/patch/del`), lalu catat di §3.

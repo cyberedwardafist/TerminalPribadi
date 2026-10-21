@@ -3,7 +3,8 @@ $('#dock').innerHTML=Object.keys(APPS).map(k=>`<button class="d" data-k="${k}" d
 $$('.d').forEach(b=>b.onclick=()=>{const k=b.dataset.k,g=grp(k),vis=g.filter(i=>!S.wins[i].min);if(vis.length&&S.act&&base(S.act)===k){vis.forEach(minimize);return}if(!g.length){b.classList.add('bounce');setTimeout(()=>b.classList.remove('bounce'),1000);open(k);return}g.sort((a,c)=>S.wins[a].el.style.zIndex-S.wins[c].el.style.zIndex).forEach(open)});
 // clock
 const tick=()=>{$('#clk').textContent=new Date().toLocaleString('id-ID',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})};tick();setInterval(tick,20000);
-open('home');
+// Pulihkan tampilan terakhir (window, isian, scroll); bila belum ada sesi tersimpan, buka Home seperti biasa.
+Sesi.restore()||open('home');Sesi.start();
 
 // Dock ala macOS: ikon membesar mengikuti kursor (kurva cosine, tetangga ikut membesar dan mendorong ikon lain), kembali dengan pegas halus. Hanya mouse/pen; mati bila gerakan dikurangi.
 (()=>{const dk=$('#dock'),ic=$$('.d'),MAX=1.8,R=130,K=.22;let tg=ic.map(()=>1),cu=ic.map(()=>1),mx=null,raf=0;

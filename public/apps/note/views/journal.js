@@ -113,8 +113,8 @@ Note.view({id:'journal',
    q('[data-addimg]').hidden=d._imgs.length>=8}
   const err=m=>{J.err=m;const e=q('.jf-err');if(e)e.textContent=m};
 
-  function openForm(t){
-   const isNew=!t,base=t?JSON.parse(JSON.stringify(t)):{id:uid(),date:J.sel,time:J.sel===today()?pad(new Date().getHours())+':'+pad(new Date().getMinutes()):'',timeEnd:'',sym:S.sym||'',side:'',res:'',amount:0,method:'',fields:[],note:'',eval:'',imgs:[],cre:Date.now()};
+  function openForm(t,sd){
+   const isNew=sd?!!sd.isNew:!t,base=sd?{...sd}:t?JSON.parse(JSON.stringify(t)):{id:uid(),date:J.sel,time:J.sel===today()?pad(new Date().getHours())+':'+pad(new Date().getMinutes()):'',timeEnd:'',sym:S.sym||'',side:'',res:'',amount:0,method:'',fields:[],note:'',eval:'',imgs:[],cre:Date.now()};
    J.draft={...base,isNew,_imgs:base.imgs.map(id=>({id,blob:null,url:null,new:false})),_removed:[]};J.dirty=false;err('');
    const f=q('.jp-form');f.innerHTML=formHtml();
    const a=f.querySelector('[data-amt]');a.value=J.draft.amount?u.rp(J.draft.amount).replace('Rp\u00a0',''):'';
@@ -232,9 +232,27 @@ Note.view({id:'journal',
   ['dragleave','drop'].forEach(n=>root.addEventListener(n,e=>{dz().classList.remove('over')}));
   root.addEventListener('drop',e=>{if(J.draft&&e.dataTransfer&&e.dataTransfer.files.length){e.preventDefault();addFiles([...e.dataTransfer.files])}});
 
+  // Sesi (core/session.js): bulan, tanggal terbuka, dan jurnal yang sedang diisi (gambar yang belum tersimpan tidak ikut)
+  api.sv=()=>{const d=J.draft;
+   return{mon:[J.mon.getFullYear(),J.mon.getMonth()],sel:J.sel,dirty:J.dirty,
+    draft:d?{id:d.id,isNew:d.isNew,date:d.date,time:d.time,timeEnd:d.timeEnd,sym:d.sym,side:d.side,res:d.res,amount:d.amount,method:d.method,fields:d.fields,note:d.note,eval:d.eval,cre:d.cre,imgs:d._imgs.filter(i=>!i.new).map(i=>i.id)}:null}};
+  api.ld=s=>{
+   if(!s||typeof s!=='object')return;
+   const m=s.mon;if(Array.isArray(m)&&Number.isInteger(m[0])&&Number.isInteger(m[1])&&m[1]>=0&&m[1]<12)J.mon=new Date(m[0],m[1],1);
+   if(typeof s.sel!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(s.sel)){renderCal();return}
+   J.sel=s.sel;root.dataset.panel='true';renderCal();renderDay();
+   const d=s.draft;if(!d||typeof d!=='object'||typeof d.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(d.date))return;
+   const str=x=>typeof x==='string'?x:'';
+   openForm(null,{id:str(d.id)||uid(),isNew:!!d.isNew,date:d.date,time:str(d.time),timeEnd:str(d.timeEnd),sym:str(d.sym),
+    side:['buy','sell'].includes(d.side)?d.side:'',res:['profit','loss','impas'].includes(d.res)?d.res:'',amount:Math.max(0,+d.amount||0),
+    method:str(d.method),fields:(Array.isArray(d.fields)?d.fields:[]).slice(0,30).map(x=>({k:str(x&&x.k),v:str(x&&x.v)})),
+    note:str(d.note),eval:str(d.eval),cre:+d.cre||Date.now(),imgs:(Array.isArray(d.imgs)?d.imgs:[]).filter(x=>typeof x==='string').slice(0,8)});
+   J.dirty=!!s.dirty};
   api.show=()=>{renderCal();if(J.sel&&!J.draft)renderDay();root.dataset.panel=J.sel?'true':'false'};
   api.canLeave=canLeave;
  },
  show(ctx){api.show()},
+ sv(){return api.sv?api.sv():null},
+ ld(s){api.ld&&api.ld(s)},
  canLeave(n){return api.canLeave?api.canLeave(n):true}});
 })();

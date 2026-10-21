@@ -63,5 +63,13 @@ registerApp('note',{css:'apps/note/note.css',icon:"<path d=\"M6 3h9l4 4v14H6z\"/
   });
 
   Object.values(Note.views).forEach(v=>v.mount(ctx));
+  // Sesi (core/session.js): ingat folder, tag, catatan yang sedang dibuka, dan jurnal yang sedang diisi
+  w._ses={
+   get:()=>({f:st.f,tag:st.tag,v:Object.fromEntries(Object.values(Note.views).filter(v=>v.sv).map(v=>[v.id,v.sv()]))}),
+   set:s=>{if(!s||typeof s!=='object')return;
+    if(typeof s.tag==='string')st.tag=s.tag.slice(0,24);
+    if(F.some(x=>x[0]===s.f))go(s.f,true);
+    Object.values(Note.views).forEach(v=>{if(v.ld&&s.v&&s.v[v.id])v.ld(s.v[v.id])});
+    refreshRail()}};
   go(st.f,true)}});
 })();

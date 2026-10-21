@@ -10,7 +10,7 @@ const Setting=(()=>{
  const page=p=>{pages.push(p);if(p.css)loadCss(p.css)};
  return{pages,seg,row,bindSeg,page}})();
 
-registerApp('setting',{css:'apps/setting/setting.css',icon:"<path d=\"M4 7h10M18 7h2M4 17h2M10 17h10\"/><circle cx=\"16\" cy=\"7\" r=\"2\"/><circle cx=\"8\" cy=\"17\" r=\"2\"/>",t:'Setting',w:860,h:600,flush:1,
+registerApp('setting',{nofields:1,css:'apps/setting/setting.css',icon:"<path d=\"M4 7h10M18 7h2M4 17h2M10 17h10\"/><circle cx=\"16\" cy=\"7\" r=\"2\"/><circle cx=\"8\" cy=\"17\" r=\"2\"/>",t:'Setting',w:860,h:600,flush:1,
  html:()=>`<div class="st"><div class="sti">
  <nav class="sb" role="tablist" aria-label="Kategori setting" aria-orientation="vertical">${Setting.pages.map(p=>`<button type="button" role="tab" data-p="${p.id}" aria-selected="false" tabindex="-1"><span class="si" style="--c:${p.color}"><svg viewBox="0 0 24 24" aria-hidden="true">${p.icon}</svg></span>${p.title}</button>`).join('')}</nav>
  <div class="sm"><h2 class="sh"></h2>

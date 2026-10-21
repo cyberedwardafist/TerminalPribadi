@@ -122,10 +122,18 @@ Note.view({id:'notes',
   srch.oninput=()=>{ns.q=srch.value.trim();renderList()};
   srch.onkeydown=e=>{if(e.key==='Escape'&&srch.value){e.stopPropagation();srch.value='';srch.oninput()}};
 
+  api.sv=()=>({sel:ns.sel,view:ns.view,q:ns.q});
+  api.ld=s=>{
+   if(!s||typeof s!=='object')return;
+   if(typeof s.q==='string'&&s.q){ns.q=s.q.slice(0,100);srch.value=ns.q}
+   if(typeof s.sel==='string'&&notes().some(n=>n.id===s.sel)){ns.sel=s.sel;ns.view=s.view==='edit'?'edit':'list';renderList();renderEditor();view()}
+   else renderList()};
   api.show=()=>{
    flush();ns.q='';srch.value='';
    const L=list();if(!L.some(n=>n.id===ns.sel)){ns.sel=(L[0]||{}).id||null;renderEditor()}
    ns.view='list';renderList();view()};
  },
- show(ctx){api.show()}});
+ show(ctx){api.show()},
+ sv(){return api.sv?api.sv():null},
+ ld(s){api.ld&&api.ld(s)}});
 })();

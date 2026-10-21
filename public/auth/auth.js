@@ -44,7 +44,7 @@ const Auth=(()=>{
 
  const session=()=>rd(SK)||rd(SK,true);
  const setSession=(user,remember,token)=>{rm(SK);wr(SK,{user,token:token||null,mode:token?'live':'dummy',at:Date.now()},!remember)};
- const logout=()=>{rm(SK)};
+ const logout=()=>{rm(SK);try{localStorage.removeItem('tc.ui')}catch(e){}};
 
  // batas percobaan login: 5 gagal -> kunci 30 detik
  const lock=()=>{const f=rd(FK)||{n:0,until:0};return Math.max(0,Math.ceil((f.until-Date.now())/1000))};
