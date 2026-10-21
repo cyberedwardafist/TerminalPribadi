@@ -10,6 +10,7 @@ const fdb = new FakeDb(); installFetch(fdb, { price: {} });
 const { handle } = await import('../lib/app.js');
 const { outbox } = await import('../lib/mail.js');
 const src = fs.readFileSync(new URL('../public/shared/live.js', import.meta.url), 'utf8');
+const faultSrc = fs.readFileSync(new URL('../public/shared/fault.js', import.meta.url), 'utf8');
 
 const j = async (method, path, body, token) => { const r = await handle(new Request('http://t' + path, { method, headers: { 'content-type': 'application/json', ...(token ? { authorization: 'Bearer ' + token } : {}) }, body: body ? JSON.stringify(body) : undefined })); return { status: r.status, body: await r.json().catch(() => null) }; };
 async function makeUser() {
@@ -22,7 +23,7 @@ function browser(token, store = {}, opt = {}) {
   const localStorage = new Storage(), timers = [];
   const ctx = vm.createContext({ Storage, localStorage, console, setTimeout, clearTimeout, Event: class { constructor(t) { this.type = t; } }, URL, JSON, Promise, Math, Date, Object, Array, Set, Map, Error, atob, btoa, Blob, Uint8Array, String, matchMedia: () => ({ matches: false }),
     document: { hidden: false, addEventListener() {} }, addEventListener() {}, setInterval: f => timers.push(f), dispatchEvent() {},
-    apiOn: () => true, sessToken: () => token,
+    apiOn: () => true, sessToken: () => token, navigator: { onLine: true }, location: { protocol: 'http:', hostname: 'localhost' },
     apiFetch: opt.offline ? () => Promise.reject(new Error('jaringan putus')) : (path, o = {}) => handle(new Request('http://t' + path, { ...o, headers: { authorization: 'Bearer ' + token, ...(o.headers || {}) } })) });
   ctx.window = ctx;
   vm.runInContext(`var WATCH=[['BTCUSDT','Bitcoin',1,0,'cry'],['BBCA','BCA',1,0,'idx'],['EURUSD','EUR',1,0,'fx']];`, ctx);
@@ -30,6 +31,7 @@ function browser(token, store = {}, opt = {}) {
   vm.runInContext(`var CFG=Object.assign({theme:'auto',sym:'BTCUSDT',tf:'1h',still:null,api:{mode:'live',base:'',key:''}},JSON.parse(localStorage.getItem('tc.cfg')||'{}'));
    var theme=null;function applyTheme(){theme=CFG.theme}
    var S={bg:localStorage.getItem('bg')||'angin',still:false,sym:'BTCUSDT',tf:'1h'};var Bg={loads:0,load(){this.loads++}};`, ctx);
+  vm.runInContext(faultSrc, ctx);
   vm.runInContext(src, ctx);
   return { ctx, localStorage, timers };
 }

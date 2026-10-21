@@ -20,3 +20,24 @@ label{display:flex;gap:8px;align-items:center;padding:4px 0}
 .dlg-ft{display:flex;justify-content:flex-end;gap:8px}.dlg-ft .btn{margin:0}
 .btn.pri.dng{background:var(--dn);border-color:var(--dn);color:#fff}
 @keyframes dlgin{from{opacity:0;transform:scale(.96)}}@media (prefers-reduced-motion:reduce){.dlg{animation:none}}
+
+/* Panel kegagalan data (shared/fault.js): diagram rantai Perangkat > Internet > Server > Sumber data */
+.ft{box-sizing:border-box;width:100%;max-width:540px;margin:0 auto;padding:26px 22px 24px;user-select:text}
+.ft-chain{display:block;width:100%;height:auto;margin:0 0 18px;overflow:visible}
+.ft-n{--c:var(--mute)}.ft-n.ok{--c:var(--up)}.ft-n.fail{--c:var(--dn)}.ft-n.warn{--c:var(--acc)}
+.ft-n .bx{fill:var(--win2);stroke:var(--c);stroke-width:1.5}.ft-n.fail .bx{stroke-width:2}.ft-n.idle .bx{stroke-dasharray:3 3;opacity:.7}
+.ft-n .ic{fill:none;stroke:var(--c);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ft-n .bd{fill:var(--win);stroke:var(--c);stroke-width:1.5}.ft-n .bg{fill:none;stroke:var(--c);stroke-width:1.7;stroke-linecap:round}
+.ft-n .lb{fill:var(--ink);font-size:13px}.ft-n .st{fill:var(--c);font-size:11.5px}
+.ft-l{fill:none;stroke-width:2;stroke-linecap:round}.ft-l.ok{stroke:var(--up);opacity:.75}.ft-l.warn{stroke:var(--acc)}.ft-l.idle{stroke:var(--mute);stroke-dasharray:2 6;opacity:.6}
+.ft-x{fill:none;stroke:var(--dn);stroke-width:2.2;stroke-linecap:round}
+.ft-tx h3{margin:0 0 6px;font-size:16px}.ft-tx p{margin:0 0 8px;color:var(--mute);font-size:13px;line-height:1.5}.ft-tx p.h{color:var(--ink)}
+.ft-te{margin:12px 0 0}.ft-te code{display:block;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--win2);color:var(--mute);font-size:11.5px;white-space:normal;word-break:break-all}
+.ft-ac{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:14px}.ft-ac .btn{margin:0}.ft-ac small{margin-left:auto;color:var(--mute);font-size:11px}
+.ft-strip{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--acc) 14%,transparent);font-size:12px}
+.ft-strip svg{flex:none;width:15px;height:15px;fill:none;stroke:var(--acc);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.ft-strip span{flex:1;min-width:0}.ft-strip b{font-weight:600}
+.ft-strip button{flex:none;border:0;background:transparent;padding:0;color:var(--acc);font-size:12px;text-decoration:underline}
+.ft-ld{display:flex;align-items:center;gap:10px;padding:28px 22px;color:var(--mute);font-size:13px}
+.ft-ld i{flex:none;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--acc);border-radius:50%;animation:ftsp .8s linear infinite}
+@keyframes ftsp{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.ft-ld i{animation:none}}

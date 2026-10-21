@@ -44,3 +44,5 @@
 @container wl (max-width:860px){.h2{display:none}}
 @container wl (max-width:560px){.h1{display:none}.wl-sd{position:absolute;inset:0 auto 0 0;z-index:5;box-shadow:8px 0 24px rgba(0,0,0,.35)}.wl-q{flex-basis:140px;width:140px}}
 @media (prefers-reduced-motion:reduce){.flu,.fld{animation:none}.wl-sd{transition:none}}
+
+.wl-fs:empty{display:none}.wl-fs{flex:none}.wl-na{color:var(--mute)}

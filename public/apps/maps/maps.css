@@ -29,3 +29,5 @@
 .mp-bar>div{height:14px;position:relative;background:color-mix(in srgb,var(--ink) 6%,transparent);border-radius:3px;overflow:hidden}
 .mp-bar>div i{display:block;height:100%;width:0;max-width:50%;border-radius:3px}.mp-bar em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums}
 @media(max-width:700px){.mp-nav{width:120px}.mp-two{grid-template-columns:1fr}}
+
+.mp-fail{flex:1;min-height:0;overflow:auto}.mp-two>.ft-ld,.mp-cards>.ft-ld{grid-column:1/-1}

@@ -6,7 +6,7 @@ const on=()=>typeof apiOn==='function'&&apiOn()&&!!sessToken();
 const BLOB={'tc.watchlist':'watchlist','tc.news':'news','tc.maps':'maps','tc.chart.tabs':'chart.tabs'};
 const KN='tc.notes',KJ='tc.journal';
 const KCFG='tc.cfg',KBG='bg',KBGI='bg.img',KBGV='bg.img.v';   // pengaturan: tc.cfg (hanya tema/simbol/tf/gerakan; blok api TIDAK pernah dikirim), bg, gambar background
-const Live={on:false,extra:{},ready:Promise.resolve(),status:'dummy'};window.Live=Live;
+const Live={on:false,extra:{},ready:Promise.resolve(),status:'dummy',q:{state:'idle',err:null,at:0,n:0}};window.Live=Live;
 const api=async(path,opt={})=>{const r=await apiFetch(path,{...opt,headers:{'content-type':'application/json',...(opt.headers||{})}});if(!r.ok){const e=new Error('HTTP '+r.status);e.status=r.status;throw e}return r.status===204?null:r.json()};
 const put=(path,body)=>api(path,{method:'PUT',body:JSON.stringify(body)});
 let hydrating=false;
@@ -15,13 +15,21 @@ const write=(k,v)=>{hydrating=true;try{raw.call(localStorage,k,v)}finally{hydrat
 const unwrite=k=>{hydrating=true;try{rawRm.call(localStorage,k)}finally{hydrating=false}};
 
 // ---------- harga ----------
+// Status terakhir ada di Live.q ('idle' | 'ok' | 'err'). Event 'tc:quotes' saat berhasil, 'tc:qfail' saat gagal.
+// Tidak ada angka cadangan: gagal = harga tetap kosong (atau yang terakhir nyata), dan penyebabnya dijelaskan oleh shared/fault.js.
 async function pullQuotes(){
  const syms=WATCH.map(r=>r[0]);let n=0;
  for(let i=0;i<syms.length;i+=50){
-  const list=await api('/api/quotes?symbols='+syms.slice(i,i+50).join(','));
+  const list=await apiJson('/api/quotes?symbols='+syms.slice(i,i+50).join(','));
+  if(!Array.isArray(list))throw new ApiError('parse',{path:'/api/quotes'});
   for(const q of list){const r=WATCH.find(x=>x[0]===q.sym);if(!r||!(q.price>0))continue;r[2]=q.price;r[3]=q.changePct;Live.extra[q.sym]={vr:q.volRatio,rsi:q.rsi14,pos:q.pos52w,spark:q.spark};n++}}
  return n}
-const quotesTick=async()=>{if(document.hidden)return;try{if(await pullQuotes())window.dispatchEvent(new Event('tc:quotes'))}catch(e){}};
+let pulling=null;
+Live.pull=()=>pulling||(pulling=(async()=>{
+ try{const n=await pullQuotes();if(!n)throw new ApiError('empty',{what:'quotes',path:'/api/quotes'});Live.q={state:'ok',err:null,at:Date.now(),n};window.dispatchEvent(new Event('tc:quotes'));return n}
+ catch(e){Live.q={state:'err',err:e,at:Date.now(),n:0};window.dispatchEvent(new Event('tc:qfail'));throw e}
+ finally{pulling=null}})());
+const quotesTick=async()=>{if(document.hidden)return;try{await Live.pull()}catch(e){}};
 
 // ---------- pengaturan Umum + Background ----------
 // Server menyimpan {theme, defaultSymbol, defaultTf, background, reduceMotion} dan satu gambar background sendiri.
@@ -163,7 +171,7 @@ Live.ready=(async()=>{
  if(!on())return;
  Live.on=true;Live.status='memuat';
  try{
-  await Promise.race([Promise.all([pullQuotes().catch(()=>0),hydrate()]),new Promise((_,no)=>setTimeout(()=>no(new Error('timeout')),7000))]);
+  await Promise.race([Promise.all([Live.pull().catch(()=>0),hydrate()]),new Promise((_,no)=>setTimeout(()=>no(new Error('timeout')),7000))]);
   Live.status='live'}
  catch(e){Live.status='sebagian: '+e.message;console.warn('[live]',e.message)}
  install();setInterval(quotesTick,10000);bgSync()})();

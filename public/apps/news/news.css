@@ -47,3 +47,5 @@ mark{background:color-mix(in srgb,var(--acc) 40%,transparent);color:inherit;bord
 .nw-ar p{margin:0 0 14px;font-size:15px;line-height:1.7}.nw-ar h3{margin:22px 0 8px;font-size:15px}.nw-ar ul{margin:0 0 14px;padding-left:20px;line-height:1.7}
 .nw-rl{display:flex;gap:12px;align-items:baseline;width:100%;box-sizing:border-box;padding:9px 4px;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left;font-size:13px}.nw-rl:hover span{color:var(--acc)}.nw-rl span{flex:1}.nw-rl time{flex:none;color:var(--mute);font-size:11px}
 .nw-ds{margin-top:22px!important;color:var(--mute);font-size:12px!important}
+
+.nw-fs:empty{display:none}.nw-fs{flex:none}

@@ -18,9 +18,9 @@ const apiUrl=p=>(CFG.api.base||location.origin).replace(/\/+$/,'')+p;
 // token sesi hasil login (Auth.setSession) dipakai otomatis; API key manual hanya cadangan
 const sessToken=()=>{for(const st of[localStorage,sessionStorage]){try{const j=JSON.parse(st.getItem('tc.session')||'null');if(j&&j.token)return j.token}catch(e){}}return''};
 async function apiFetch(path,opt={}){
- const c=new AbortController(),t=setTimeout(()=>c.abort(),CFG.api.timeout||8000);
+ const{timeout:tmo,...o}=opt,c=new AbortController(),t=setTimeout(()=>c.abort(),tmo||CFG.api.timeout||8000);
  const h={...(opt.headers||{})};const tk=sessToken()||CFG.api.key;if(tk&&!h.Authorization)h.Authorization='Bearer '+tk;
- try{return await fetch(apiUrl(path),{...opt,headers:h,signal:c.signal})}finally{clearTimeout(t)}}
+ try{return await fetch(apiUrl(path),{...o,headers:h,signal:c.signal})}finally{clearTimeout(t)}}
 // Pesan untuk status HTTP tanpa isi JSON dari backend. 404 di sini berarti alamat ini TIDAK menjalankan backend (server statis / Live Server / deploy tanpa folder api).
 const apiHttpMsg=st=>st===404?'Backend tidak ditemukan di alamat ini (HTTP 404). Jalankan lewat "npm run dev" (atau deploy Vercel yang menyertakan folder api), atau ganti Setting > API ke mode Dummy':'Server membalas HTTP '+st;
 async function apiPing(){

@@ -15,7 +15,7 @@ const rid=()=>'i'+Math.random().toString(36).slice(2,8);
 let INST=0,PEND=null,DRAG=null;const WINS=new Set();
 
 // ---------- data ----------
-function gen(sym,tf){const st=TFS[tf],r=rng([...sym+tf].reduce((a,c)=>a*31+c.charCodeAt(0)|0,7)),base=(WATCH.find(x=>x[0]===sym)||[0,0,100])[2],vol=Math.min(.03,.004*Math.sqrt(st/3600)),end=Math.floor(Date.now()/1000/st)*st,n=1500;
+function gen(sym,tf){const st=TFS[tf],r=rng([...sym+tf].reduce((a,c)=>a*31+c.charCodeAt(0)|0,7)),base=((WATCH.find(x=>x[0]===sym)||[])[2])||100,vol=Math.min(.03,.004*Math.sqrt(st/3600)),end=Math.floor(Date.now()/1000/st)*st,n=1500;
  let p=base,dr=0,o=[];for(let i=0;i<n;i++){if(i%40===0)dr=(r()-.5)*vol*.5;const op=p,c=op*(1+(r()-.5)*2*vol+dr);o.push({t:end-(n-1-i)*st,o:op,h:Math.max(op,c)*(1+r()*vol*.6),l:Math.min(op,c)*(1-r()*vol*.6),c,v:Math.round((500+r()*1500)*(1+Math.abs(c-op)/op/vol))});p=c}
  const k=base/o[n-1].c;o.forEach(b=>{b.o*=k;b.h*=k;b.l*=k;b.c*=k});return o}
 const norm=j=>j.map(x=>({t:x.t>1e12?Math.floor(x.t/1000):x.t,o:x.o,h:x.h,l:x.l,c:x.c,v:x.v||0}));

@@ -1,47 +1,37 @@
 // App "maps" (dock). Sidebar + peta pasar (treemap) per pasar. Berdiri sendiri: ubah file ini tidak memengaruhi app lain.
 (()=>{
 const KEY='tc.maps';
-// Data dummy: 'Grup:KODE=bobot,...|Grup:...'. Bobot = kapitalisasi kasar (IHSG Rp T, kripto/saham luar USD B, lainnya bobot relatif)
-const DATA={
- ihsg:'Keuangan:BBCA=1100,BBRI=700,BMRI=600,BBNI=240,BRIS=130,ARTO=70,BNGA=60,BBTN=20|Energi:BYAN=300,ADRO=80,PGAS=40,PTBA=40,AKRA=35,ITMG=30,MEDC=30,BUMI=30|Barang Baku:AMMN=900,TPIA=600,BRPT=150,MDKA=70,NCKL=70,ANTM=60,MBMA=60,INCO=55|Konsumer Primer:ICBP=130,AMRT=100,UNVR=90,HMSP=90,CPIN=80,INDF=70,MYOR=50,GGRM=40|Konsumer Siklikal:MAPI=30,SCMA=15,ACES=20,ERAA=12,MNCN=10|Infrastruktur & Telko:TLKM=330,ISAT=60,MTEL=50,TBIG=45,TOWR=40,JSMR=40,EXCL=35|Teknologi:DCII=300,MLPT=80,GOTO=70,EMTK=50,BUKA=20|Kesehatan:KLBF=80,MIKA=40,SIDO=35,HEAL=20|Industri:ASII=250,UNTR=130|Properti:BSDE=30,CTRA=25,PWON=25,SMRA=15',
- kripto:'Layer 1:BTC=1300,ETH=380,BNB=90,SOL=80,TRX=25,ADA=22,AVAX=15,TON=15,SUI=12,DOT=10,NEAR=7|Pembayaran:XRP=130,BCH=9,LTC=8,XLM=10|Stablecoin:USDT=120,USDC=35,DAI=5|DeFi & Infra:LINK=10,UNI=6,AAVE=4,ARB=3,OP=3,ATOM=3,MKR=2,INJ=2|Meme:DOGE=25,SHIB=10,PEPE=6,WIF=2,BONK=2',
- komoditas:'Logam:XAU=100,XAG=30,COPPER=25,ALU=15,XPT=10|Energi:BRENT=65,WTI=60,NGAS=25,COAL=20|Pertanian:CPO=25,SOY=20,CORN=20,WHEAT=15,COFFEE=12,SUGAR=10,COCOA=10,RUBBER=6',
- luar:'Teknologi Elektronik:AAPL=3500,NVDA=3400,AVGO=800,TSM=800,ASML=400,AMD=250,INTC=100|Teknologi Layanan:MSFT=3100,GOOGL=2000,META=1400,ORCL=450,NFLX=400,CRM=280,ADBE=200|Ritel & Konsumer:AMZN=1900,WMT=700,COST=400,HD=380,PG=380,KO=270,PEP=220,MCD=210,NKE=110|Keuangan:BRK.B=900,JPM=600,V=550,MA=450,BAC=300,WFC=220,GS=150|Kesehatan:LLY=800,UNH=500,JNJ=380,ABBV=300,MRK=260,PFE=150|Otomotif:TSLA=800,TM=250,F=45|Energi:XOM=450,CVX=280',
- lain:'Forex Mayor:EURUSD=100,USDJPY=80,GBPUSD=50,USDIDR=40,AUDUSD=30,USDCHF=25,USDCAD=25,EURJPY=20,NZDUSD=15,USDSGD=15|Indeks Global:SPX=100,NDX=80,DJI=60,DAX=40,SSEC=40,N225=45,FTSE=35,HSI=30,IHSG=25,KS11=20,STI=15'};
 const MKT=[['ihsg','IHSG',1.8,3],['kripto','Kripto',4.5,8],['komoditas','Komoditas',1.6,3],['luar','Saham Luar',1.7,3],['lain','Lainnya',.7,1.2]];
 const RG={'1D':1,'1W':2.3,'1M':4.6};
 const STABLE=['USDT','USDC','DAI'];
 const PAGES=[['map','Peta Pasar'],['sum','Ringkasan Pasar'],['mov','Top Movers'],['sec','Performa Sektor']];
-const SUM=[['IHSG',7300],['LQ45',920],['S&P 500',5800],['NASDAQ',18400],['Dow Jones',42500],['Nikkei 225',38500],['Hang Seng',20500],['BTCUSDT',67420.5],['ETHUSDT',3180.2],['XAUUSD',2386.4],['WTI',78.4],['USDIDR',15700],['EURUSD',1.0842]];
 let M={page:'map',mk:'ihsg',rg:'1D'};try{M={...M,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch(e){}
 if(!PAGES.some(p=>p[0]===M.page))M.page='map';if(!MKT.some(m=>m[0]===M.mk))M.mk='ihsg';if(!RG[M.rg])M.rg='1D';
 const store=()=>{try{localStorage.setItem(KEY,JSON.stringify(M))}catch(e){}};
-const rng=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
-const hs=s=>[...s].reduce((a,c)=>a*31+c.charCodeAt(0)|0,7);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>'&#'+c.charCodeAt(0)+';');
 const mc=()=>MKT.find(m=>m[0]===M.mk);
 const fcap=v=>v>=1000?(v/1000).toFixed(2).replace('.',',')+' T':v.toLocaleString('id-ID')+' '+(M.mk==='ihsg'?'T':'B');
 
-// ---------- data ----------
+// ---------- data: hanya dari server (/api/heatmap, /api/summary). Gagal = ApiError, tidak ada data karangan ----------
 const CACHE={};
-function dummy(mk,rg){const day=Math.floor(Date.now()/864e5),vol=MKT.find(m=>m[0]===mk)[2]*RG[rg];
- return DATA[mk].split('|').map(g=>{const[n,l]=g.split(':'),gd=(rng(hs(n+day+rg))()-.5)*vol*.7;
-  return{n,it:l.split(',').map(x=>{const[s,v]=x.split('='),r=rng(hs(s+day+rg)),st=STABLE.includes(s);return{s,v:+v,c:+(st?(r()-.5)*.06:gd+(r()+r()+r()-1.5)*vol*1.1).toFixed(2)}})}})}
-async function load0(mk=M.mk,rg=M.rg,force=false){const k=mk+'|'+rg;if(CACHE[k]&&!force)return CACHE[k];let g;
- if(apiOn()){try{const r=await apiFetch(`/api/heatmap?market=${mk}&range=${rg.toLowerCase()}`);if(!r.ok)throw 0;const j=await r.json(),m={};j.forEach(x=>(m[x.group]=m[x.group]||[]).push({s:x.sym,v:x.cap,c:x.changePct}));g=Object.entries(m).map(([n,it])=>({n,it}))}catch(e){g=null}
-  return g&&g.length?(CACHE[k]=g):null}   // Live: tidak pernah jatuh ke data dummy; gagal = null (tidak di-cache)
- return CACHE[k]=dummy(mk,rg)}
+async function load0(mk=M.mk,rg=M.rg,force=false){const k=mk+'|'+rg;if(CACHE[k]&&!force)return CACHE[k];
+ const j=await apiJson(`/api/heatmap?market=${mk}&range=${rg.toLowerCase()}`);
+ if(!Array.isArray(j)||!j.length)throw new ApiError('empty',{what:'heatmap',path:'/api/heatmap'});
+ const m={};j.forEach(x=>(m[x.group]=m[x.group]||[]).push({s:x.sym,v:x.cap,c:x.changePct}));
+ return CACHE[k]=Object.entries(m).map(([n,it])=>({n,it}))}
 const load=()=>load0();
-// Running text menubar: semua simbol dari kelima pasar Maps (ubah% 1D)
+// Running text menubar: semua simbol dari kelima pasar Maps (ubah% 1D). Hanya data nyata; tanpa mode Live kosong. Stablecoin dilewati (server memberi ubah% 0 sebagai penanda statis, bukan harga nyata)
 if(window.Ticker){
- // Hanya data nyata dari server (/api/heatmap). Tanpa mode Live: kosong. Stablecoin dilewati (server memberi ubah% 0 sebagai penanda statis, bukan harga nyata)
- const all=async()=>{if(!apiOn())return[];const o=[];for(const m of MKT){const g=await load0(m[0],'1D');if(g)g.forEach(x=>x.it.forEach(t=>{if(!STABLE.includes(t.s))o.push({s:t.s,c:t.c})}))}return o};
+ const all=async()=>{if(!apiOn())return[];const o=[];for(const m of MKT){let g=null;try{g=await load0(m[0],'1D')}catch(e){}if(g)g.forEach(x=>x.it.forEach(t=>{if(!STABLE.includes(t.s))o.push({s:t.s,c:t.c})}))}return o};
  const snap=()=>{const o={};for(const k in CACHE)if(k.endsWith('|1D'))CACHE[k].forEach(x=>x.it.forEach(t=>o[k+t.s]=t.c));return o};
  // true bila ada ubah% simbol Maps yang berbeda dari sebelumnya: ambil ulang /api/heatmap semua pasar (1D)
  const refresh=async()=>{if(!apiOn())return false;await all();const before=snap();
   for(const m of MKT){try{await load0(m[0],'1D',true)}catch(e){}}
   const after=snap();return Object.keys(after).some(k=>k in before&&before[k]!==after[k])};
  Ticker.source('maps',all,refresh)}
-const loadErr=w=>{const e=$('.mp-map,.mp-two,.mp-sec',w);if(e)e.innerHTML='<p class="mp-ft">Data pasar live tidak bisa dimuat. Coba lagi beberapa saat.</p>'};
+// Gagal memuat: ganti area data dengan panel penyebab (internet, server, atau sumber data) dari shared/fault.js
+async function fail(w,tk,err,what){const info=await Fault.explain(err,{what,fresh:true});if(tk!==w._tk)return;
+ const box=$('.mp-map,.mp-two,.mp-sec,.mp-cards',w);if(!box)return;const d=document.createElement('div');d.className='mp-fail';box.replaceWith(d);Fault.mount(d,info,()=>show(w))}
 
 // ---------- treemap (squarified) ----------
 function squarify(items,x,y,w,h){const tot=items.reduce((a,i)=>a+i.v,0),out=[];if(!tot||w<=0||h<=0)return out;
@@ -67,17 +57,20 @@ const seg=(a,items,v)=>`<div class="seg" data-seg="${a}">${items.map(([k,l])=>`<
 const bar=(mk,rg,leg)=>`<div class="mp-tb">${mk?seg('mk',MKT.map(m=>[m[0],m[1]]),M.mk):''}${rg?seg('rg',Object.keys(RG).map(k=>[k,k]),M.rg):''}${leg?`<span class="mp-leg"><i>\u2212</i><s></s><i>+</i></span>`:''}</div>`;
 const row=(r,max)=>`<button class="mp-row" data-s="${r.s}"><b>${r.s}</b><span>${r.g}</span><em class="${cls(r.c)}">${pc(r.c)}</em></button>`;
 const PG={
- async map(w,main,tk){main.innerHTML=bar(1,1,1)+`<div class="mp-map"></div><p class="mp-ft">${apiOn()?'Data live':'Data dummy'} \u00b7 ukuran = kapitalisasi, warna = perubahan ${M.rg} \u00b7 klik tile untuk buka di Chart</p>`;
-  const g=await load();if(tk!==w._tk)return;if(!g){loadErr(w);return}const draw=()=>paint(w,g);draw();w._ro&&w._ro.disconnect();w._ro=new ResizeObserver(draw);w._ro.observe($('.mp-map',w))},
- async sum(w,main,tk){main.innerHTML=bar(0,1,0)+`<div class="mp-cards">${SUM.map(([n,v])=>{const r=rng(hs(n+M.rg+Math.floor(Date.now()/864e5))),vol=(n==='BTCUSDT'||n==='ETHUSDT'?.04:.012)*RG[M.rg]**.7,pts=[v];for(let i=0;i<29;i++)pts.unshift(pts[0]/(1+(r()-.5)*2*vol/5.4));
-   const mn=Math.min(...pts),mx=Math.max(...pts),c=(v/pts[0]-1)*100,d=pts.map((p,i)=>`${i*5},${(30-(p-mn)/((mx-mn)||1)*28).toFixed(1)}`).join(' ');
-   return`<div class="mp-card"><span>${n}</span><b>${f(v)}</b><em class="${cls(c)}">${pc(c)}</em><svg viewBox="0 0 145 32" preserveAspectRatio="none"><polyline points="${d}" fill="none" stroke="var(--${c>=0?'up':'dn'})" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg></div>`}).join('')}</div><p class="mp-ft">Data dummy \u00b7 perubahan dihitung dari rentang ${M.rg}</p>`},
- async mov(w,main,tk){main.innerHTML=bar(1,1,0)+`<div class="mp-two"></div>`;const g=await load();if(tk!==w._tk)return;if(!g){loadErr(w);return}
+ async map(w,main,tk){main.innerHTML=bar(1,1,1)+`<div class="mp-map">${Fault.loading('Memuat peta pasar\u2026')}</div><p class="mp-ft">Data live \u00b7 ukuran = kapitalisasi, warna = perubahan ${M.rg} \u00b7 klik tile untuk buka di Chart</p>`;
+  let g;try{g=await load()}catch(e){return fail(w,tk,e,'heatmap')}if(tk!==w._tk)return;const draw=()=>paint(w,g);draw();w._ro&&w._ro.disconnect();w._ro=new ResizeObserver(draw);w._ro.observe($('.mp-map',w))},
+ async sum(w,main,tk){main.innerHTML=`<div class="mp-cards">${Fault.loading('Memuat ringkasan pasar\u2026')}</div><p class="mp-ft"></p>`;
+  let j;try{j=await apiJson('/api/summary');if(!j||!((j.indices||[]).length+(j.highlights||[]).length))throw new ApiError('empty',{what:'summary',path:'/api/summary'})}catch(e){return fail(w,tk,e,'summary')}if(tk!==w._tk)return;
+  const rows=[...(j.indices||[]),...(j.highlights||[])].filter(r=>r&&r.price!=null);
+  $('.mp-cards',w).innerHTML=rows.map(r=>{const sp=Array.isArray(r.spark)&&r.spark.length>1?r.spark:null;let d='';if(sp){const mn=Math.min(...sp),mx=Math.max(...sp);d=sp.map((p,i)=>`${(i*145/(sp.length-1)).toFixed(1)},${(30-(p-mn)/((mx-mn)||1)*28).toFixed(1)}`).join(' ')}
+   return`<div class="mp-card" title="${esc(r.name||r.sym)}"><span>${esc(r.sym)}</span><b>${f(r.price)}</b><em class="${cls(r.changePct)}">${pc(r.changePct)}</em>${sp?`<svg viewBox="0 0 145 32" preserveAspectRatio="none"><polyline points="${d}" fill="none" stroke="var(--${r.changePct>=0?'up':'dn'})" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>`:''}</div>`}).join('');
+  $('.mp-ft',w).textContent='Data live \u00b7 perubahan harian \u00b7 garis = 30 penutupan harian terakhir \u00b7 diperbarui '+new Date(j.time||Date.now()).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})},
+ async mov(w,main,tk){main.innerHTML=bar(1,1,0)+`<div class="mp-two">${Fault.loading('Memuat data\u2026')}</div>`;let g;try{g=await load()}catch(e){return fail(w,tk,e,'heatmap')}if(tk!==w._tk)return;
   const all=g.flatMap(x=>x.it.map(i=>({...i,g:x.n}))).sort((a,b)=>b.c-a.c),top=all.slice(0,10),low=all.slice(-10).reverse();
   $('.mp-two',w).innerHTML=`<div><h3>Naik terbanyak</h3>${top.map(row).join('')}</div><div><h3>Turun terbanyak</h3>${low.map(row).join('')}</div>`},
- async sec(w,main,tk){main.innerHTML=bar(1,1,0)+`<div class="mp-sec"></div>`;const g=await load();if(tk!==w._tk)return;if(!g){loadErr(w);return}
+ async sec(w,main,tk){main.innerHTML=bar(1,1,0)+`<div class="mp-sec">${Fault.loading('Memuat data\u2026')}</div>`;let g;try{g=await load()}catch(e){return fail(w,tk,e,'heatmap')}if(tk!==w._tk)return;
   const r=g.map(x=>{const t=x.it.reduce((a,i)=>a+i.v,0);return{n:x.n,c:x.it.reduce((a,i)=>a+i.c*i.v,0)/t}}).sort((a,b)=>b.c-a.c),mx=Math.max(...r.map(x=>Math.abs(x.c)),.01);
-  $('.mp-sec',w).innerHTML=r.map(x=>`<div class="mp-bar"><span>${x.n}</span><div><i class="${cls(x.c)}" style="width:${Math.abs(x.c)/mx*50}%;margin-${x.c>=0?'left':'right'}:50%;background:var(--${x.c>=0?'up':'dn'});${x.c<0?'margin-left:auto;':''}"></i></div><em class="${cls(x.c)}">${pc(x.c)}</em></div>`).join('')+`<p class="mp-ft">Rata-rata berbobot kapitalisasi per sektor \u00b7 data dummy</p>`}};
+  $('.mp-sec',w).innerHTML=r.map(x=>`<div class="mp-bar"><span>${x.n}</span><div><i class="${cls(x.c)}" style="width:${Math.abs(x.c)/mx*50}%;margin-${x.c>=0?'left':'right'}:50%;background:var(--${x.c>=0?'up':'dn'});${x.c<0?'margin-left:auto;':''}"></i></div><em class="${cls(x.c)}">${pc(x.c)}</em></div>`).join('')+`<p class="mp-ft">Rata-rata berbobot kapitalisasi per sektor</p>`}};
 function show(w){const tk=w._tk=(w._tk||0)+1,main=$('.mp-main',w);
  $$('.mp-n',w).forEach(b=>b.setAttribute('aria-pressed',b.dataset.p===M.page));w._ro&&w._ro.disconnect();PG[M.page](w,main,tk)}
 registerApp('maps',{css:'apps/maps/maps.css',icon:"<rect x=\"3\" y=\"3\" width=\"10\" height=\"10\" rx=\"1.5\"/><rect x=\"15\" y=\"3\" width=\"6\" height=\"6\" rx=\"1.5\"/><rect x=\"15\" y=\"11\" width=\"5\" height=\"10\" rx=\"1.5\"/><rect x=\"3\" y=\"15\" width=\"10\" height=\"6\" rx=\"1.5\"/>",t:'Maps',w:960,h:600,flush:1,

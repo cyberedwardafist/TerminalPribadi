@@ -23,3 +23,5 @@
 .hm-ar em{flex:none;min-width:70px;font-style:normal;font-size:11px;color:var(--acc);text-transform:uppercase;letter-spacing:.03em}
 .hm-ar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hm-ar small{flex:none;color:var(--mute);font-size:11px}
+
+.hm-fs:empty{display:none}.hm-fs .ft-strip{border:1px solid var(--line);border-radius:10px}

@@ -4,7 +4,7 @@ const{row,seg,bindSeg}=Setting;
 Setting.page({id:'api',title:'API',color:'#30b158',icon:"<rect x=\"3\" y=\"4\" width=\"18\" height=\"6\" rx=\"2\"/><rect x=\"3\" y=\"14\" width=\"18\" height=\"6\" rx=\"2\"/><path d=\"M7 7h.01M7 17h.01\"/>",
  html:()=>`
   <div class="grp">
-   ${row('Sumber data','Dummy = data contoh di klien. Live = ambil dari backend',seg('mode',[['dummy','Dummy'],['live','Live']]))}
+   ${row('Sumber data','Dummy = tanpa server (data pasar tidak tersedia). Live = ambil dari backend',seg('mode',[['dummy','Dummy'],['live','Live']]))}
   </div>
   <div class="grp" data-live>
    ${row('Base URL','Alamat server REST, mis. <code>https://api.contoh.id</code>','<input class="in w" data-a="base" type="url" inputmode="url" placeholder="https://" autocomplete="off" spellcheck="false" aria-label="Base URL">')}
