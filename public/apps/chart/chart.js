@@ -147,7 +147,7 @@ function pop(w,anchor,html,bind,cls){closePop(w);const root=$('.ct',w),p=documen
 function at(x,y){return{getBoundingClientRect:()=>({left:x,bottom:y,top:y,right:x,width:0,height:0}),contains:()=>false}}
 // modal di dalam jendela chart. ok(form)->false untuk tetap terbuka
 function modal(w,title,body,ok,o={}){closeModal(w);const root=$('.ct',w),bd=document.createElement('div');bd.className='ct-md';
- bd.innerHTML=`<form class="ct-mb${o.wide?' wide':''}" role="dialog" aria-modal="true" aria-label="${esc(title)}"><header><b>${esc(title)}</b><button type="button" class="ct-x" data-m="x" aria-label="Tutup">×</button></header><div class="ct-mc">${body}</div>${ok?`<footer>${(o.extra||[]).map(x=>`<button type="button" class="ct-b ${x[2]||''}" data-m="${x[0]}">${x[1]}</button>`).join('')}<i class="ct-sp"></i><button type="button" class="ct-b" data-m="x">Batal</button><button type="submit" class="ct-b ct-pri">${o.okText||'Simpan'}</button></footer>`:''}</form>`;
+ bd.innerHTML=`<form class="ct-mb${o.wide?' wide':''}${o.cls?' '+o.cls:''}" role="dialog" aria-modal="true" aria-label="${esc(title)}"><header><b>${esc(title)}</b><button type="button" class="ct-x" data-m="x" aria-label="Tutup">×</button></header><div class="ct-mc">${body}</div>${ok?`<footer>${(o.extra||[]).map(x=>`<button type="button" class="ct-b ${x[2]||''}" data-m="${x[0]}">${x[1]}</button>`).join('')}<i class="ct-sp"></i><button type="button" class="ct-b" data-m="x">Batal</button><button type="submit" class="ct-b ct-pri">${o.okText||'Simpan'}</button></footer>`:''}</form>`;
  root.append(bd);w._m=bd;const fm=bd.firstChild,done=()=>closeModal(w);
  fm.onsubmit=e=>{e.preventDefault();if(ok&&ok(fm)===false)return;done()};
  bd.onclick=e=>{if(e.target===bd||e.target.closest('[data-m=x]'))done();else{const x=e.target.closest('[data-m]');if(x&&o.on&&o.on[x.dataset.m])o.on[x.dataset.m](fm,done)}};
@@ -173,7 +173,7 @@ function tabSearch(w,anchor){const R=w._r;
 const hex=c=>{if(/^#[0-9a-f]{6}$/i.test(c||''))return c;const m=/^rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(c||'');return m?'#'+[m[1],m[2],m[3]].map(v=>(+v).toString(16).padStart(2,'0')).join(''):'#8a93a0'};
 function indPanel(w){const T=cur(w);let mine=[];
  const body=`<input class="ct-in" placeholder="Cari indikator…" aria-label="Cari indikator"><div class="ct-il"></div>`;
- const fm=modal(w,'Indikator',body,null,{wide:1});const inp=$('input',fm),ls=$('.ct-il',fm);
+ const fm=modal(w,'Indikator',body,null,{cls:'ind'});const inp=$('input',fm),ls=$('.ct-il',fm);
  const draw=()=>{const q=inp.value.trim().toLowerCase();let h='';
   const cust=mine.filter(m=>!q||m.name.toLowerCase().includes(q));
   for(const[g,ks]of ChartInd.GROUPS){const it=ks.filter(k=>!q||ID[k].name.toLowerCase().includes(q)||ID[k].short.toLowerCase().includes(q));if(it.length)h+=`<h5>${g}</h5>`+it.map(k=>`<button type="button" class="ct-r" data-k="${k}"><b>${ID[k].short}</b><span>${ID[k].name}</span><em>${ID[k].overlay?'overlay':'panel'}</em></button>`).join('')}
