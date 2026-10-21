@@ -134,13 +134,13 @@ function sync(w){const R=w._r,T=cur(w),q=s=>$(s,w);
  $$('[data-tf]',w).forEach(b=>b.setAttribute('aria-pressed',b.dataset.tf===T.tf));
  $$('[data-sc]',w).forEach(b=>b.setAttribute('aria-pressed',b.dataset.sc===T.scale));
  q('[data-a=auto]').setAttribute('aria-pressed',T.auto!==false);
- q('[data-a=mag]').setAttribute('aria-pressed',T.mag);q('[data-a=hide]').setAttribute('aria-pressed',!!T.hideDr);
+ q('[data-a=mag]').setAttribute('aria-pressed',T.mag);q('[data-a=stay]').setAttribute('aria-pressed',!!R.stay);q('[data-a=hide]').setAttribute('aria-pressed',!!T.hideDr);
  q('[data-a=undo]').disabled=!hist(T.sym).u.length;q('[data-a=redo]').disabled=!hist(T.sym).r.length;
  railSync(w);styleBar(w);legend(w);
  q('canvas').style.cursor=T.tool==='cur'?'crosshair':'cell';sch(w)}
 
 // ---------- popover dan modal ----------
-function closePop(w){const p=w._p;if(p){p.remove();document.removeEventListener('pointerdown',w._pa,true);w._p=null}}
+function closePop(w){const p=w._p;if(p){const cv=$('canvas',w);if(cv&&p.contains(document.activeElement))cv.focus&&cv.focus({preventScroll:true});p.remove();document.removeEventListener('pointerdown',w._pa,true);w._p=null}}
 function pop(w,anchor,html,bind,cls){closePop(w);const root=$('.ct',w),p=document.createElement('div'),r=anchor.getBoundingClientRect(),b=root.getBoundingClientRect();
  p.className='ct-pop'+(cls?' '+cls:'');p.innerHTML=html;root.append(p);const pw=p.offsetWidth;p.style.left=Math.max(4,Math.min(r.left-b.left,b.width-pw-4))+'px';p.style.top=Math.max(4,Math.min(r.bottom-b.top+4,b.height-p.offsetHeight-4))+'px';w._p=p;
  w._pa=e=>{if(!p.contains(e.target)&&!(anchor.contains&&anchor.contains(e.target)))closePop(w)};document.addEventListener('pointerdown',w._pa,true);bind(p);return p}
@@ -251,18 +251,18 @@ function updLegend(w,T,res){const box=$('.ct-lg',w),G=w._g;if(!box||!res||!G)ret
 
 // ---------- render ----------
 const sch=w=>{if(w._q)return;w._q=requestAnimationFrame(()=>{w._q=0;draw(w)})};
-function draw(w){const T=cur(w);if(!T)return;
+function draw(w){const T=cur(w);if(!T)return;T._dp=T.draft&&w._r.dc?w._r.dc.placed:0;hint(w,T);
  const deps={series:i=>serie(w,T,i),drawings:()=>T.hideDr?[]:drs(T.sym),alerts:()=>w._al=alertsOf(T.sym),now:Date.now},res=ChartRender.draw(w,T,deps);
  if(res){updLegend(w,T,res);const G=w._g;if(G&&G.i0<25&&T.D&&T.D.live&&!T.busy&&!T.noMore)older(w,T)}else{const g=w._g;if(!T.D)w._g=null}}
 
 // ---------- gambar: interaksi ----------
 function snap(w,T,mx,my,noMag){const G=w._g,j=G.iX(mx),bi=Math.max(0,Math.min(G.D.length-1,Math.round(j)));let p=G.P(my),t=G.tAt(j);
- if(T.mag&&!noMag){t=G.D[bi].t;const k=G.V[bi];let best=1e9;[k.o,k.h,k.l,k.c].forEach(v=>{const dd=Math.abs(G.Y(v)-my);if(dd<best&&dd<18){best=dd;p=v}})}
+ if(T.mag&&!noMag&&!w._r.alt){t=G.D[bi].t;const k=G.V[bi];let best=1e9;[k.o,k.h,k.l,k.c].forEach(v=>{const dd=Math.abs(G.Y(v)-my);if(dd<best&&dd<18){best=dd;p=v}})}
  return{t,p}}
 const isLocked=d=>!!d.lock;
 function finishDraft(w,T){const R=w._r,d=T.draft;T.draft=null;R.dc=null;if(!d)return;
  if(d.k==='long'||d.k==='short')ChartDraw.complete(d);
- const add=()=>{mut(T.sym,L=>L.push(d));T.sel=d;T.tool='cur';sync(w);redrawAll()};
+ const add=()=>{mut(T.sym,L=>L.push(d));T.sel=d;if(!R.stay)T.tool='cur';sync(w);redrawAll()};     // R.stay: tetap di alat yang sama untuk gambar berikutnya
  if(d.k==='text'){dlg.prompt('Teks','Isi teks','').then(v=>{if(v==null||!v.trim()){T.tool='cur';sync(w);return}d.txt=v.trim();add()});return}
  add()}
 function drawDown(w,T,mx,my){const R=w._r,G=w._g;if(my>=G.mH)return;const pt=snap(w,T,mx,my),k=T.tool,n=ChartDraw.BY[k].n;
@@ -276,38 +276,79 @@ function drawMove(w,T,mx,my,down){const R=w._r,dc=R.dc,d=T.draft;if(!d||!dc||my<
 
 function styleBar(w){const T=cur(w),bar=$('.ct-sb',w);if(!bar)return;const d=T&&T.sel;if(!d||!drs(T.sym).includes(d)){bar.hidden=true;return}
  bar.hidden=false;const s=d.s||(d.s={}),nc=ChartDraw.NOCOLOR[d.k];
- bar.innerHTML=(nc?'':ChartDraw.COLORS.map(c=>`<button class="ct-cs${(s.c||'')===c?' on':''}" data-sc2="${c}" style="background:${c}" aria-label="Warna ${c}"></button>`).join(''))+
+ bar.innerHTML=`<span class="ct-sn">${esc(ChartDraw.BY[d.k].name)}</span>`+(nc?'':ChartDraw.COLORS.map(c=>`<button class="ct-cs${(s.c||'')===c?' on':''}" data-sc2="${c}" style="background:${c}" aria-label="Warna ${c}"></button>`).join('')+`<input type="color" class="ct-cc" data-cc value="${/^#[0-9a-f]{6}$/i.test(s.c||'')?s.c:'#4c9aff'}" title="Warna lain" aria-label="Warna lain">`)+
   `<select data-sw aria-label="Tebal garis">${[1,1.5,2,3,4].map(v=>`<option value="${v}"${(s.w||1.5)==v?' selected':''}>${v}px</option>`).join('')}</select><select data-sd aria-label="Gaya garis"><option value="0">Solid</option><option value="1"${s.dash===1?' selected':''}>Putus</option><option value="2"${s.dash===2?' selected':''}>Titik</option></select>`+
-  (d.k==='fib'||d.k==='fibx'?`<button class="ct-b" data-sa="ext" aria-pressed="${!!s.ext}" title="Perpanjang ke kanan">→</button>`:'')+(d.k==='text'?'<button class="ct-b" data-sa="txt">Ubah teks</button>':'')+
+  (d.k==='fib'||d.k==='fibx'?`<button class="ct-b" data-sa="ext" aria-pressed="${!!s.ext}" title="Perpanjang ke kanan">→</button>`:'')+(d.k==='text'?'<button class="ct-b" data-sa="txt">Ubah teks</button>':'')+(['hline','hray','cross'].includes(d.k)?'<button class="ct-b" data-sa="price" title="Ketik harga tepat">Harga…</button>':'')+
   `<button class="ct-b" data-sa="lock" aria-pressed="${!!d.lock}" title="Kunci">\u{1F512}</button><button class="ct-b" data-sa="hide" title="Sembunyikan">◉</button><button class="ct-b" data-sa="clone" title="Duplikat (Ctrl+D)">⧉</button><button class="ct-b ct-dng" data-sa="del" title="Hapus (Del)">\u{1F5D1}</button>`}
 function styleAct(w,e){const T=cur(w),d=T.sel;if(!d)return;const t=e.target;
  const ch=fn=>{mut(T.sym,()=>fn());sync(w);redrawAll()};
  if(t.dataset.sc2)return ch(()=>{d.s=d.s||{};d.s.c=t.dataset.sc2});
+ if(t.matches('[data-cc]'))return ch(()=>{d.s=d.s||{};d.s.c=t.value});
  if(t.matches('[data-sw]'))return ch(()=>{d.s=d.s||{};d.s.w=+t.value});
  if(t.matches('[data-sd]'))return ch(()=>{d.s=d.s||{};d.s.dash=+t.value});
- const b=t.closest('[data-sa]');if(!b)return;const a=b.dataset.sa;
+ const b=t.closest('[data-sa]');if(b)doAct(w,b.dataset.sa)}
+// aksi pada gambar terpilih (tombol style bar, menu klik kanan, pintasan keyboard, klik dua kali)
+function doAct(w,a){const T=cur(w),d=T&&T.sel;if(!d)return;
+ const ch=fn=>{mut(T.sym,()=>fn());sync(w);redrawAll()};
  if(a==='del')return ch(()=>{const L=drs(T.sym);L.splice(L.indexOf(d),1);T.sel=null});
  if(a==='lock')return ch(()=>{d.lock=!d.lock});
  if(a==='hide')return ch(()=>{d.hide=true;T.sel=null});
  if(a==='ext')return ch(()=>{d.s=d.s||{};d.s.ext=!d.s.ext});
  if(a==='clone')return ch(()=>{const c=ChartDraw.clone(d);ChartDraw.translate(c,TFS[T.tf]*3,0);drs(T.sym).push(c);T.sel=c});
- if(a==='txt')dlg.prompt('Teks','Isi teks',d.txt||'').then(v=>{if(v&&v.trim())ch(()=>{d.txt=v.trim()})})}
+ if(a==='front'||a==='back')return ch(()=>{const L=drs(T.sym);L.splice(L.indexOf(d),1);a==='front'?L.push(d):L.unshift(d)});
+ if(a==='txt')return dlg.prompt('Teks','Isi teks',d.txt||'').then(v=>{if(v&&v.trim())ch(()=>{d.txt=v.trim()})});
+ if(a==='price')return dlg.prompt('Harga '+T.sym,'Harga',String(+d.pts[0].p.toPrecision(8))).then(v=>{if(v==null)return;const n=parseFloat(String(v).replace(',','.'));
+  if(n>0&&isFinite(n))ch(()=>{d.pts[0].p=n});else dlg.alert('Harga','Isi angka harga yang valid.')})}
+// geser halus gambar terpilih dengan tombol panah (satu bar / satu piksel harga; Shift = 10x). Penekanan beruntun dalam 0,8 dtk = satu langkah undo.
+function nudge(w,T,e){const G=w._g,R=w._r,d=T.sel,L=drs(T.sym);if(!G||!L.includes(d))return;
+ const n=e.shiftKey?10:1;let dt=0,dp=0;
+ if(e.key==='ArrowLeft')dt=-TFS[T.tf]*n;else if(e.key==='ArrowRight')dt=TFS[T.tf]*n;else dp=Math.abs(G.P(0)-G.P(1))*n*(e.key==='ArrowUp'?1:-1);
+ const t=Date.now();if(R.nd===d&&t-R.nt<800){ChartDraw.translate(d,dt,dp);touch(T.sym)}else mut(T.sym,()=>ChartDraw.translate(d,dt,dp));
+ R.nd=d;R.nt=t;sync(w);redrawAll()}
+// petunjuk singkat di kiri bawah kanvas: apa yang harus dilakukan sekarang
+function hint(w,T){const el=$('.ct-hint',w);if(!el)return;const R=w._r,tl=ChartDraw.BY[T.tool];let s='';
+ if(T.tool!=='cur'&&tl){const dc=R.dc;
+  if(T.draft&&dc)s=dc.brush?'Seret untuk menggambar, lepas untuk selesai':`${tl.name}: klik titik ke-${Math.min(dc.placed+1,tl.n)} dari ${tl.n}`;
+  else s=tl.n===1?`${tl.name}: klik untuk menaruh`:tl.n===0?`${tl.name}: tekan lalu seret`:`${tl.name}: klik titik awal, lalu klik (atau seret) ke titik berikutnya`;
+  s+=' · Alt = tanpa magnet · Esc / klik kanan = selesai'}
+ else if(T.sel&&!T.hideDr&&drs(T.sym).includes(T.sel))s=T.sel.lock?'Terkunci · klik ikon gembok di bilah atas untuk membuka':'Seret titik putih = ubah bentuk · seret garis = pindah · panah = geser halus (Shift = cepat) · Del = hapus · klik kanan = menu';
+ if(el.textContent!==s){el.textContent=s;el.hidden=!s}}
 
-function railSync(w){const T=cur(w),R=w._r;$$('[data-g]',w).forEach(b=>{const g=b.dataset.g,tl=ChartDraw.TOOLS.filter(t=>t.grp===g),on=tl.some(t=>t.k===T.tool);b.setAttribute('aria-pressed',on);const sh=on?T.tool:R.last[g]||tl[0].k;b.innerHTML=svg(ChartDraw.BY[sh].ic)+(tl.length>1?'<u></u>':'');b.title=tl.length>1?ChartDraw.GROUPS.find(x=>x[0]===g)[1]:tl[0].name})}
-function toolMenu(w,b){const g=b.dataset.g,T=cur(w),R=w._r,tl=ChartDraw.TOOLS.filter(t=>t.grp===g);
- if(tl.length===1){T.tool=T.tool===tl[0].k?'cur':tl[0].k;T.draft=null;w._r.dc=null;sync(w);return}
- pop(w,b,tl.map(t=>`<button class="ct-r${T.tool===t.k?' on':''}" data-t="${t.k}">${svg(t.ic)}<span style="color:var(--ink)">${t.name}</span></button>`).join(''),p=>{p.onclick=e=>{const x=e.target.closest('[data-t]');if(!x)return;closePop(w);T.tool=x.dataset.t;R.last[g]=T.tool;T.draft=null;R.dc=null;sync(w)}},'ct-fly');
+const TOOLKEY={t:'trend',h:'hline',v:'vline',r:'rect',f:'fib',a:'arrow',x:'text',c:'channel',m:'measure',l:'long',s:'short',b:'brush',e:'ellipse'};
+const KEYOF=Object.fromEntries(Object.entries(TOOLKEY).map(([k,v])=>[v,k.toUpperCase()]));
+function railSync(w){const T=cur(w),R=w._r;$$('[data-g]',w).forEach(b=>{const g=b.dataset.g,tl=ChartDraw.TOOLS.filter(t=>t.grp===g),on=tl.some(t=>t.k===T.tool),sh=on?T.tool:R.last[g]||tl[0].k,n=ChartDraw.BY[sh];
+ b.setAttribute('aria-pressed',on);b.innerHTML=svg(n.ic)+(tl.length>1?'<u></u>':'');
+ b.title=n.name+(KEYOF[sh]?` (${KEYOF[sh]})`:'')+(tl.length>1?' · klik = pakai alat ini; panah kecil atau klik kanan = alat lain':'')})}
+// Klik pada tombol grup = langsung pakai alat terakhir grup itu (1 klik). Daftar alat lain: klik panah kecil di pojok tombol, atau klik kanan.
+function toolMenu(w,b,e){const g=b.dataset.g,T=cur(w),R=w._r,tl=ChartDraw.TOOLS.filter(t=>t.grp===g);
+ const pick=k=>{T.tool=T.tool===k?'cur':k;if(T.tool!=='cur')R.last[g]=k;T.draft=null;R.dc=null;closePop(w);sync(w)};
+ if(tl.length===1){pick(tl[0].k);return}
+ const arrow=e&&(e.type==='contextmenu'||(e.target.closest&&e.target.closest('u'))||e.clientX-b.getBoundingClientRect().left>b.offsetWidth-12);
+ if(!arrow){pick(R.last[g]||tl[0].k);return}
+ pop(w,b,tl.map(t=>`<button class="ct-r${T.tool===t.k?' on':''}" data-t="${t.k}">${svg(t.ic)}<span style="color:var(--ink)">${t.name}</span>${KEYOF[t.k]?`<kbd>${KEYOF[t.k]}</kbd>`:''}</button>`).join(''),p=>{p.onclick=ev=>{const x=ev.target.closest('[data-t]');if(!x)return;closePop(w);T.tool=x.dataset.t;R.last[g]=T.tool;T.draft=null;R.dc=null;sync(w)}},'ct-fly');
  const p=w._p;if(p){const r=b.getBoundingClientRect(),rr=$('.ct',w).getBoundingClientRect();p.style.left=r.right-rr.left+4+'px';p.style.top=Math.max(4,r.top-rr.top)+'px'}}
 
 function bind(w){const cv=$('canvas',w),R=w._r;
  const pos=e=>{const r=cv.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+ const tol=()=>R.ptype==='touch'?{t:16,hr:22}:{t:8,hr:10};      // layar sentuh: area tekan lebih besar
  const sel=(T,mx,my)=>{const G=w._g;if(my>=G.mH||T.hideDr)return null;const L=drs(T.sym);
-  if(T.sel&&L.includes(T.sel)){const h=ChartDraw.hit(T.sel,G.E,mx,my);if(h)return{d:T.sel,h}}
-  for(let i=L.length-1;i>=0;i--){const h=ChartDraw.hit(L[i],G.E,mx,my);if(h)return{d:L[i],h}}return null};
- cv.addEventListener('pointerdown',e=>{const T=cur(w),G=w._g;if(!T||!T.D||!G||e.button!==0)return;const[mx,my]=pos(e);cv.setPointerCapture(e.pointerId);closePop(w);cv.focus&&cv.focus();
+  const o=tol();
+  if(T.sel&&L.includes(T.sel)){const h=ChartDraw.hit(T.sel,G.E,mx,my,o);if(h)return{d:T.sel,h}}
+  for(let i=L.length-1;i>=0;i--){const h=ChartDraw.hit(L[i],G.E,mx,my,o);if(h)return{d:L[i],h}}return null};
+ const hover=(T,mx,my)=>{const G=w._g;let h=null;       // sorot gambar di bawah kursor + ubah bentuk kursor
+  if(G&&T.tool==='cur'&&!T.draft&&mx<=G.pw&&my<G.mH&&!T.hideDr)h=sel(T,mx,my);
+  const o=T.hov,hh=h&&h.h.h!=null?h.h.h:null;if(h?!(o&&o.d===h.d&&o.h===hh):o)T.hov=h?{d:h.d,h:hh}:null;
+  cv.style.cursor=T.tool!=='cur'?'cell':h?ChartDraw.cursorOf(h.d,h.h):'crosshair'};
+ const drawMenu=(e,d)=>{const pr=['hline','hray','cross'].includes(d.k);
+  pop(w,at(e.clientX,e.clientY),`<h5>${esc(ChartDraw.BY[d.k].name)}</h5>${pr?'<button class="ct-r" data-m="price">Ubah harga…</button>':''}${d.k==='text'?'<button class="ct-r" data-m="txt">Ubah teks…</button>':''}<button class="ct-r" data-m="clone">Duplikat<em>Ctrl+D</em></button><button class="ct-r" data-m="lock">${d.lock?'Buka kunci':'Kunci posisi'}</button><button class="ct-r" data-m="hide">Sembunyikan</button><button class="ct-r" data-m="front">Bawa ke depan</button><button class="ct-r" data-m="back">Kirim ke belakang</button><button class="ct-r ct-dng" data-m="del">Hapus<em>Del</em></button>`,
+   p=>{p.onclick=ev=>{const b=ev.target.closest('[data-m]');if(!b)return;closePop(w);doAct(w,b.dataset.m)}})};
+ cv.addEventListener('pointerdown',e=>{const T=cur(w),G=w._g;if(!T||!T.D||!G||e.button!==0)return;const[mx,my]=pos(e);R.alt=e.altKey;R.ptype=e.pointerType;cv.setPointerCapture(e.pointerId);closePop(w);cv.focus&&cv.focus();
   if(mx>G.pw){if(my<G.PH){T.auto=false;R.drag={mode:'ys',my,yr:[...T.yr]};sync(w)}return}
   if(my>G.PH){R.drag={mode:'xs',mx,vis:T.vis,rb:T.rb};return}
   for(const a of w._al||[])if(a._box&&mx>=a._box[0]&&mx<=a._box[0]+a._box[2]&&my>=a._box[1]&&my<=a._box[1]+a._box[3]){const l=G.D[G.D.length-1].c;setAlert(a.id,null,l);sch(w);return}
+  if(T.tool!=='cur'&&!T.draft&&T.sel&&!isLocked(T.sel)&&drs(T.sym).includes(T.sel)){        // alat gambar masih aktif: titik gambar yang baru dibuat tetap bisa ditarik untuk merapikan
+   const hh=ChartDraw.hit(T.sel,G.E,mx,my,tol());
+   if(hh&&hh.h!=null){R.drag={mode:'handle',d:T.sel,h:hh.h,mx,my,o:JSON.parse(JSON.stringify(T.sel.pts)),pre:JSON.stringify(drs(T.sym)),moved:false};sch(w);return}}
   if(T.tool!=='cur'){drawDown(w,T,mx,my);if(T.draft){R.drag={mode:'draw'}}return}
   for(let i=1;i<G.panes.length;i++)if(Math.abs(my-G.panes[i].y0)<=3){R.drag={mode:'rs',i,my,w0:G.panes.map(p=>p.k==='main'?T.mw:p.o.i.h||1.3)};return}
   const h=sel(T,mx,my);
@@ -315,7 +356,7 @@ function bind(w){const cv=$('canvas',w),R=w._r;
    if(isLocked(h.d)){sch(w);return}
    R.drag={mode:h.h.h!=null?'handle':'move',d:h.d,h:h.h.h,mx,my,o:JSON.parse(JSON.stringify(h.d.pts)),pre:JSON.stringify(drs(T.sym)),moved:false}}
   else{if(T.sel){T.sel=null;styleBar(w)}R.drag={mode:'pan',mx,my,rb:T.rb,yr:T.yr&&[...T.yr]}}sch(w)});
- cv.addEventListener('pointermove',e=>{const T=cur(w);if(!T)return;const[mx,my]=pos(e),G=w._g,dr=R.drag;T.m={x:mx,y:my};
+ cv.addEventListener('pointermove',e=>{const T=cur(w);if(!T)return;const[mx,my]=pos(e),G=w._g,dr=R.drag;T.m={x:mx,y:my};R.alt=e.altKey;R.ptype=e.pointerType;
   if(G&&dr){
    if(dr.mode==='pan'){T.rb=Math.max(-T.vis*.5,Math.min(T.D.length+T.vis*.6,dr.rb-(mx-dr.mx)/G.bw));if(T.auto===false&&dr.yr){const pr=(dr.yr[1]-dr.yr[0])/(T._yrMain.m1-T._yrMain.m0),dy=(my-dr.my)*pr;T.yr=[dr.yr[0]+dy,dr.yr[1]+dy]}}
    else if(dr.mode==='ys'){const k=Math.exp((my-dr.my)/180),c=(dr.yr[0]+dr.yr[1])/2,hs=(dr.yr[1]-dr.yr[0])/2*k;T.yr=[c-hs,c+hs]}
@@ -323,9 +364,10 @@ function bind(w){const cv=$('canvas',w),R=w._r;
    else if(dr.mode==='rs'){const tot=G.panes.reduce((a,p,i)=>a+(i?p.o.i.h||1.3:T.mw),0),u=tot/G.PH,dy=(my-dr.my)*u,a=dr.i-1,b=dr.i,wa=dr.w0[a]+dy,wb=dr.w0[b]-dy;
     if(wa>=.6&&wb>=.6){const set=(i,v)=>{i===0?T.mw=v:G.panes[i].o.i.h=v};set(a,wa);set(b,wb)}}
    else if(dr.mode==='draw')drawMove(w,T,mx,my,true);
-   else if(dr.mode==='handle'){dr.moved=true;ChartDraw.moveHandle(dr.d,dr.h,snap(w,T,mx,Math.min(my,G.mH-1),e.altKey))}
-   else if(dr.mode==='move'){dr.moved=true;const dt=G.tAt(G.iX(mx))-G.tAt(G.iX(dr.mx)),log=G.mode==='log',r=G.P(my)/G.P(dr.my),dp=G.P(my)-G.P(dr.my);dr.d.pts.forEach((q,i)=>{q.t=dr.o[i].t+dt;q.p=log?dr.o[i].p*r:dr.o[i].p+dp})}}
+   else if(dr.mode==='handle'&&(dr.moved||Math.hypot(mx-dr.mx,my-dr.my)>=3)){dr.moved=true;ChartDraw.moveHandle(dr.d,dr.h,snap(w,T,mx,Math.min(my,G.mH-1),e.altKey))}
+   else if(dr.mode==='move'&&(dr.moved||Math.hypot(mx-dr.mx,my-dr.my)>=3)){dr.moved=true;const dt=G.tAt(G.iX(mx))-G.tAt(G.iX(dr.mx)),log=G.mode==='log',r=G.P(my)/G.P(dr.my),dp=G.P(my)-G.P(dr.my);dr.d.pts.forEach((q,i)=>{q.t=dr.o[i].t+dt;q.p=log?dr.o[i].p*r:dr.o[i].p+dp})}}
   else if(T.draft)drawMove(w,T,mx,my,false);
+  else hover(T,mx,my);
   sch(w)});
  const end=e=>{const T=cur(w),dr=R.drag;R.drag=null;if(!T)return;
   if(dr&&dr.mode==='draw'&&T.draft&&R.dc){const[mx,my]=pos(e),dc=R.dc;if(dc.brush){if(T.draft.pts.length>1)finishDraft(w,T);else{T.draft=null;R.dc=null}}
@@ -334,12 +376,15 @@ function bind(w){const cv=$('canvas',w),R=w._r;
   if(dr&&(dr.mode==='rs'||dr.mode==='xs'))save(w);
   sch(w)};
  cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',e=>{R.drag=null;sch(w)});
- cv.addEventListener('pointerleave',()=>{const T=cur(w);if(T&&!R.drag){T.m=null;sch(w)}});
+ cv.addEventListener('pointerleave',()=>{const T=cur(w);if(T&&!R.drag){T.m=null;T.hov=null;sch(w)}});
  cv.addEventListener('dblclick',e=>{const T=cur(w),G=w._g;if(!T||!G)return;const[mx,my]=pos(e);
   if(mx>G.pw){T.auto=true;sync(w);return}
-  if(my<G.mH){const h=sel(T,mx,my);if(h&&h.d.k==='text'){T.sel=h.d;styleAct(w,{target:Object.assign(document.createElement('b'),{dataset:{sa:'txt'}})});return}}
+  if(my<G.mH){const h=sel(T,mx,my);if(h&&(h.d.k==='text'||['hline','hray','cross'].includes(h.d.k))){T.sel=h.d;doAct(w,h.d.k==='text'?'txt':'price');return}}
   T.vis=120;T.rb=T.D.length+7;T.auto=true;sync(w)});
- cv.addEventListener('contextmenu',e=>{e.preventDefault();const T=cur(w),G=w._g;if(!T||!G)return;const[mx,my]=pos(e);if(mx>G.pw||my>=G.mH)return;const price=G.P(my),last=G.D[G.D.length-1].c,rr=$('.ct',w).getBoundingClientRect();
+ cv.addEventListener('contextmenu',e=>{e.preventDefault();const T=cur(w),G=w._g;if(!T||!G)return;const[mx,my]=pos(e);if(mx>G.pw||my>=G.mH)return;
+  if(T.tool!=='cur'||T.draft){T.tool='cur';T.draft=null;R.dc=null;sync(w);return}          // klik kanan saat menggambar = selesai
+  {const hd=sel(T,mx,my);if(hd){T.sel=hd.d;sync(w);drawMenu(e,hd.d);return}}                 // klik kanan pada gambar = menu gambar
+  const price=G.P(my),last=G.D[G.D.length-1].c,rr=$('.ct',w).getBoundingClientRect();
   const al=alertsOf(T.sym)[0];
   pop(w,at(e.clientX,e.clientY),`<button class="ct-r" data-m="al">\u{1F514} Pasang alert di ${G.F(price)}</button>${al?'<button class="ct-r" data-m="alx">Hapus alert</button>':''}<button class="ct-r" data-m="cp">Salin harga ${G.F(price)}</button><button class="ct-r" data-m="rs">Reset tampilan</button><button class="ct-r" data-m="clr">Hapus semua gambar</button>`,p=>{
    p.onclick=async ev=>{const b=ev.target.closest('[data-m]');if(!b)return;closePop(w);const m=b.dataset.m;
@@ -349,7 +394,7 @@ function bind(w){const cv=$('canvas',w),R=w._r;
  cv.addEventListener('wheel',e=>{e.preventDefault();const T=cur(w),G=w._g;if(!T||!G)return;const[mx]=pos(e);
   if(Math.abs(e.deltaX)>Math.abs(e.deltaY)){T.rb=Math.max(-T.vis*.5,Math.min(T.D.length+T.vis*.6,T.rb+e.deltaX/G.bw));sch(w);return}
   const ia=G.iX(mx),v=Math.max(10,Math.min(1500,T.vis*(e.deltaY<0?.88:1.14))),nb=G.pw/v;T.vis=v;T.rb=Math.max(-v*.5,Math.min(T.D.length+v*.6,ia+(G.pw-nb/2-mx)/nb));sch(w)},{passive:false});
- const sb=$('.ct-sb',w);sb.addEventListener('click',e=>{if(!e.target.matches('select'))styleAct(w,e)});sb.addEventListener('change',e=>{if(e.target.matches('select'))styleAct(w,e)});
+ const sb=$('.ct-sb',w);sb.addEventListener('click',e=>{if(!e.target.matches('select,[data-cc]'))styleAct(w,e)});sb.addEventListener('change',e=>{if(e.target.matches('select,[data-cc]'))styleAct(w,e)});
  $('.ct-lg',w).addEventListener('click',e=>{const b=e.target.closest('[data-ia]'),row=e.target.closest('[data-iid]');if(!b||!row)return;const T=cur(w),i=T.ind.find(x=>x.id===row.dataset.iid);if(!i)return;
   if(b.dataset.ia==='eye')i.on=!i.on;else if(b.dataset.ia==='rm')T.ind=T.ind.filter(x=>x!==i);else{indSettings(w,i.id);return}save(w);sync(w)});
  $('.ct-lg',w).addEventListener('dblclick',e=>{const row=e.target.closest('[data-iid]');if(row&&!e.target.closest('button'))indSettings(w,row.dataset.iid)});
@@ -357,7 +402,9 @@ function bind(w){const cv=$('canvas',w),R=w._r;
   if((e.key==='Delete'||e.key==='Backspace')&&T.sel){const d=T.sel;mut(T.sym,L=>{L.splice(L.indexOf(d),1)});T.sel=null;sync(w);redrawAll();e.preventDefault()}
   else if(mod&&k==='z'){undo(w,e.shiftKey);e.preventDefault()}
   else if(mod&&k==='y'){undo(w,true);e.preventDefault()}
-  else if(mod&&k==='d'&&T.sel){styleAct(w,{target:Object.assign(document.createElement('b'),{dataset:{sa:'clone'}})});e.preventDefault()}
+  else if(mod&&k==='d'&&T.sel){doAct(w,'clone');e.preventDefault()}
+  else if(!mod&&!e.altKey&&e.key.startsWith('Arrow')&&T.sel&&!T.draft&&!isLocked(T.sel)&&w._g){nudge(w,T,e);e.preventDefault()}
+  else if(!mod&&!e.altKey&&!e.shiftKey&&TOOLKEY[k]&&e.key.length===1){const tk=TOOLKEY[k];T.tool=T.tool===tk?'cur':tk;if(T.tool!=='cur')R.last[ChartDraw.BY[tk].grp]=tk;T.draft=null;R.dc=null;closePop(w);sync(w);e.preventDefault()}
   else if(e.key==='Escape'&&(T.draft||T.tool!=='cur'||T.sel||w._p||w._m)){e.stopImmediatePropagation();if(w._m){closeModal(w);return}T.draft=null;R.dc=null;T.tool='cur';T.sel=null;closePop(w);sync(w)}
   else if(e.altKey&&k==='t'){e.preventDefault();symPicker(w,$('.ct-new',w),'new')}
   else if(e.altKey&&k==='w'){e.preventDefault();closeTab(w,R.act)}
@@ -366,7 +413,8 @@ function bind(w){const cv=$('canvas',w),R=w._r;
 // ---------- app ----------
 const A={
  sym:(w,b)=>symPicker(w,b,'rep'),ind:w=>indPanel(w),new:(w,b)=>symPicker(w,b,'new'),srch:(w,b)=>tabSearch(w,b),lay:(w,b)=>layoutMenu(w,b),
- mag:w=>{const T=cur(w);T.mag=!T.mag;sync(w);save(w)},auto:w=>{const T=cur(w);T.auto=true;sync(w)},
+ mag:w=>{const T=cur(w);T.mag=!T.mag;sync(w);save(w)},
+ stay:w=>{const R=w._r;R.stay=!R.stay;try{localStorage.setItem('tc.chart.stay',R.stay?'1':'0')}catch(e){}sync(w)},auto:w=>{const T=cur(w);T.auto=true;sync(w)},
  hide:w=>{const T=cur(w);T.hideDr=!T.hideDr;T.sel=null;sync(w);save(w)},
  undo:w=>undo(w),redo:w=>undo(w,true),
  al:async w=>{const T=cur(w);if(!T.D)return;const last=T.D[T.D.length-1].c,ex=alertsOf(T.sym)[0],v=await dlg.prompt('Alert harga '+T.sym,'Harga',String(ex?ex.price:+last.toPrecision(7)));if(v==null)return;const n=parseFloat(String(v).replace(',','.'));
@@ -378,10 +426,10 @@ const svg=d=>`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke
 registerApp('chart',{css:'apps/chart/chart.css',icon:"<path d=\"M7 3v18M17 5v15\"/><rect x=\"4.5\" y=\"8\" width=\"5\" height=\"7\" rx=\"1\"/><rect x=\"14.5\" y=\"9\" width=\"5\" height=\"6\" rx=\"1\"/>",t:'Chart',w:1080,h:660,flush:1,
  html:()=>`<div class="ct"><div class="ct-top"><button class="ct-b ct-round" data-a="srch" aria-label="Cari tab" title="Semua tab">${svg('M6 9l6 6 6-6')}</button><div class="ct-tl" role="tablist"></div><button class="ct-b ct-round ct-new" data-a="new" aria-label="Tab baru" title="Tab baru (Alt+T)">${svg('M12 5v14M5 12h14')}</button></div>
 <div class="ct-bar"><button class="ct-b ct-sym" data-a="sym" title="Ganti simbol"></button><div class="seg">${Object.keys(TFS).map(t=>`<button data-tf="${t}" aria-pressed="false">${t}</button>`).join('')}</div><select class="ct-b" data-a="type" aria-label="Tipe chart">${Object.entries(TYPES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select><button class="ct-b" data-a="ind">Indikator</button><button class="ct-b" data-a="lay">Layout</button><button class="ct-b" data-a="al" title="Alert harga">\u{1F514} Alert</button><i class="ct-sp"></i><button class="ct-b" data-a="undo" title="Urungkan (Ctrl+Z)" aria-label="Urungkan">↶</button><button class="ct-b" data-a="redo" title="Ulangi (Ctrl+Y)" aria-label="Ulangi">↷</button><button class="ct-b" data-a="det" title="Pindahkan tab ini ke window baru (atau seret tab keluar dari strip)">Window baru</button><button class="ct-b" data-a="shot">PNG</button></div>
-<div class="ct-main"><div class="ct-rail">${ChartDraw.GROUPS.map(g=>`<button class="ct-b" data-g="${g[0]}" aria-pressed="false"></button>`).join('')}<i class="ct-sp"></i><button class="ct-b" data-a="mag" aria-pressed="true" title="Magnet: tempel ke O/H/L/C" aria-label="Magnet">${svg('M6 4v8a6 6 0 0012 0V4h-4v8a2 2 0 01-4 0V4z')}</button><button class="ct-b" data-a="hide" aria-pressed="false" title="Sembunyikan semua gambar" aria-label="Sembunyikan gambar">${svg('M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 100 6 3 3 0 000-6z')}</button><button class="ct-b" data-a="clr" title="Hapus semua gambar" aria-label="Hapus semua gambar">${svg('M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13')}</button></div>
-<div class="ct-cv"><canvas tabindex="0"></canvas><div class="ct-lg"></div><div class="ct-sb" hidden></div><div class="ct-sc"><button class="ct-b" data-sc="lin" aria-pressed="true" title="Skala linear">Lin</button><button class="ct-b" data-sc="log" aria-pressed="false" title="Skala logaritmik">Log</button><button class="ct-b" data-sc="pct" aria-pressed="false" title="Skala persen">%</button><button class="ct-b" data-a="auto" aria-pressed="true" title="Skala otomatis (klik dua kali sumbu harga)">Auto</button></div></div></div></div>`,
+<div class="ct-main"><div class="ct-rail">${ChartDraw.GROUPS.map(g=>`<button class="ct-b" data-g="${g[0]}" aria-pressed="false"></button>`).join('')}<i class="ct-sp"></i><button class="ct-b" data-a="mag" aria-pressed="true" title="Magnet: tempel ke O/H/L/C" aria-label="Magnet">${svg('M6 4v8a6 6 0 0012 0V4h-4v8a2 2 0 01-4 0V4z')}</button><button class="ct-b" data-a="stay" aria-pressed="true" title="Tetap di alat setelah menggambar (matikan = otomatis kembali ke kursor)" aria-label="Tetap menggambar">${svg('M12 17v5M9 3h6l-1 6 3 3v2H7v-2l3-3z')}</button><button class="ct-b" data-a="hide" aria-pressed="false" title="Sembunyikan semua gambar" aria-label="Sembunyikan gambar">${svg('M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 100 6 3 3 0 000-6z')}</button><button class="ct-b" data-a="clr" title="Hapus semua gambar" aria-label="Hapus semua gambar">${svg('M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13')}</button></div>
+<div class="ct-cv"><canvas tabindex="0"></canvas><div class="ct-lg"></div><div class="ct-sb" hidden></div><div class="ct-hint" hidden></div><div class="ct-sc"><button class="ct-b" data-sc="lin" aria-pressed="true" title="Skala linear">Lin</button><button class="ct-b" data-sc="log" aria-pressed="false" title="Skala logaritmik">Log</button><button class="ct-b" data-sc="pct" aria-pressed="false" title="Skala persen">%</button><button class="ct-b" data-a="auto" aria-pressed="true" title="Skala otomatis (klik dua kali sumbu harga)">Auto</button></div></div></div></div>`,
  show(w){if(!S.go)return;const R=w._r,s=S.go,t=R.tabs.find(t=>t.sym===s);S.go=null;t?act(w,t.id):addTab(w,s);save(w)},
- init(w){const P=PEND;PEND=null;const R=w._r={tabs:[],act:0,uid:0,main:!P,inst:P?P.id:'chart',last:{}};let sv=null;WINS.add(w);
+ init(w){const P=PEND;PEND=null;const R=w._r={tabs:[],act:0,uid:0,main:!P,inst:P?P.id:'chart',last:{},stay:(()=>{try{return localStorage.getItem('tc.chart.stay')!=='0'}catch(e){return true}})()};let sv=null;WINS.add(w);
   if(P){P.tab.id=R.uid=1;R.tabs.push(P.tab)}
   if(R.main)sv=jl(KEY,null);
   if(sv&&Array.isArray(sv.tabs))sv.tabs.forEach(s=>{if(!TFS[s.tf]||!s.sym)return;R.tabs.push(fromSaved(w,s))});
@@ -392,7 +440,7 @@ registerApp('chart',{css:'apps/chart/chart.css',icon:"<path d=\"M7 3v18M17 5v15\
   const root=$('.ct',w),L=$('.ct-tl',w);
   root.addEventListener('click',e=>{if(e.target.closest('.ct-md,.ct-pop,.ct-sb,.ct-lg'))return;const x=e.target.closest('.ct-tl .ct-x');if(x){closeTab(w,+x.closest('.ct-tab').dataset.id);return}
    const tb=e.target.closest('.ct-tab');if(tb){act(w,+tb.dataset.id);return}
-   const g=e.target.closest('[data-g]');if(g){toolMenu(w,g);return}
+   const g=e.target.closest('[data-g]');if(g){toolMenu(w,g,e);return}
    const b=e.target.closest('button[data-a]');if(b&&A[b.dataset.a]){A[b.dataset.a](w,b);return}
    const tf=e.target.closest('[data-tf]');if(tf){setTf(w,tf.dataset.tf);return}
    const sc=e.target.closest('[data-sc]');if(sc){const T=cur(w);T.scale=T.scale===sc.dataset.sc&&sc.dataset.sc!=='lin'?'lin':sc.dataset.sc;T.auto=true;sync(w);save(w)}});
@@ -416,6 +464,7 @@ registerApp('chart',{css:'apps/chart/chart.css',icon:"<path d=\"M7 3v18M17 5v15\
      else if(c.dataset.c==='dup'){const n=dup(T,w);R.tabs.splice(R.tabs.indexOf(T)+1,0,n);act(w,n.id);save(w)}
      else if(c.dataset.c==='cls')closeTab(w,id);
      else{R.tabs=[T];act(w,id);save(w)}}})});
+  root.addEventListener('contextmenu',e=>{const g=e.target.closest('.ct-rail [data-g]');if(g){e.preventDefault();toolMenu(w,g,e)}});
   bind(w);new ResizeObserver(()=>sch(w)).observe($('.ct-cv',w));
   R.pt=setInterval(()=>poll(w),1000);
   act(w,a.id);save(w)},

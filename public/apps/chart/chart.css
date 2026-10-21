@@ -91,3 +91,14 @@ select.ct-b{appearance:none;padding-right:9px;color-scheme:dark light}
 .ct-tw{max-height:220px;overflow:auto}.ct-st .ct-up{color:#3ecf8e}.ct-st .ct-dn{color:#ff6b6b}
 
 .ct-rt{margin-left:10px;font-size:10px;color:#8a8f98;white-space:nowrap}.ct-rt[data-c=on]{color:#30b158}.ct-rt[data-c=wait]{color:#d9a23a}
+
+/* ---- edit gambar: handle terlihat, petunjuk, style bar ---- */
+.ct-rail .ct-b u{border-width:4px;opacity:.9}
+.ct-rail .ct-b:hover u{border-right-color:var(--ink);border-bottom-color:var(--ink)}
+.ct-hint{position:absolute;left:10px;bottom:32px;z-index:4;max-width:calc(100% - 120px);padding:4px 9px;border-radius:7px;background:color-mix(in srgb,var(--win) 88%,transparent);border:1px solid var(--line);font-size:11px;color:var(--mute);pointer-events:none;backdrop-filter:blur(4px)}
+.ct-hint[hidden]{display:none}
+.ct-sn{font-size:11px;font-weight:600;color:var(--mute);padding:0 4px 0 2px;white-space:nowrap}
+.ct-cc{width:20px;height:20px;padding:0;border:1px solid var(--line);border-radius:50%;background:none;cursor:pointer;overflow:hidden}
+.ct-cc::-webkit-color-swatch-wrapper{padding:0}.ct-cc::-webkit-color-swatch{border:0;border-radius:50%}
+.ct-fly .ct-r kbd,.ct-r em kbd,kbd.ct-k{margin-left:auto;font:10px ui-monospace,Menlo,monospace;padding:1px 5px;border:1px solid var(--line);border-radius:4px;color:var(--mute)}
+.ct-r em{margin-left:auto}

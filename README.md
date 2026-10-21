@@ -147,3 +147,12 @@ Wajib: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (secret/service_role, bukan a
 - `/api/candles` tetap dipakai untuk isi bar yang terlewat, koreksi OHLC bar yang baru tutup, dan cadangan tiap 4 dtk bila tak ada sumber realtime hidup. Bar berjalan tidak ditimpa harga basi saat realtime hidup (`RT.bars.merge`).
 - Cek GoAPI/OHLC.dev: `npm run rt:test -- BBCA` (respons mentah + hasil urai). Bila nama field berbeda, tambahkan di `lib/providers/quote-parse.js`. Cek semua sumber dari browser: Setting > API > "Tes realtime".
 - Tes: `tests/rt-client.test.js` (WebSocket palsu, jam terkendali), `tests/rt-server.test.js`.
+
+## Alat gambar: cara menggambar dan mengedit (chart)
+- **Pilih alat:** klik tombol grup di rail = langsung pakai alat terakhir grup itu. Alat lain: klik **panah kecil** di pojok tombol atau **klik kanan** tombol. Pintasan huruf (tanpa Ctrl/Alt): `T` tren, `H` horizontal, `V` vertikal, `R` kotak, `F` fib, `A` panah, `X` teks, `C` kanal, `M` ukur, `L` long, `S` short, `B` kuas, `E` elips; huruf yang sama lagi = kembali ke kursor.
+- **Tetap menggambar** (tombol pin di rail, bawaan nyala, tersimpan di `tc.chart.stay`): setelah satu gambar selesai alat tetap aktif untuk gambar berikutnya. `Esc` atau klik kanan = selesai. Selama alat aktif, titik gambar yang baru dibuat tetap bisa ditarik untuk merapikan.
+- **Mengedit:** gambar terpilih menampilkan **titik putih** (handle) dan menyala. Seret titik = ubah bentuk, seret garis = pindah (ambang 3 px, klik biasa tidak menggeser), **panah** = geser halus (Shift = 10x), `Del` hapus, `Ctrl+D` duplikat, `Ctrl+Z` urungkan. Kursor berubah saat melintas di atas gambar (move / pointer / ns-resize), dan gambar di bawah kursor ikut menyala. Klik dua kali garis horizontal = ketik harga tepat; klik dua kali teks = ubah teks.
+- **Klik kanan pada gambar:** ubah harga/teks, duplikat, kunci, sembunyikan, bawa ke depan/belakang, hapus. Bilah gaya di atas kanvas menampilkan nama alat, 8 warna + pemilih warna bebas, tebal, gaya garis.
+- **Magnet:** tahan `Alt` untuk menonaktifkan sementara saat menggambar maupun menarik titik. Layar sentuh memakai area tekan lebih besar (`tol()` di `chart.js`).
+- Teks petunjuk di kiri bawah kanvas menjelaskan langkah berikutnya. Logika murni (hit-test, `drawHandles`, `cursorOf`) ada di `draw.js`, diuji di `tests/draw-edit.test.js`.
+

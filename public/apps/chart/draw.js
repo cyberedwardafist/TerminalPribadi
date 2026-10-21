@@ -120,10 +120,11 @@ function handles(d,E){
  if(d.k==='long'||d.k==='short'){const[e,tp,sl]=P;return[{x:Math.min(e.x,tp.x),y:e.y,i:0},{x:Math.max(e.x,tp.x),y:tp.y,i:1},{x:Math.max(e.x,tp.x),y:sl.y,i:2}]}
  return P.map((q,i)=>({x:q.x,y:q.y,i}))}
 // kembalikan {h:indeks handle} | {body:true} | null
-function hit(d,E,mx,my){
- if(d.hide)return null;
- for(const h of handles(d,E))if(Math.hypot(h.x-mx,h.y-my)<=8)return{h:h.i};
- const P=pts(d,E),k=d.k,W=E.w,H=E.h,T=6;
+// o={t,hr}: toleransi garis dan jari-jari handle (piksel). Bawaan 8/10 (mouse); layar sentuh memakai nilai lebih besar dari pemanggil.
+function hit(d,E,mx,my,o){
+ if(d.hide)return null;const HR=o&&o.hr||10;
+ for(const h of handles(d,E))if(Math.hypot(h.x-mx,h.y-my)<=HR)return{h:h.i};
+ const P=pts(d,E),k=d.k,W=E.w,H=E.h,T=o&&o.t||8;
  const onSeg=(a,b,mode)=>{const c=clip(a,b,mode,W,H);return!!c&&segDist(mx,my,c[0].x,c[0].y,c[1].x,c[1].y)<T};
  const inBox=(a,b,m=0)=>mx>=Math.min(a.x,b.x)-m&&mx<=Math.max(a.x,b.x)+m&&my>=Math.min(a.y,b.y)-m&&my<=Math.max(a.y,b.y)+m;
  let ok=false;
@@ -146,6 +147,20 @@ function hit(d,E,mx,my){
  return ok?{body:true}:null}
 function pointInTri(px,py,a,b,c){const s=(p,q,r)=>(p.x-r.x)*(q.y-r.y)-(q.x-r.x)*(p.y-r.y),p={x:px,y:py},d1=s(p,a,b),d2=s(p,b,c),d3=s(p,c,a);return!((d1<0||d2<0||d3<0)&&(d1>0||d2>0||d3>0))}
 
+// ---------- tampilan seleksi ----------
+// Titik pegangan yang TERLIHAT: tanpa ini pengguna tidak tahu di mana harus menarik untuk mengubah gambar.
+// sel=true: gambar terpilih (lingkaran putih besar; hot = handle yang sedang disorot membesar). sel=false: petunjuk ringan saat kursor melintas. n: hanya handle ke-0..n-1 (titik yang sudah ditaruh saat menggambar).
+function drawHandles(g,d,E,hot,sel,n){
+ if(d.hide)return;g.save();
+ for(const h of handles(d,E)){if(n!=null&&h.i>=n)continue;const on=hot===h.i,r=sel?(on?7:5.5):3.5;
+  if(sel&&on){g.beginPath();g.arc(h.x,h.y,12,0,7);g.fillStyle=rgba(E.col.acc,.22);g.fill()}
+  g.beginPath();g.arc(h.x,h.y,r,0,7);g.globalAlpha=sel?1:.75;g.fillStyle=sel?'#fff':E.col.acc;g.fill();g.globalAlpha=1;g.lineWidth=2;g.strokeStyle=E.col.acc;g.stroke()}
+ g.restore()}
+// bentuk kursor yang memberi tahu apa yang akan terjadi bila ditekan: handle = ubah bentuk, badan = pindah
+function cursorOf(d,h){
+ if(h.h!=null||d.lock)return'pointer';
+ if(d.k==='hline'||d.k==='hray')return'ns-resize';if(d.k==='vline')return'ew-resize';return'move'}
+
 // ---------- ubah ----------
 // geser handle i ke titik pt (aturan khusus long/short: target dan stop berbagi waktu; stop harus di sisi berlawanan)
 function moveHandle(d,i,pt){
@@ -159,5 +174,5 @@ const translate=(d,dt,dp)=>d.pts.forEach(q=>{q.t+=dt;q.p+=dp});
 const clone=d=>({...JSON.parse(JSON.stringify(d)),id:uid()});
 const needsText=k=>k==='text';
 
-return{TOOLS,BY:BYK,GROUPS,COLORS,NOCOLOR,create,complete,ready,render,axisLabels,handles,hit,moveHandle,translate,clone,needsText,uid,clip,segDist,rgba};
+return{TOOLS,BY:BYK,GROUPS,COLORS,NOCOLOR,create,complete,ready,render,axisLabels,handles,hit,drawHandles,cursorOf,moveHandle,translate,clone,needsText,uid,clip,segDist,rgba};
 })();

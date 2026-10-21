@@ -114,8 +114,11 @@ function draw(w,T,deps){
  // gambar
  const E={g:x,X:t=>X(idx(t)),Y,T:px=>tAt(iX(px)),P,w:pw,h:mH,F,st,idx,col};
  const DR=deps.drawings();T._E=E;
- for(const d of DR)ChartDraw.render(x,d,E,d===T.sel);
+ for(const d of DR){if(d===T.sel||(T.hov&&T.hov.d===d)){x.save();x.shadowColor=col.acc;x.shadowBlur=9;ChartDraw.render(x,d,E,d===T.sel);x.restore()}else ChartDraw.render(x,d,E,false)}
  if(T.draft)ChartDraw.render(x,T.draft,E,true);
+ if(T.sel&&DR.includes(T.sel))ChartDraw.drawHandles(x,T.sel,E,T.hov&&T.hov.d===T.sel?T.hov.h:null,true);      // handle terlihat pada gambar terpilih
+ if(T.hov&&T.hov.d!==T.sel&&DR.includes(T.hov.d))ChartDraw.drawHandles(x,T.hov.d,E,T.hov.h,false);              // petunjuk ringan saat kursor melintas
+ if(T.draft&&T._dp)ChartDraw.drawHandles(x,T.draft,E,null,true,T._dp);                                           // titik yang sudah ditaruh
  // alert
  const AL=deps.alerts();
  for(const a of AL){const y=Math.round(Y(a.price))+.5;if(y<0||y>mH)continue;x.setLineDash([6,4]);x.strokeStyle='#e8a33d';x.beginPath();x.moveTo(0,y);x.lineTo(pw,y);x.stroke();x.setLineDash([]);
