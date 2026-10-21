@@ -2,16 +2,26 @@
 // Format JS: badan fungsi dengan variabel open, high, low, close, volume, time (array), p (parameter), ta, plot(), hline(), marker().
 //   //@input period 14 2 200     <- deklarasi parameter: nama, bawaan, min, maks (opsional)
 //   //@overlay true
-// Pine: subset v5 (indicator, input.*, ta.sma/ema/rma/wma/rsi/stdev/highest/lowest/change/crossover/crossunder/tr/atr/macd/bb, plot, hline, plotshape). if/for/fungsi buatan belum didukung.
+// Pine: interpreter v5 penuh (pine/*.js): var/varip, if/for/while/switch, fungsi buatan, tuple, type/method, array/map, ta.* (60+), str/math/color,
+// input.*, plot*/fill/bgcolor/barcolor/hline/alertcondition, label/line/box, request.security, strategy.* (entry/exit/close + laporan).
 const ChartCustom=(()=>{
 const LKEY='tc.chart.ci',TIMEOUT=5000;
 
 // Kode worker ada di worker.js (berkas terpisah, CSP sendiri).
 // ---------- sisi halaman ----------
 let RID=0;const WURL='apps/chart/worker.js';
-function exec(lang,src,p,D){return new Promise((res,rej)=>{let wk;try{wk=new Worker(WURL)}catch(e){return rej(new Error('Worker tidak dapat dimuat (butuh halaman dari server http/https, bukan file://)'))}const id=++RID,t=setTimeout(()=>{wk.terminate();rej(new Error('Waktu habis (>5 detik): periksa perulangan tak berujung'))},TIMEOUT);
- wk.onmessage=e=>{clearTimeout(t);wk.terminate();e.data.err?rej(new Error(e.data.err)):res(e.data)};wk.onerror=e=>{clearTimeout(t);wk.terminate();rej(new Error(e.message||'Error di worker'))};
- const f=k=>D.map(b=>b[k]);wk.postMessage({id,lang,src,p,bars:{t:f('t'),o:f('o'),h:f('h'),l:f('l'),c:f('c'),v:f('v')}})})}
+const H={fetch:null};   // chart.js mengisi H.fetch(sym,sec) -> Promise<{t,o,h,l,c,v}[]> untuk request.security
+function exec(lang,src,p,D,ctx){ctx=ctx||{};return new Promise((res,rej)=>{
+ const f=k=>D.map(b=>b[k]),bars={t:f('t'),o:f('o'),h:f('h'),l:f('l'),c:f('c'),v:f('v')},sec={},opts={sym:ctx.sym||'SYMBOL',tfSec:ctx.tfSec||(D.length>1?D[1].t-D[0].t:3600),mintick:ctx.mintick||.01,live:false};let rounds=0;
+ const go=()=>{let wk;try{wk=new Worker(WURL)}catch(e){return rej(new Error('Worker tidak dapat dimuat (butuh halaman dari server http/https, bukan file://)'))}
+  const id=++RID,t=setTimeout(()=>{wk.terminate();rej(new Error('Batas waktu 5 detik terlampaui (loop tak berujung?)'))},TIMEOUT);
+  wk.onmessage=e=>{clearTimeout(t);wk.terminate();const d=e.data;
+   if(d.err)return rej(new Error(d.err));
+   if(d.need){if(++rounds>6)return rej(new Error('request.security terlalu banyak (maks. 6 sumber data)'));if(!H.fetch)return rej(new Error('request.security belum tersedia di sini'));
+    H.fetch(d.need.sym,d.need.sec).then(bs=>{if(!bs||!bs.length)throw new Error('Data '+d.need.sym+' '+d.need.tf+' tidak tersedia');const g=k=>bs.map(b=>b[k]);sec[d.need.sym+'|'+d.need.sec]={t:g('t'),o:g('o'),h:g('h'),l:g('l'),c:g('c'),v:g('v')};go()}).catch(er=>rej(new Error('request.security: '+(er.message||er))));return}
+   res(d)};
+  wk.onerror=e=>{clearTimeout(t);wk.terminate();rej(new Error(e.message||'Error di worker'))};
+  wk.postMessage({id,lang,src,p,bars,sec,opts})};go()})}
 
 // meta dari kode (tanpa menjalankan): parameter dan overlay
 function meta(lang,src){const inputs=[];let overlay=false;
@@ -23,12 +33,13 @@ function meta(lang,src){const inputs=[];let overlay=false;
 
 // def untuk render.js; plots diketahui setelah eksekusi pertama
 function def(inst){const m=meta(inst.lang||'js',inst.src||''),r=inst._res;
- return{name:inst.name||'Custom',short:inst.name||'Custom',overlay:r&&r.overlay!=null?r.overlay:m.overlay,inputs:m.inputs,plots:r?r.plots:[],levels:r?r.levels:[],markers:r?r.markers:null,fills:[],run:null}}
+ return{name:inst.name||'Custom',short:inst.name||'Custom',overlay:r&&r.overlay!=null?r.overlay:m.overlay,inputs:r&&r.inputs&&r.inputs.length?r.inputs:m.inputs,plots:r?r.plots:[],levels:r?r.levels:[],markers:r?r.markers:null,fills:r&&r.fills||[],bg:r&&r.bg,barcol:r&&r.barcol,candles:r&&r.candles||[],objs:r&&r.objs||[],alerts:r&&r.alerts||[],run:null}}
 const COL=['#e8a33d','#5aa9ff','#b58cff','#ff7ad9','#3ecf8e','#ff6b6b','#4dd0e1','#c0ca33'];
-function series(inst,D,key,done){
+function series(inst,D,key,done,ctx){
  if(inst._ck===key&&inst._res)return build(inst);
- if(inst._runKey!==key){inst._runKey=key;const p={};for(const i of meta(inst.lang||'js',inst.src||'').inputs)p[i.key]=inst.p&&inst.p[i.key]!==undefined?inst.p[i.key]:i.def;
-  exec(inst.lang||'js',inst.src||'',p,D).then(r=>{if(inst._runKey!==key)return;const o=r.ok;o.plots.forEach((pl,i)=>{pl.c=pl.c||COL[i%COL.length];pl.k=pl.k+(o.plots.slice(0,i).some(q=>q.k===pl.k)?'#'+i:'')});inst._res=o;inst._ck=key;inst.err=null;done()}).catch(e=>{if(inst._runKey!==key)return;inst.err=e.message;inst._res=inst._res||{overlay:null,plots:[],levels:[],markers:[]};inst._ck=key;console.warn('Indikator custom:',e.message);done()})}
+ if(inst._runKey!==key){inst._runKey=key;const lang=inst.lang||'js',known=inst._res&&inst._res.inputs&&inst._res.inputs.length?inst._res.inputs:meta(lang,inst.src||'').inputs,p=lang==='pine'?{...(inst.p||{})}:{};
+  if(lang!=='pine')for(const i of known)p[i.key]=inst.p&&inst.p[i.key]!==undefined?inst.p[i.key]:i.def;
+  exec(lang,inst.src||'',p,D,ctx).then(r=>{if(inst._runKey!==key)return;const o=r.ok;o.plots.forEach((pl,i)=>{pl.c=pl.c||COL[i%COL.length];if(lang==='pine')pl.px=1;pl.k=pl.k+(o.plots.slice(0,i).some(q=>q.k===pl.k)?'#'+i:'')});inst._res=o;inst._ck=key;inst.err=null;done()}).catch(e=>{if(inst._runKey!==key)return;inst.err=e.message;inst._res=inst._res||{overlay:null,plots:[],levels:[],markers:[]};inst._ck=key;console.warn('Indikator custom:',e.message);done()})}
  return inst._res&&inst._ck===key?build(inst):null}
 function build(inst){const r=inst._res,d=def(inst);if(inst.err)d.name=(inst.name||'Custom')+' \u26a0 '+inst.err;const s={};r.plots.forEach(pl=>{s[pl.k]=pl.data});const p={};for(const i of d.inputs)p[i.key]=inst.p&&inst.p[i.key]!==undefined?inst.p[i.key]:i.def;return{p,series:s,def:d}}
 
@@ -53,16 +64,22 @@ hline(70); hline(30);
 // Sinyal: panah saat RSI keluar dari area jenuh jual
 const up = ta.crossover(r, 30);
 up.forEach((v, i) => { if (v) marker(i, 'up', { color: 'green' }); });
-`,pine:`//@version=5
-indicator("Contoh EMA Cross", overlay=true)
-fast = input.int(12, "Cepat", minval=1)
-slow = input.int(26, "Lambat", minval=1)
-a = ta.ema(close, fast)
-b = ta.ema(close, slow)
-plot(a, title="EMA cepat", color=color.blue)
-plot(b, title="EMA lambat", color=color.orange)
-plotshape(ta.crossover(a, b), style=shape.triangleup, color=color.green)
-plotshape(ta.crossunder(a, b), style=shape.triangledown, color=color.red)
+`,pine:`//@version=6
+indicator("Bollinger + MACD warna", overlay=true)
+len  = input.int(20, "Panjang", minval=1, group="Bollinger")
+mult = input.float(2.0, "Pengali", minval=0.1, step=0.1, group="Bollinger")
+src  = input.source(close, "Sumber")
+colUp = input.color(color.new(color.teal, 0), "Warna atas")
+[mid, up, lo] = ta.bb(src, len, mult)
+pm = plot(mid, "Tengah", color=color.orange)
+pu = plot(up, "Atas", color=colUp)
+pl = plot(lo, "Bawah", color=colUp)
+fill(pu, pl, color=color.new(colUp, 90), title="Latar")
+// tanda saat harga menembus pita
+plotshape(ta.crossover(close, up), "Tembus atas", shape.triangledown, location.abovebar, color.red, text="Jual")
+plotshape(ta.crossunder(close, lo), "Tembus bawah", shape.triangleup, location.belowbar, color.green, text="Beli")
+bgcolor(close > up ? color.new(color.red, 92) : close < lo ? color.new(color.green, 92) : na)
+alertcondition(ta.crossover(close, up), "Tembus atas", "Harga menembus pita atas")
 `};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 // editor: item=null untuk baru. h={modal,closeModal,fork}
@@ -74,10 +91,10 @@ function edit(w,item,done,h){
    const bars=w._r&&w._r.tabs.find(t=>t.id===w._r.act);
    save(fork?it:it,o).then(r=>done(r)).catch(e=>{done(null);console.warn(e)});return true},{wide:1,okText:'Simpan',extra:[['test','Uji','']].concat(it&&!fork?[['del','Hapus','ct-dng']]:[]),on:{
     test:fm=>{const T=w._r.tabs.find(t=>t.id===w._r.act),msg=fm.querySelector('[data-msg]');if(!T||!T.D){msg.textContent='Data chart belum dimuat.';return}msg.textContent='Menjalankan\u2026';
-     const l=fm.l.value,s=fm.s.value,p={};for(const i of meta(l,s).inputs)p[i.key]=i.def;
-     exec(l,s,p,T.D).then(r=>{msg.className='ct-em ok';msg.textContent='OK: '+r.ok.plots.length+' plot, '+r.ok.markers.length+' penanda.'}).catch(e=>{msg.className='ct-em bad';msg.textContent=e.message})},
+     const l=fm.l.value,s=fm.s.value,p={};if(l!=='pine')for(const i of meta(l,s).inputs)p[i.key]=i.def;
+     exec(l,s,p,T.D,{sym:T.sym,tfSec:ChartRender.TFS[T.tf]}).then(r=>{const o=r.ok;msg.className='ct-em ok';msg.textContent='OK: '+o.plots.length+' plot, '+o.markers.length+' penanda'+(o.objs.length?', '+o.objs.length+' objek':'')+(o.fills.length?', '+o.fills.length+' fill':'')+(o.inputs.length?', '+o.inputs.length+' input':'')+'.'}).catch(e=>{msg.className='ct-em bad';msg.textContent=e.message})},
     del:(fm,close)=>{h.closeModal(w);remove(it).then(()=>done(null))}}});
   fm.l.onchange=()=>{const cur=fm.s.value.trim();if(!cur||cur===TPL.js.trim()||cur===TPL.pine.trim())fm.s.value=TPL[fm.l.value]}})}
 
-return{def,series,list,full,edit,meta,exec,TPL};
+return{def,series,list,full,edit,meta,exec,TPL,hook:H};
 })();

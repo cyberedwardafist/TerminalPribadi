@@ -23,6 +23,7 @@ const CACHE=new Map();
 async function data(sym,tf){const k=sym+'|'+tf;if(CACHE.has(k))return CACHE.get(k);let d,live=false;
  if(apiOn()){try{d=norm(await(await apiFetch(`/api/candles?symbol=${encodeURIComponent(sym)}&tf=${tf}&limit=${N}`)).json());live=true}catch(e){}}
  d=d&&d.length?d:(live=false,gen(sym,tf));d.live=live;CACHE.set(k,d);return d}
+if(typeof ChartCustom!=='undefined')ChartCustom.hook.fetch=async(sym,sec)=>{const tf=Object.keys(TFS).find(k=>TFS[k]===sec);if(!tf)throw new Error('timeframe '+sec+'s tidak tersedia (pakai 1m,5m,15m,30m,1h,4h,1D,1W,1M)');return data(sym,tf)};
 async function older(w,T){const D=T.D;if(!D||!D.live||T.busy||T.noMore||!apiOn())return;T.busy=true;
  try{const j=norm(await(await apiFetch(`/api/candles?symbol=${encodeURIComponent(T.sym)}&tf=${T.tf}&limit=${N}&to=${D[0].t-1}`)).json()).filter(x=>x.t<D[0].t);
   if(!j.length)T.noMore=true;else{D.unshift(...j);T.rb+=j.length}}catch(e){T.noMore=true}T.busy=false;sch(w)}
@@ -54,11 +55,12 @@ function setAlert(sym,price,last){const o=wl();if(price==null)delete o.al[sym];e
 const mkInd=(k,extra)=>({id:rid(),k,on:true,p:{},c:{},...extra});
 const DEF=[()=>mkInd('vol'),()=>mkInd('sma',{p:{period:20}})];
 function defOf(inst){if(inst.k[0]==='c'&&inst.k[1]===':')return typeof ChartCustom!=='undefined'?ChartCustom.def(inst):null;return ID[inst.k]}
-function serie(w,T,inst){const D=T.D;if(!D||!D.length)return null;const last=D[D.length-1],key=D.length+'|'+last.t+'|'+last.c+'|'+JSON.stringify(inst.p)+(inst.src?inst.src.length:'');
+const hs=t=>{let h=5381;for(let i=0;i<t.length;i++)h=(h*33^t.charCodeAt(i))|0;return h>>>0};
+function serie(w,T,inst){const D=T.D;if(!D||!D.length)return null;const last=D[D.length-1],key=D.length+'|'+last.t+'|'+last.c+'|'+JSON.stringify(inst.p)+(inst.src?inst.src.length+':'+hs(inst.src):'');
  if(inst._k===key&&inst._r)return inst._r;
- if(inst.k.startsWith('c:')){if(typeof ChartCustom==='undefined')return inst._r||null;const r=ChartCustom.series(inst,D,key,()=>{inst._k=null;sch(w)});if(r){inst._k=key;inst._r=r}return r||inst._r||null}
+ if(inst.k.startsWith('c:')){if(typeof ChartCustom==='undefined')return inst._r||null;const r=ChartCustom.series(inst,D,key,()=>{inst._k=null;sch(w)},{sym:T.sym,tfSec:TFS[T.tf]});if(r){inst._k=key;inst._r=r}return r||inst._r||null}
  const def=ID[inst.k];if(!def)return null;try{const c=ChartInd.compute(def,D,inst.p);inst.p=c.p;inst._r={p:c.p,series:c.series,def};inst._k=key;return inst._r}catch(e){return null}}
-const instName=inst=>{const d=defOf(inst);if(!d)return inst.name||inst.k;return inst.k.startsWith('c:')?(inst.name||'Custom')+(d.inputs&&d.inputs.length?' '+d.inputs.map(i=>inst.p[i.key]??i.def).join(', '):''):ChartInd.label(d,ChartInd.norm(d,inst.p))};
+const instName=inst=>{const d=defOf(inst);if(!d)return inst.name||inst.k;return inst.k.startsWith('c:')?(inst.name||'Custom')+(d.inputs&&d.inputs.length?' '+d.inputs.filter(i=>!i.type||i.type==='int'||i.type==='float').slice(0,4).map(i=>inst.p[i.key]??i.def).join(', '):''):ChartInd.label(d,ChartInd.norm(d,inst.p))};
 const colorOf=(inst,pl)=>inst.c&&inst.c[pl.k]||pl.c;
 
 // ---------- tab ----------
@@ -123,7 +125,7 @@ function tabSearch(w,anchor){const R=w._r;
   p.onclick=e=>{const r=e.target.closest('[data-id]');if(!r)return;const id=+r.dataset.id;if(e.target.closest('.ct-x')){closeTab(w,id);if(w._r.tabs.length)tabSearch(w,anchor);else closePop(w)}else{closePop(w);act(w,id)}}})}
 
 // ---------- panel indikator ----------
-const hex=c=>/^#[0-9a-f]{6}$/i.test(c||'')?c:'#8a93a0';
+const hex=c=>{if(/^#[0-9a-f]{6}$/i.test(c||''))return c;const m=/^rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(c||'');return m?'#'+[m[1],m[2],m[3]].map(v=>(+v).toString(16).padStart(2,'0')).join(''):'#8a93a0'};
 function indPanel(w){const T=cur(w);let mine=[];
  const body=`<input class="ct-in" placeholder="Cari indikator…" aria-label="Cari indikator"><div class="ct-il"></div>`;
  const fm=modal(w,'Indikator',body,null,{wide:1});const inp=$('input',fm),ls=$('.ct-il',fm);
@@ -140,10 +142,26 @@ function indPanel(w){const T=cur(w);let mine=[];
   const a=e.target.closest('[data-add]');if(a){const m=mine.find(x=>x.id===a.dataset.add);if(m){addC(m);closeModal(w)}return}
   const ed=e.target.closest('[data-ed]');if(ed){const m=mine.find(x=>x.id===ed.dataset.ed);if(m)ChartCustom.edit(w,m,r=>{reload();if(r&&m.mine!==false)for(const t of w._r.tabs)for(const i of t.ind)if(i.k==='c:'+m.id){i.name=r.name;i.lang=r.language;i.src=r.source;i._k=null;i._runKey=null}else{}save(w);sync(w)},{modal,closeModal})}}}
 
+function inputsHtml(ins,p){let g=null,h='';for(const i of ins){if(i.group&&i.group!==g){g=i.group;h+=`<h5>${esc(g)}</h5>`}
+ const n='p:'+esc(i.key),v=p[i.key],t=i.type,L=esc(i.label||i.key);
+ if(t==='bool')h+=`<label class="ct-f"><span>${L}</span><input type="checkbox" name="${n}" data-t="bool"${v?' checked':''}></label>`;
+ else if(t==='color')h+=`<label class="ct-f"><span>${L}</span><input type="color" name="${n}" data-t="color" value="${hex(v)}"></label>`;
+ else if(i.options&&i.options.length)h+=`<label class="ct-f"><span>${L}</span><select name="${n}" data-t="str">${i.options.map(o=>`<option value="${esc(o)}"${String(o)===String(v)?' selected':''}>${esc(o)}</option>`).join('')}</select></label>`;
+ else if(t==='string'||t==='timeframe'||t==='symbol'||t==='session')h+=`<label class="ct-f"><span>${L}</span><input type="text" name="${n}" data-t="str" value="${esc(v??'')}"></label>`;
+ else h+=`<label class="ct-f"><span>${L}</span><input type="number" name="${n}" data-t="num" value="${v}" min="${i.min??''}" max="${i.max??''}" step="${i.step||(t==='int'?1:'any')}"></label>`}
+ return h}
+function stratReport(w,inst){const R=inst._res&&inst._res.strategy;if(!R)return;
+ const st=R.stats,f=(v,d=2)=>v==null||!isFinite(v)?'∞':(+v).toLocaleString('id-ID',{minimumFractionDigits:d,maximumFractionDigits:d}),sg=v=>v>0?'ct-up':v<0?'ct-dn':'';
+ const row=(a,b,c)=>`<tr><td>${a}</td><td class="${c||''}">${b}</td></tr>`;
+ const eq=R.equity.filter(v=>v!=null),mn=Math.min(...eq),mx=Math.max(...eq),pts=eq.map((v,i)=>((i/(eq.length-1||1))*300).toFixed(1)+','+(70-(v-mn)/((mx-mn)||1)*66).toFixed(1)).join(' ');
+ const body=`<div class="ct-rp"><svg viewBox="0 0 300 74" preserveAspectRatio="none" class="ct-eq"><polyline fill="none" stroke="currentColor" stroke-width="1.4" points="${pts}"/></svg>
+<table class="ct-st">${row('Laba bersih',f(st.net)+' ('+f(st.netPct)+'%)',sg(st.net))}${row('Ekuitas akhir',f(st.equity))}${row('Jumlah trade',st.n+' (menang '+st.win+')')}${row('Win rate',f(st.winRate)+'%')}${row('Profit factor',f(st.pf))}${row('Rata-rata trade',f(st.avg),sg(st.avg))}${row('Rata-rata menang / kalah',f(st.avgWin)+' / '+f(st.avgLoss))}${row('Terbaik / terburuk',f(st.best)+' / '+f(st.worst))}${row('Max drawdown',f(st.maxDD)+' ('+f(st.maxDDPct)+'%)','ct-dn')}${row('Sharpe (perkiraan)',f(st.sharpe))}${row('Long / Short',f(st.longNet)+' ('+st.longN+') / '+f(st.shortNet)+' ('+st.shortN+')')}${row('Posisi terbuka',st.open+' · '+f(st.openPnl),sg(st.openPnl))}</table>
+<h5>Trade terakhir</h5><div class="ct-tw"><table class="ct-st"><tr><th>ID</th><th>Arah</th><th>Masuk</th><th>Keluar</th><th>P/L</th></tr>${R.trades.slice(-40).reverse().map(t=>`<tr><td>${esc(t.id)}</td><td>${t.dir>0?'Long':'Short'}</td><td>${f(t.ep)}</td><td>${f(t.xp)}</td><td class="${sg(t.pnl)}">${f(t.pnl)}</td></tr>`).join('')}</table></div></div>`;
+ modal(w,'Laporan: '+(inst.name||'Strategi'),body,()=>true,{wide:1,okText:'Tutup'})}
 function indSettings(w,iid){const T=cur(w),inst=T.ind.find(i=>i.id===iid),def=inst&&defOf(inst);if(!def)return;const p=inst.k.startsWith('c:')?{...Object.fromEntries((def.inputs||[]).map(i=>[i.key,i.def])),...inst.p}:ChartInd.norm(def,inst.p);
- const body=`${(def.inputs||[]).length?'<h5>Parameter</h5>':''}${(def.inputs||[]).map(i=>`<label class="ct-f"><span>${esc(i.label||i.key)}</span><input type="number" name="p:${esc(i.key)}" value="${p[i.key]}" min="${i.min??''}" max="${i.max??''}" step="any"></label>`).join('')}<h5>Warna</h5>${def.plots.filter(pl=>!pl.dirKey||true).map(pl=>`<label class="ct-f"><span>${esc(pl.k)}</span><input type="color" name="c:${esc(pl.k)}" value="${hex(colorOf(inst,pl))}"></label>`).join('')}${def.overlay?'':`<label class="ct-f"><span>Tinggi panel</span><input type="number" name="h" min="0.6" max="6" step="0.1" value="${inst.h||1.3}"></label>`}`;
- modal(w,instName(inst),body,fm=>{const np={},nc={};for(const el of fm.elements){if(!el.name)continue;const[a,k]=el.name.split(/:(.*)/);if(a==='p'){const v=parseFloat(el.value);if(isFinite(v))np[k]=v}else if(a==='c'){const pl=def.plots.find(x=>x.k===k);if(pl&&el.value.toLowerCase()!==hex(pl.c).toLowerCase())nc[k]=el.value}else if(el.name==='h')inst.h=Math.max(.6,Math.min(6,parseFloat(el.value)||1.3))}
-  inst.p=np;inst.c=nc;inst._k=null;save(w);sync(w)},{extra:[['rm','Hapus','ct-dng']],on:{rm:(fm,done)=>{T.ind=T.ind.filter(i=>i.id!==iid);save(w);sync(w);done()}}})}
+ const body=`${(def.inputs||[]).length?'<h5>Parameter</h5>':''}${inputsHtml(def.inputs||[],p)}<h5>Warna</h5>${def.plots.filter(pl=>!pl.dirKey||true).map(pl=>`<label class="ct-f"><span>${esc(pl.k)}</span><input type="color" name="c:${esc(pl.k)}" value="${hex(colorOf(inst,pl))}"></label>`).join('')}${def.overlay?'':`<label class="ct-f"><span>Tinggi panel</span><input type="number" name="h" min="0.6" max="6" step="0.1" value="${inst.h||1.3}"></label>`}`;
+ modal(w,instName(inst),body,fm=>{const np={},nc={};for(const el of fm.elements){if(!el.name)continue;const[a,k]=el.name.split(/:(.*)/);if(a==='p'){const t=el.dataset.t;if(t==='bool')np[k]=el.checked;else if(t==='str'||t==='color')np[k]=el.value;else{const v=parseFloat(el.value);if(isFinite(v))np[k]=v}}else if(a==='c'){const pl=def.plots.find(x=>x.k===k);if(pl&&el.value.toLowerCase()!==hex(pl.c).toLowerCase())nc[k]=el.value}else if(el.name==='h')inst.h=Math.max(.6,Math.min(6,parseFloat(el.value)||1.3))}
+  inst.p=np;inst.c=nc;inst._k=null;save(w);sync(w)},{extra:(inst._res&&inst._res.strategy?[['rep','Laporan','']]:[]).concat([['rm','Hapus','ct-dng']]),on:{rep:(fm,done)=>{done();stratReport(w,inst)},rm:(fm,done)=>{T.ind=T.ind.filter(i=>i.id!==iid);save(w);sync(w);done()}}})}
 
 // ---------- layout, template ----------
 const lsGet=async(kind)=>{if(srv()){try{return kind==='layout'?(await api('/api/chart/layouts')).map(x=>({id:x.id,name:x.name})):(await api('/api/chart/templates?kind=indicators')).map(x=>({id:x.id,name:x.name}))}catch(e){}}return jl(kind==='layout'?LKEY:TKEY,[]).map(x=>({id:x.id,name:x.name}))};

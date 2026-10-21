@@ -77,7 +77,7 @@ test('clone memberi id baru dan tidak berbagi titik', () => {
 // ---- sandbox custom: jalankan custom.js dengan Worker tiruan yang mengeksekusi kode worker di vm terpisah ----
 function customEnv() {
   const blobText = read('worker.js');
-  const Worker = class { constructor() { const self = { postMessage: m => setImmediate(() => this.onmessage && this.onmessage({ data: m })) }; const ctx = vm.createContext({ self, console, Math, setImmediate, Array, Object, JSON, Number, Error, isNaN, isFinite }); vm.runInContext(blobText, ctx); this.self = self; }
+  const Worker = class { constructor() { const self = { postMessage: m => setImmediate(() => this.onmessage && this.onmessage({ data: m })) }; const importScripts = (...fs_) => { for (const f of fs_) vm.runInContext(fs.readFileSync(new URL('../public/apps/chart/' + f, import.meta.url), 'utf8'), ctx, { filename: f }); }; const ctx = vm.createContext({ self, importScripts, console, Math, setImmediate, Array, Object, JSON, Number, Error, String, Map, Set, Date, Boolean, RegExp, Float64Array, isNaN, isFinite, parseFloat, parseInt }); vm.runInContext(blobText, ctx); this.self = self; }
     postMessage(m) { try { this.self.onmessage({ data: m }); } catch (e) { this.onerror && this.onerror(e); } } terminate() {} };
   const g = { Worker, localStorage: { getItem: () => null, setItem() {} }, setTimeout, clearTimeout, apiOn: () => false };
   return load('custom.js', 'ChartCustom', g);
@@ -100,9 +100,9 @@ test('custom Pine: ema/rsi/cross sama dengan fungsi bawaan', async () => {
 });
 test('Pine: galat dilaporkan dengan nomor baris, bukan crash', async () => {
   const C = customEnv(), B = bars(50);
-  await assert.rejects(C.exec('pine', 'indicator("x")\nplot(foo)', {}, B), /baris 2.*foo/);
-  await assert.rejects(C.exec('pine', 'indicator("x")\nif close > open\n    x = 1', {}, B), /baris 2/);
-  await assert.rejects(C.exec('pine', 'indicator("x")\na = close', {}, B), /tidak ada plot/);
+  await assert.rejects(C.exec('pine', 'indicator("x")\nplot(foo)', {}, B), /Baris 2.*foo/);
+  await assert.rejects(C.exec('pine', 'indicator("x")\nplot(close', {}, B), /Baris 2/);
+  await assert.rejects(C.exec('pine', 'indicator("x")\na = close', {}, B), /tidak menghasilkan keluaran/);
   await assert.rejects(C.exec('js', 'throw new Error("boom")', {}, B), /boom/);
 });
 test('sandbox: fetch/XMLHttpRequest tidak tersedia di worker', async () => {

@@ -55,7 +55,7 @@ function draw(w,T,deps){
  const vol=overs.find(o=>o.r.def.kind==='volume');
  let hi=-Infinity,lo=Infinity;
  for(let i=i0;i<=i1;i++){const k=V[i],a=line?k.c:k.h,b=line?k.c:k.l;if(a>hi)hi=a;if(b<lo)lo=b}
- for(const o of overs){if(o.r.def.kind==='volume')continue;for(const p of o.r.def.plots){const s=o.r.series[p.k];if(!s)continue;const sh=p.shift?p.shift(o.r.p):0;for(let i=i0;i<=i1;i++){const v=s[i-sh];if(v!=null&&isFinite(v)){if(v>hi)hi=v;if(v<lo)lo=v}}}}
+ for(const o of overs){if(o.r.def.kind==='volume')continue;for(const p of o.r.def.plots){const s=o.r.series[p.k];if(!s)continue;const sh=shOf(p,o.r.p);for(let i=i0;i<=i1;i++){const v=s[i-sh];if(v!=null&&isFinite(v)){if(v>hi)hi=v;if(v<lo)lo=v}}}for(const q of o.r.def.candles||[])for(let i=i0;i<=i1;i++){if(q.h[i]!=null&&q.h[i]>hi)hi=q.h[i];if(q.l[i]!=null&&q.l[i]<lo)lo=q.l[i]}}
  if(!(hi>lo)){hi=last.c*1.01;lo=last.c*.99}
  const tr=v=>mode==='log'?Math.log(Math.max(v,1e-12)):v;
  let hiT=tr(hi),loT=tr(lo);
@@ -93,6 +93,7 @@ function draw(w,T,deps){
   const ma=vol.r.series.ma;if(ma&&vol.r.p.ma){x.beginPath();let on=false;for(let i=i0;i<=i1;i++){const v=ma[i];if(v==null){on=false;continue}const px=X(i),py=mH*.985-v/vm*mH*.14;on?x.lineTo(px,py):x.moveTo(px,py);on=true}x.strokeStyle=vol.i.c&&vol.i.c.ma||vol.r.def.plots[0].c;x.lineWidth=1.2;x.stroke()}}
  // base line (untuk tipe baseline)
  const cw=Math.max(1,Math.floor(bw*.7));
+ const BC=new Map();for(const o of overs){const d=o.r.def;drawBg(x,d,i0,i1,X,0,mH,bw);if(d.barcol)for(const q of d.barcol)BC.set(q[0],q[1])}
  if(T.type==='base'){const by=Y(base);x.save();x.beginPath();x.rect(0,0,pw,by);x.clip();x.beginPath();for(let i=i0;i<=i1;i++){const px=X(i),py=Y(V[i].c);i===i0?x.moveTo(px,py):x.lineTo(px,py)}x.lineTo(X(i1),by);x.lineTo(X(i0),by);x.closePath();x.fillStyle=col.up+'33';x.fill();x.restore();
   x.save();x.beginPath();x.rect(0,by,pw,mH);x.clip();x.beginPath();for(let i=i0;i<=i1;i++){const px=X(i),py=Y(V[i].c);i===i0?x.moveTo(px,py):x.lineTo(px,py)}x.lineTo(X(i1),by);x.lineTo(X(i0),by);x.closePath();x.fillStyle=col.dn+'33';x.fill();x.restore();
   x.setLineDash([3,3]);x.strokeStyle=col.mute;x.beginPath();x.moveTo(0,Math.round(by)+.5);x.lineTo(pw,Math.round(by)+.5);x.stroke();x.setLineDash([])}
@@ -101,14 +102,14 @@ function draw(w,T,deps){
   const path=()=>{x.beginPath();for(let i=i0;i<=i1;i++){const px=X(i),py=Y(V[i].c);i===i0?x.moveTo(px,py):x.lineTo(px,py)}};
   if(T.type==='area'){path();const s=x.createLinearGradient(0,m0,0,m1);s.addColorStop(0,'rgba(76,154,255,.35)');s.addColorStop(1,'rgba(76,154,255,0)');x.lineTo(X(i1),m1);x.lineTo(X(i0),m1);x.closePath();x.fillStyle=s;x.fill()}
   path();x.strokeStyle='#4c9aff';x.lineWidth=1.8;x.lineJoin='round';x.stroke();x.lineWidth=1}
- else for(let i=i0;i<=i1;i++){const k=V[i],cx=Math.round(X(i)),u=k.c>=k.o,yh=Math.round(Y(k.h)),yl=Math.round(Y(k.l)),yo=Math.round(Y(k.o)),yc=Math.round(Y(k.c)),c=u?col.up:col.dn;x.fillStyle=c;
+ else for(let i=i0;i<=i1;i++){const k=V[i],cx=Math.round(X(i)),u=k.c>=k.o,yh=Math.round(Y(k.h)),yl=Math.round(Y(k.l)),yo=Math.round(Y(k.o)),yc=Math.round(Y(k.c)),c=BC.get(i)||(u?col.up:col.dn);x.fillStyle=c;
   if(T.type==='bar'){const tk=Math.max(2,cw>>1);x.fillRect(cx,yh,1,Math.max(1,yl-yh));x.fillRect(cx-tk,yo,tk,1);x.fillRect(cx+1,yc,tk,1)}
   else if(T.type==='hollow'&&u){x.fillRect(cx,yh,1,Math.max(1,yl-yh));const bt=Math.min(yo,yc),bh=Math.max(1,Math.abs(yo-yc));if(cw>2){x.strokeStyle=c;x.strokeRect(cx-(cw>>1)+.5,bt+.5,cw-1,Math.max(0,bh-1))}else x.fillRect(cx-(cw>>1),bt,cw,bh)}
   else{x.fillRect(cx,yh,1,Math.max(1,yl-yh));x.fillRect(cx-(cw>>1),Math.min(yo,yc),cw,Math.max(1,Math.abs(yo-yc)))}}
  // overlay
  for(const o of overs){if(o.r.def.kind==='volume')continue;drawPlots(x,o,i0,i1,X,Y,col)}
- // penanda sinyal indikator custom
- for(const o of overs){const mk=o.r.def.markers;if(!mk)continue;for(const m of mk){if(m.i<i0||m.i>i1||!V[m.i])continue;const px=X(m.i),dn=m.s==='down',py=dn?Y(V[m.i].h)-12:Y(V[m.i].l)+12;x.fillStyle=m.c||(dn?col.dn:col.up);x.beginPath();x.moveTo(px,py+(dn?6:-6));x.lineTo(px-5,py+(dn?-4:4));x.lineTo(px+5,py+(dn?-4:4));x.closePath();x.fill();if(m.txt){x.textAlign='center';x.fillText(m.txt,px,py+(dn?-12:12));x.textAlign='left'}}}
+ // custom: plotcandle, penanda, objek Pine
+ for(const o of overs){const d=o.r.def;if(d.kind==='volume')continue;drawCan(x,d,i0,i1,X,Y,cw,col);drawMk(x,d,i0,i1,X,Y,V,null,col,mH);drawObjs(x,d,i0,i1,X,Y,V,pw,mH,col)}
 
  // gambar
  const E={g:x,X:t=>X(idx(t)),Y,T:px=>tAt(iX(px)),P,w:pw,h:mH,F,st,idx,col};
@@ -131,14 +132,16 @@ function draw(w,T,deps){
   x.save();x.beginPath();x.rect(0,y0+1,pw,h-1);x.clip();
   let a,b;
   if(def.range){a=def.range[0];b=def.range[1]}
-  else{a=Infinity;b=-Infinity;for(const p of def.plots){const s=o.r.series[p.k];if(!s)continue;const sh=p.shift?p.shift(o.r.p):0;for(let i=i0;i<=i1;i++){const v=s[i-sh];if(v!=null&&isFinite(v)){if(v<a)a=v;if(v>b)b=v}}}
+  else{a=Infinity;b=-Infinity;for(const p of def.plots){const s=o.r.series[p.k];if(!s)continue;const sh=shOf(p,o.r.p);for(let i=i0;i<=i1;i++){const v=s[i-sh];if(v!=null&&isFinite(v)){if(v<a)a=v;if(v>b)b=v}}if(p.t==='hist'||p.t==='area'){const z=p.base!=null?p.base:0;if(z<a)a=z;if(z>b)b=z}}
+   for(const q of def.candles||[])for(let i=i0;i<=i1;i++){if(q.h[i]!=null&&q.h[i]>b)b=q.h[i];if(q.l[i]!=null&&q.l[i]<a)a=q.l[i]}
    for(const l of def.levels||[]){const lv=l.v??l;if(lv<a)a=lv;if(lv>b)b=lv}
    if(!(b>a)){a=(isFinite(a)?a:0)-1;b=(isFinite(b)?b:0)+1}const pd=(b-a)*.1;a-=pd;b+=pd}
   const SY=v=>top+(b-v)/(b-a)*hh,SP=y=>b-(y-top)/hh*(b-a);
+  drawBg(x,def,i0,i1,X,y0+1,h-1,bw);
   if(def.band){x.fillStyle=ChartDraw.rgba('#8a93a0',.08);const y1=SY(def.band[1]),y2=SY(def.band[0]);x.fillRect(0,y1,pw,y2-y1)}
   x.strokeStyle=col.line;x.globalAlpha=.9;x.setLineDash([3,3]);for(const l of def.levels||[]){const lv=l.v??l,y=Math.round(SY(lv))+.5;x.beginPath();x.moveTo(0,y);x.lineTo(pw,y);if(l.c)x.strokeStyle=l.c;x.stroke();x.strokeStyle=col.line}x.setLineDash([]);x.globalAlpha=1;
   // baseline nol untuk histogram
-  drawPlots(x,o,i0,i1,X,SY,col,{zero:SY(0),bw});
+  drawPlots(x,o,i0,i1,X,SY,col,{zero:SY(0),bw});drawCan(x,def,i0,i1,X,SY,cw,col);drawMk(x,def,i0,i1,X,SY,V,pn,col,0);drawObjs(x,def,i0,i1,X,SY,V,pw,h,col);
   x.restore();
   // tick sumbu
   const tk=def.range||def.levels?(def.levels||[]).map(l=>l.v??l):[],tv=tk.length?tk:(()=>{const s=niceStep((b-a)/Math.max(1,Math.floor(hh/34))),r=[];for(let q=Math.ceil(a/s);q*s<=b;q++)r.push(q*s);return r})();
@@ -174,19 +177,86 @@ function draw(w,T,deps){
  return{hv,R,V,mode,F}}
 
 // gambar semua plot satu indikator pada panel dengan fungsi skala Yf
+const shOf=(pl,p)=>(pl.shift?pl.shift(p):0)+(pl.off||0);
 function drawPlots(x,o,i0,i1,X,Yf,col,opt={}){
  const def=o.r.def,p=o.r.p,S=o.r.series,cl=k=>o.i.c&&o.i.c[k];
- // isian antar plot
- for(const f of def.fills||[]){const A=S[f.a],B=S[f.b];if(!A||!B)continue;const pa=def.plots.find(q=>q.k===f.a),sh=pa&&pa.shift?pa.shift(p):0;
-  for(let i=i0+1;i<=i1;i++){const j=i-sh,a1=A[j],b1=B[j],a0=A[j-1],b0=B[j-1];if(a1==null||b1==null||a0==null||b0==null)continue;
-   x.fillStyle=f.c||(a1>=b1?f.up:f.dn);x.beginPath();x.moveTo(X(i-1),Yf(a0));x.lineTo(X(i),Yf(a1));x.lineTo(X(i),Yf(b1));x.lineTo(X(i-1),Yf(b0));x.closePath();x.fill()}}
+ // isian antar plot (bawaan: a/b = kunci seri; Pine: boleh konstanta va/vb dan warna per bar)
+ for(const f of def.fills||[]){const A=f.a?S[f.a]:null,B=f.b?S[f.b]:null;if(!A&&f.va==null||!B&&f.vb==null)continue;const pa=f.a&&def.plots.find(q=>q.k===f.a),sh=pa?shOf(pa,p):0;
+  const ga=j=>A?A[j]:f.va,gb=j=>B?B[j]:f.vb;
+  for(let i=i0+1;i<=i1;i++){const j=i-sh,a1=ga(j),b1=gb(j),a0=ga(j-1),b0=gb(j-1);if(a1==null||b1==null||a0==null||b0==null)continue;
+   const fc=f.cols?f.cols[i]:f.c!==undefined?f.c:(a1>=b1?f.up:f.dn);if(!fc)continue;
+   x.fillStyle=fc;x.beginPath();x.moveTo(X(i-1),Yf(a0));x.lineTo(X(i),Yf(a1));x.lineTo(X(i),Yf(b1));x.lineTo(X(i-1),Yf(b0));x.closePath();x.fill()}}
  for(const pl of def.plots){
-  const s=S[pl.k];if(!s)continue;const sh=pl.shift?pl.shift(p):0,c=cl(pl.k)||pl.c,t=pl.t||'line';
-  if(t==='hist'){const z=opt.zero??Yf(0),bw=Math.max(1,Math.floor((opt.bw||4)*.7));for(let i=i0;i<=i1;i++){const v=s[i-sh];if(v==null)continue;const pv=s[i-sh-1];x.globalAlpha=pv!=null&&Math.abs(v)<Math.abs(pv)?.45:.85;x.fillStyle=v>=0?(cl(pl.k)||pl.c):(pl.c2||'#ff6b6b');const y=Yf(v);x.fillRect(Math.round(X(i)-bw/2),Math.min(z,y),bw,Math.max(1,Math.abs(y-z)))}x.globalAlpha=1;continue}
-  if(t==='dots'){x.fillStyle=c;for(let i=i0;i<=i1;i++){const v=s[i-sh];if(v==null)continue;x.beginPath();x.arc(X(i),Yf(v),1.8,0,7);x.fill()}continue}
+  const s=S[pl.k];if(!s)continue;const sh=shOf(pl,p),c=cl(pl.k)||pl.c,t=pl.t||'line',cs=pl.cols,cAt=i=>cs?cs[i-(pl.off||0)]:c;
+  if(t==='hist'){const z=pl.base!=null?Yf(pl.base):(opt.zero??Yf(0)),bw=Math.max(1,Math.floor((opt.bw||4)*.7));for(let i=i0;i<=i1;i++){const v=s[i-sh];if(v==null)continue;
+    if(pl.px||cs){const fc=cs?cs[i-sh]:c;if(!fc)continue;x.globalAlpha=1;x.fillStyle=fc}
+    else{const pv=s[i-sh-1];x.globalAlpha=pv!=null&&Math.abs(v)<Math.abs(pv)?.45:.85;x.fillStyle=v>=0?(cl(pl.k)||pl.c):(pl.c2||'#ff6b6b')}
+    const y=Yf(v);x.fillRect(Math.round(X(i)-bw/2),Math.min(z,y),bw,Math.max(1,Math.abs(y-z)))}x.globalAlpha=1;continue}
+  if(t==='dots'||t==='cross'){for(let i=i0;i<=i1;i++){const v=s[i-sh];if(v==null)continue;const fc=cs?cs[i-sh]:c;if(!fc)continue;const px=X(i),py=Yf(v);
+    if(t==='cross'){x.strokeStyle=fc;x.lineWidth=1;x.beginPath();x.moveTo(px-3,py);x.lineTo(px+3,py);x.moveTo(px,py-3);x.lineTo(px,py+3);x.stroke()}else{x.fillStyle=fc;x.beginPath();x.arc(px,py,pl.w>2?2.6:1.8,0,7);x.fill()}}continue}
+  if(t==='area'){const z=pl.base!=null?Yf(pl.base):(opt.zero??Yf(0));let on=false,sx=0;x.fillStyle=ChartDraw.rgba(typeof c==='string'&&c[0]==='#'?c:'#4c9aff',.2);
+   const close=ex=>{if(on){x.lineTo(ex,z);x.lineTo(sx,z);x.closePath();x.fill()}on=false};x.beginPath();
+   for(let i=i0;i<=i1;i++){const v=s[i-sh];if(v==null||!isFinite(v)){close(X(i-1));x.beginPath();continue}const px=X(i),py=Yf(v);if(!on){x.moveTo(px,py);sx=px;on=true}else x.lineTo(px,py)}close(X(i1))}
   if(pl.dirKey){const dir=S[pl.dirKey];let prev=null;x.lineWidth=pl.w||1.6;for(let i=i0;i<=i1;i++){const v=s[i-sh];if(v==null){prev=null;continue}const d=dir&&dir[i-sh];x.strokeStyle=d===-1?pl.c2:pl.c;if(prev!=null&&prev.d===d){x.beginPath();x.moveTo(X(i-1),Yf(prev.v));x.lineTo(X(i),Yf(v));x.stroke()}prev={v,d}}x.lineWidth=1;continue}
-  x.beginPath();let on=false;for(let i=i0;i<=i1;i++){const v=s[i-sh];if(v==null||!isFinite(v)){on=false;continue}const px=X(i),py=Yf(v);if(t==='step'&&on){x.lineTo(px,x.__ly||py)}on?x.lineTo(px,py):x.moveTo(px,py);on=true;x.__ly=py}
-  x.strokeStyle=c;x.lineWidth=pl.w||1.5;x.lineJoin='round';x.stroke();x.lineWidth=1}}
+  const lw=pl.w||1.5;x.lineWidth=lw;x.lineJoin='round';
+  if(cs){let prev=null;for(let i=i0;i<=i1;i++){const v=s[i-sh];if(v==null||!isFinite(v)){prev=null;continue}const px=X(i),py=Yf(v),fc=cs[i-sh];
+    if(prev&&fc){x.strokeStyle=fc;x.beginPath();x.moveTo(prev[0],prev[1]);if(t==='step')x.lineTo(px,prev[1]);x.lineTo(px,py);x.stroke()}prev=[px,py]}x.lineWidth=1;continue}
+  x.beginPath();let on=false,ly=0;for(let i=i0;i<=i1;i++){const v=s[i-sh];if(v==null||!isFinite(v)){on=t==='linebr'||t==='line'||t==='step'||t==='area'?false:on;continue}const px=X(i),py=Yf(v);if(t==='step'&&on)x.lineTo(px,ly);on?x.lineTo(px,py):x.moveTo(px,py);on=true;ly=py}
+  x.strokeStyle=c;x.stroke();x.lineWidth=1}}
+// latar per bar (bgcolor)
+function drawBg(x,def,i0,i1,X,y0,h,bw){if(!def.bg)return;const m=new Map();for(const q of def.bg){if(q[0]>=i0&&q[0]<=i1)m.set(q[0],q[1])}for(const[i,c]of m){x.fillStyle=c;x.fillRect(Math.round(X(i)-bw/2),y0,Math.max(1,Math.ceil(bw)),h)}}
+// plotcandle / plotbar
+function drawCan(x,def,i0,i1,X,Yf,bw,col){for(const q of def.candles||[]){for(let i=i0;i<=i1;i++){const o=q.o[i],h=q.h[i],l=q.l[i],c=q.c[i];if(o==null||h==null||l==null||c==null)continue;
+  const fc=q.cols[i]||(c>=o?col.up:col.dn),wc=q.wick[i]||fc,bc=q.border[i]||fc,cx=Math.round(X(i)),yo=Math.round(Yf(o)),yc=Math.round(Yf(c)),yh=Math.round(Yf(h)),yl=Math.round(Yf(l));
+  if(q.bar){x.fillStyle=fc;const tk=Math.max(2,bw>>1);x.fillRect(cx,yh,1,Math.max(1,yl-yh));x.fillRect(cx-tk,yo,tk,1);x.fillRect(cx+1,yc,tk,1);continue}
+  x.fillStyle=wc;x.fillRect(cx,yh,1,Math.max(1,yl-yh));x.fillStyle=fc;const bt=Math.min(yo,yc),bh=Math.max(1,Math.abs(yo-yc)),w=Math.max(1,Math.round(bw*.8));x.fillRect(cx-(w>>1),bt,w,bh);if(w>3&&bc!==fc){x.strokeStyle=bc;x.strokeRect(cx-(w>>1)+.5,bt+.5,w-1,Math.max(0,bh-1))}}}}
+// penanda plotshape / plotchar / plotarrow
+const MSZ={tiny:3,small:4.5,normal:6.5,large:9,huge:12,auto:5.5};
+function drawMk(x,def,i0,i1,X,Yf,V,pane,col,mH){const mk=def.markers;if(!mk||!mk.length)return;const stack=new Map();x.font='10px '+MONO;
+ for(const m of mk){if(m.i<i0||m.i>i1||!V[m.i]||m.s==='none')continue;
+  const sz=MSZ[m.z]||MSZ.auto,loc=m.l||'abovebar',up=loc==='abovebar'||loc==='top',px=X(m.i),sk=m.i+loc,n0=stack.get(sk)||0;stack.set(sk,n0+1);const gap=n0*(sz*2+4);
+  let py;if(pane){const t=pane.y0+6,bt=pane.y0+pane.h-6;py=loc==='absolute'&&isFinite(m.v)?Yf(m.v):up?t+sz+gap+2:bt-sz-gap-2}
+  else if(loc==='absolute')py=Yf(m.v);else if(loc==='top')py=sz+8+gap;else if(loc==='bottom')py=mH-sz-8-gap;else py=up?Yf(V[m.i].h)-sz-4-gap:Yf(V[m.i].l)+sz+4+gap;
+  const cc=m.c||(up?col.dn:col.up),s=m.s;x.fillStyle=cc;x.strokeStyle=cc;x.lineWidth=1.4;
+  const dn=!up||s==='arrowdown'||s==='triangledown'||s==='labeldown';
+  x.beginPath();
+  switch(s){
+   case 'circle':x.arc(px,py,sz*.75,0,7);x.fill();break;
+   case 'square':x.fillRect(px-sz*.7,py-sz*.7,sz*1.4,sz*1.4);break;
+   case 'diamond':x.moveTo(px,py-sz);x.lineTo(px+sz*.8,py);x.lineTo(px,py+sz);x.lineTo(px-sz*.8,py);x.closePath();x.fill();break;
+   case 'cross':x.moveTo(px-sz*.7,py);x.lineTo(px+sz*.7,py);x.moveTo(px,py-sz*.7);x.lineTo(px,py+sz*.7);x.stroke();break;
+   case 'xcross':x.moveTo(px-sz*.7,py-sz*.7);x.lineTo(px+sz*.7,py+sz*.7);x.moveTo(px+sz*.7,py-sz*.7);x.lineTo(px-sz*.7,py+sz*.7);x.stroke();break;
+   case 'triangleup':x.moveTo(px,py-sz);x.lineTo(px+sz,py+sz*.7);x.lineTo(px-sz,py+sz*.7);x.closePath();x.fill();break;
+   case 'triangledown':x.moveTo(px,py+sz);x.lineTo(px+sz,py-sz*.7);x.lineTo(px-sz,py-sz*.7);x.closePath();x.fill();break;
+   case 'arrowup':x.moveTo(px,py-sz);x.lineTo(px+sz,py);x.lineTo(px+sz*.4,py);x.lineTo(px+sz*.4,py+sz);x.lineTo(px-sz*.4,py+sz);x.lineTo(px-sz*.4,py);x.lineTo(px-sz,py);x.closePath();x.fill();break;
+   case 'arrowdown':x.moveTo(px,py+sz);x.lineTo(px+sz,py);x.lineTo(px+sz*.4,py);x.lineTo(px+sz*.4,py-sz);x.lineTo(px-sz*.4,py-sz);x.lineTo(px-sz*.4,py);x.lineTo(px-sz,py);x.closePath();x.fill();break;
+   case 'flag':x.moveTo(px-sz*.6,py+sz);x.lineTo(px-sz*.6,py-sz);x.lineTo(px+sz*.9,py-sz*.4);x.lineTo(px-sz*.6,py+sz*.1);x.stroke();break;
+   case 'labelup':case 'labeldown':{const w=Math.max(sz*2.2,(m.x?x.measureText(m.x).width:0)+8),h=sz*2+4,by=s==='labelup'?py+4:py-h-4;x.fillRect(px-w/2,by,w,h);x.beginPath();x.moveTo(px-4,s==='labelup'?by:by+h);x.lineTo(px,s==='labelup'?by-5:by+h+5);x.lineTo(px+4,s==='labelup'?by:by+h);x.closePath();x.fill();
+     if(m.x){x.fillStyle=m.tc||'#fff';x.textAlign='center';x.textBaseline='middle';x.fillText(m.x,px,by+h/2+.5);x.textAlign='left'}continue}
+   case 'char':break;
+   default:x.moveTo(px-sz,py+sz*.7);x.lineTo(px+sz,py+sz*.7);x.lineTo(px,py-sz);x.closePath();x.fill()}
+  if(m.x&&s!=='labelup'&&s!=='labeldown'){x.fillStyle=m.tc||cc;x.textAlign='center';x.textBaseline='middle';x.fillText(m.x,px,dn&&s!=='char'?py-sz-7:up?py-(s==='char'?0:sz+7):py+(s==='char'?0:sz+7));x.textAlign='left'}
+  x.textBaseline='middle'}
+ x.lineWidth=1}
+// objek label/line/box dari Pine. x = indeks bar (boleh pecahan / di luar data), y = harga.
+function drawObjs(x,def,i0,i1,X,Yf,V,pw,hmax,col){const ob=def.objs;if(!ob||!ob.length)return;x.font='10px '+MONO;
+ for(const q of ob){
+  if(q.k==='label'){if(q.x<i0-2||q.x>i1+2)continue;const j=Math.round(q.x),b=V[Math.max(0,Math.min(V.length-1,j))];let y=q.y;
+   if(q.yloc==='abovebar'&&b)y=Yf(b.h)-10;else if(q.yloc==='belowbar'&&b)y=Yf(b.l)+10;else y=Yf(q.y);if(!isFinite(y))continue;
+   const px=X(q.x),st=q.style||'label_down',tx=q.text||'',sz={tiny:8,small:9,normal:11,large:13,huge:16}[q.size]||11;x.font=sz+'px '+MONO;
+   if(st==='none'||st==='text_outline'){x.fillStyle=q.tc||col.ink;x.textAlign='center';x.textBaseline='middle';x.fillText(tx,px,y);x.textAlign='left';continue}
+   const lines=tx.split('\n'),tw=Math.max(...lines.map(l=>x.measureText(l).width))+10,th=lines.length*(sz+2)+6;
+   let bx=px-tw/2,by=y-th-6;if(st==='label_up')by=y+6;else if(st==='label_center'){by=y-th/2}else if(st==='label_left'){bx=px-tw-6;by=y-th/2}else if(st==='label_right'){bx=px+6;by=y-th/2}
+   else if(/arrowup/.test(st))by=y+6;
+   x.fillStyle=q.c||'#2962FF';if(/square|text_only/.test(st)){if(!/text_only/.test(st))x.fillRect(bx,by,tw,th)}else{x.beginPath();x.roundRect?x.roundRect(bx,by,tw,th,3):x.rect(bx,by,tw,th);x.fill()}
+   if(/^label_(down|up|left|right)$/.test(st)){x.beginPath();if(st==='label_down'){x.moveTo(px-4,by+th);x.lineTo(px,y);x.lineTo(px+4,by+th)}else if(st==='label_up'){x.moveTo(px-4,by);x.lineTo(px,y);x.lineTo(px+4,by)}else if(st==='label_left'){x.moveTo(bx+tw,by+th/2-4);x.lineTo(px,y);x.lineTo(bx+tw,by+th/2+4)}else{x.moveTo(bx,by+th/2-4);x.lineTo(px,y);x.lineTo(bx,by+th/2+4)}x.closePath();x.fill()}
+   x.fillStyle=q.tc||'#fff';x.textAlign='center';x.textBaseline='middle';lines.forEach((l,k)=>x.fillText(l,bx+tw/2,by+4+(k+.5)*(sz+2)));x.textAlign='left';continue}
+  if(q.k==='line'){let x1=X(q.x1),x2=X(q.x2),y1=Yf(q.y1),y2=Yf(q.y2);if(![x1,x2,y1,y2].every(isFinite))continue;
+   if(q.ext==='right'||q.ext==='both'||q.ext==='left'){const dx=x2-x1,dy=y2-y1;if(dx!==0){const sl=dy/dx;if(q.ext!=='left'){const X2=pw+10;y2=y1+sl*(X2-x1);x2=X2}if(q.ext!=='right'){const X1=-10;y1=y1+sl*(X1-x1);x1=X1}}}
+   x.strokeStyle=q.c;x.lineWidth=q.w||1;x.setLineDash(q.style==='dashed'?[6,4]:q.style==='dotted'?[2,3]:[]);x.beginPath();x.moveTo(x1,y1);x.lineTo(x2,y2);x.stroke();x.setLineDash([]);x.lineWidth=1;continue}
+  if(q.k==='box'){const x1=X(Math.min(q.x1,q.x2)),x2=q.ext==='right'||q.ext==='both'?pw+10:X(Math.max(q.x1,q.x2)),ya=Yf(q.y1),yb=Yf(q.y2);if(![x1,x2,ya,yb].every(isFinite))continue;const xl=q.ext==='left'||q.ext==='both'?-10:x1;
+   x.fillStyle=q.bg;x.fillRect(xl,Math.min(ya,yb),x2-xl,Math.abs(yb-ya));x.strokeStyle=q.c;x.lineWidth=q.w||1;x.strokeRect(xl+.5,Math.min(ya,yb)+.5,x2-xl,Math.abs(yb-ya));x.lineWidth=1;
+   if(q.text){x.font='10px '+MONO;x.fillStyle=q.tc||col.ink;x.textAlign='center';x.textBaseline='middle';x.fillText(q.text,(xl+x2)/2,(ya+yb)/2);x.textAlign='left'}}}}
 
 return{draw,idxOf,timeAt,TFS,decimals,PR,TB,MONO,niceStep};
 })();

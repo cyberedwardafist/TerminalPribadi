@@ -3,6 +3,7 @@
 // Pelindung lapis kedua: fetch/XMLHttpRequest/WebSocket dst. dimatikan di bawah. Dipanggil dari custom.js lewat new Worker('apps/chart/worker.js').
 'use strict';
 (function(){
+ try{importScripts('pine/parser.js','pine/lib.js','pine/strategy.js','pine/runtime.js')}catch(e){self._pineErr=String(e)}
  for(const k of['fetch','XMLHttpRequest','WebSocket','EventSource','importScripts','indexedDB','caches','BroadcastChannel','SharedWorker','Worker','postMessage_'])try{self[k]=undefined}catch(e){}
  const post=self.postMessage.bind(self);
  const COLORS={red:'#ff6b6b',green:'#3ecf8e',blue:'#4c9aff',orange:'#e8a33d',purple:'#b58cff',yellow:'#c0ca33',white:'#e6e8eb',gray:'#8a93a0',aqua:'#4dd0e1',teal:'#26a69a',lime:'#8bc34a',maroon:'#a33',navy:'#2a4',fuchsia:'#ff7ad9',silver:'#b0b6bf',black:'#222',olive:'#808000'};
@@ -41,51 +42,10 @@
   const hline=(v,c)=>R.levels.push({v:+v,c:COLORS[c]||c}),marker=(i,side,o)=>{o=o||{};R.markers.push({i:i|0,s:side==='down'?'down':'up',c:COLORS[o.color]||o.color,txt:o.text})},overlay=v=>{R.overlay=!!v};
   const fn=new Function('open','high','low','close','volume','time','hl2','hlc3','ohlc4','p','ta','plot','hline','marker','overlay','nz','Math',`"use strict";\n${src}`);
   fn(A.open,A.high,A.low,A.close,A.volume,A.time,A.hl2,A.hlc3,A.ohlc4,p,ta,plot,hline,marker,overlay,nz,Math);return R}
- // ----- Pine -> JS per bar -----
- function splitTop(s){const r=[];let d=0,q=null,cur='';for(const ch of s){if(q){cur+=ch;if(ch===q)q=null;continue}if(ch==='"'||ch==="'"){q=ch;cur+=ch;continue}if('([{'.includes(ch))d++;if(')]}'.includes(ch))d--;if(ch===','&&d===0){r.push(cur.trim());cur=''}else cur+=ch}if(cur.trim())r.push(cur.trim());return r}
- const FN={abs:'Math.abs',max:'Math.max',min:'Math.min',sqrt:'Math.sqrt',log:'Math.log',exp:'Math.exp',pow:'Math.pow',floor:'Math.floor',ceil:'Math.ceil',round:'Math.round',sign:'Math.sign',nz:'nz'};
- function pine(src,p,bars){const A=arrays(bars),B={h:bars.h,l:bars.l,c:bars.c},n=bars.t.length,R=mkR(),V={...A},T=makeT(B);const consts={},alias={},known=new Set(Object.keys(A));let site=0,code=[],plots=0;
-  const err=(m,l)=>{throw new Error('Pine'+(l?' baris '+l:'')+': '+m)};
-  const tx=(e,ln)=>{let o='',i=0;while(i<e.length){const ch=e[i];
-    if(/\s/.test(ch)){o+=ch;i++;continue}
-    if(ch==='"'||ch==="'"){const j=e.indexOf(ch,i+1);if(j<0)err('string tidak ditutup',ln);o+=e.slice(i,j+1);i=j+1;continue}
-    if(/\d|\.\d/.test(ch)){const m=/^(\d+\.?\d*|\.\d+)(e[+-]?\d+)?/i.exec(e.slice(i));o+=m[0];i+=m[0].length;continue}
-    if(/[A-Za-z_]/.test(ch)){const m=/^[A-Za-z_][\w.]*/.exec(e.slice(i))[0];i+=m.length;const rest=e.slice(i),call=/^\s*\(/.test(rest);
-     if(m.startsWith('ta.')){const f=m.slice(3);if(!T[f]||f==='at')err('ta.'+f+' belum didukung',ln);if(call){i+=rest.indexOf('(')+1;const emp=/^\s*\)/.test(e.slice(i));o+=`T.${f}(${++site}${emp?'':','}`}else o+=`T.${f}(${++site})`;continue}
-     if(m.startsWith('math.')){o+='Math.'+m.slice(5);continue}
-     if(m.startsWith('color.')){const c=m.slice(6);if(c==='new'){i+=rest.indexOf('(')+1;o+='cnew(';continue}o+=JSON.stringify(COLORS[c]||'#8a93a0');continue}
-     if(m==='and'){o+='&&';continue}if(m==='or'){o+='||';continue}if(m==='not'){o+='!';continue}if(m==='true'||m==='false'){o+=m;continue}
-     if(m==='na'){if(call){i+=rest.indexOf('(')+1;o+='isNaN(';}else o+='NaN';continue}
-     if(call&&FN[m]){o+=FN[m];continue}
-     const nm=alias[m]||m;
-     if(m in consts){o+='('+JSON.stringify(consts[m])+')';continue}
-     if(!known.has(nm))err('simbol tidak dikenal "'+m+'"',ln);
-     if(e[i]==='['){let d=0,j=i;for(;j<e.length;j++){if(e[j]==='[')d++;else if(e[j]===']'&&--d===0)break}o+=`G(${JSON.stringify(nm)},i-(${tx(e.slice(i+1,j),ln)}))`;i=j+1}else o+=`G(${JSON.stringify(nm)},i)`;continue}
-    o+=ch;i++}return o.replace(/\bnot\s*/g,'!')};
-  const named=(args,names)=>{const o={},pos=[];for(const a of args){const m=/^(\w+)\s*=(?!=)\s*(.*)$/s.exec(a);if(m)o[m[1]]=m[2];else pos.push(a)}return{o,pos}};
-  const lit=s=>{if(s==null)return undefined;try{return Function('"use strict";return('+s.replace(/\bcolor\.(\w+)/g,(_,c)=>JSON.stringify(COLORS[c]||'#8a93a0'))+')')()}catch(e){return undefined}};
-  const lines=src.split(/\r?\n/);const meta={inputs:[]};
-  lines.forEach((raw,li)=>{const ln=li+1;let l=raw.replace(/\/\/.*$/,'').trim();if(!l||l[0]==='@')return;
-   if(/^(if|for|while|switch)\b|=>/.test(l)||/^\s{2,}/.test(raw)&&false)err('if/for/fungsi buatan belum didukung',ln);
-   let m;
-   if(m=/^indicator\s*\((.*)\)$/.exec(l)){const o=named(splitTop(m[1])).o;if(/^true$/.test((o.overlay||'').trim()))R.overlay=true;return}
-   if(/^(strategy|library)\b/.test(l))err('hanya indicator() yang didukung',ln);
-   if(/^(bgcolor|barcolor|alertcondition|label|line|box|table)\b/.test(l))return;
-   if(m=/^hline\s*\((.*)\)$/.exec(l)){const a=named(splitTop(m[1]));R.levels.push({v:+lit(a.pos[0]),c:lit(a.o.color)});return}
-   if(m=/^plot\s*\((.*)\)$/.exec(l)){const a=named(splitTop(m[1])),k=plots++,title=lit(a.o.title||a.pos[1])||'plot '+(k+1),st=(a.o.style||'')+'';
-    R.plots.push({k:String(title).slice(0,24),data:new Array(n).fill(NaN),c:lit(a.o.color),w:+lit(a.o.linewidth)||undefined,t:/histogram|columns/.test(st)?'hist':/circles|cross/.test(st)?'dots':'line'});code.push(`PL(${k},i,${tx(a.pos[0],ln)});`);return}
-   if(m=/^plotshape\s*\((.*)\)$/.exec(l)){const a=named(splitTop(m[1])),down=/down|abovebar/.test((a.o.style||'')+(a.o.location||''));code.push(`if(${tx(a.pos[0],ln)})MK(i,${down?"'down'":"'up'"},${JSON.stringify(lit(a.o.color)||null)},${JSON.stringify(lit(a.o.text)||null)});`);return}
-   if(m=/^(?:\w+\s+)?(\w+)\s*=\s*input(?:\.(\w+))?\s*\((.*)\)$/.exec(l)){const a=named(splitTop(m[3])),kind=m[2]||'float',d=a.pos[0];
-    if(kind==='source'){alias[m[1]]=(d||'close').trim();known.add(m[1]);return}
-    const def=kind==='bool'?d==='true':kind==='string'?lit(d):+lit(d),val=p&&p[m[1]]!==undefined&&kind!=='string'&&kind!=='bool'?+p[m[1]]:def;consts[m[1]]=val;
-    if(kind==='int'||kind==='float')meta.inputs.push({key:m[1],label:lit(a.o.title||a.pos[1])||m[1],def,min:lit(a.o.minval),max:lit(a.o.maxval)});return}
-   if(m=/^\[([\w\s,]+)\]\s*=\s*(.*)$/.exec(l)){const names=m[1].split(',').map(s=>s.trim());names.forEach(x=>{known.add(x);V[x]=new Array(n).fill(NaN)});code.push(`{const r=${tx(m[2],ln)};${names.map((x,j)=>`V.${x}[i]=r[${j}];`).join('')}}`);return}
-   if(m=/^(?:(?:var|varip)\s+)?(?:(?:int|float|bool|string|series\s+\w+)\s+)?(\w+)\s*:?=\s*(.*)$/.exec(l)){if(/^(close|open|high|low|volume)$/.test(m[1]))err('nama bawaan tidak dapat ditimpa',ln);const rhs=tx(m[2],ln);known.add(m[1]);V[m[1]]=new Array(n).fill(NaN);code.push(`V.${m[1]}[i]=${rhs};`);return}
-   err('sintaks tidak dikenali: '+l.slice(0,40),ln)});
-  if(!R.plots.length)err('tidak ada plot()');
-  const G=(k,j)=>j<0||j>=n?NaN:V[k][j],PL=(k,i,v)=>{R.plots[k].data[i]=v},MK=(i,s,c,t)=>R.markers.push({i,s,c,txt:t}),cnew=c=>c;
-  const step=new Function('G','T','V','PL','MK','nz','cnew','i','"use strict";'+code.join('\n'));
-  for(let i=0;i<n;i++){T.at(i);step(G,T,V,PL,MK,nz,cnew,i)}
-  R.inputs=meta.inputs;return R}
- self.onmessage=e=>{const{id,lang,src,p,bars}=e.data;try{const R=lang==='pine'?pine(src,p,bars):runJs(src,p,bars);post({id,ok:out(R,bars.t.length),inputs:R.inputs})}catch(err){post({id,err:String(err&&err.message||err).slice(0,300)})}}
+ const jsOut=(R,n)=>{const o=out(R,n);o.markers=o.markers.map(m=>({i:m.i,s:m.s==='down'?'triangledown':'triangleup',l:m.s==='down'?'abovebar':'belowbar',c:m.c||null,tc:null,x:m.txt||'',z:'auto'}));o.kind='indicator';o.fills=[];o.bg=[];o.barcol=[];o.candles=[];o.objs=[];o.alerts=[];o.events=[];o.title=null;o.short=null;return o};
+ self.onmessage=e=>{const{id,lang,src,p,bars,sec,opts}=e.data;try{
+  if(lang==='pine'){if(!self.PineRun)throw new Error('Interpreter Pine gagal dimuat');
+   let r;try{r=self.PineRun.run(src,p||{},bars,Object.assign({},opts,{sec:sec||{}}))}catch(err){if(err instanceof self.PineRun.NeedData){post({id,need:err.need});return}throw err}
+   post({id,ok:r,inputs:r.inputs});return}
+  const R=runJs(src,p,bars);post({id,ok:jsOut(R,bars.t.length),inputs:R.inputs})}catch(err){post({id,err:String(err&&err.message||err).slice(0,400)})}}
 })();
