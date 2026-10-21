@@ -5,7 +5,7 @@
 <script>try{if(!localStorage.getItem("tc.session")&&!sessionStorage.getItem("tc.session"))location.replace("auth/login.html")}catch(e){}</script>
 <link rel="stylesheet" href="core/base.css"><link rel="stylesheet" href="shared/ui.css"></head><body>
 <canvas id="bg" aria-hidden="true"></canvas>
-<div id="mb"><b id="mbapp">Terminal Chart</b><span>Dock: buka app (app dengan beberapa window: klik = sembunyikan/tampilkan semuanya) · Tombol hijau: tata letak window</span><i class="sp"></i><span id="mbmode">Data dummy</span><span id="clk"></span></div>
+<div id="mb"><b id="mbapp">Terminal Chart</b><div id="tkr" aria-hidden="true"></div><span id="mbmode">Data dummy</span><span id="clk"></span></div>
 <nav id="dock" aria-label="Dock"></nav>
 <!-- Bersama -->
 <script src="shared/config.js"></script>
@@ -17,6 +17,7 @@
 <script src="core/core.js"></script>
 <script src="core/background.js"></script>
 <script src="shared/notif.js"></script>
+<script src="shared/ticker.js"></script>
 <script>
 // Daftar di bawah dimuat berurutan SETELAH Live.ready (di mode Live data server sudah ditulis ke localStorage; mode Dummy langsung jalan).
 // Satu folder per item dock. Urutan baris = urutan dock. Hapus satu baris untuk menyembunyikan app itu.

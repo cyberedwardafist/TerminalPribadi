@@ -26,10 +26,11 @@ const CACHE={};
 function dummy(mk,rg){const day=Math.floor(Date.now()/864e5),vol=MKT.find(m=>m[0]===mk)[2]*RG[rg];
  return DATA[mk].split('|').map(g=>{const[n,l]=g.split(':'),gd=(rng(hs(n+day+rg))()-.5)*vol*.7;
   return{n,it:l.split(',').map(x=>{const[s,v]=x.split('='),r=rng(hs(s+day+rg)),st=STABLE.includes(s);return{s,v:+v,c:+(st?(r()-.5)*.06:gd+(r()+r()+r()-1.5)*vol*1.1).toFixed(2)}})}})}
-async function load(){const k=M.mk+'|'+M.rg;if(CACHE[k])return CACHE[k];let g;
+async function load0(){const k=M.mk+'|'+M.rg;if(CACHE[k])return CACHE[k];let g;
  if(apiOn()){try{const r=await apiFetch(`/api/heatmap?market=${M.mk}&range=${M.rg.toLowerCase()}`);if(!r.ok)throw 0;const j=await r.json(),m={};j.forEach(x=>(m[x.group]=m[x.group]||[]).push({s:x.sym,v:x.cap,c:x.changePct}));g=Object.entries(m).map(([n,it])=>({n,it}))}catch(e){g=null}
   return g&&g.length?(CACHE[k]=g):null}   // Live: tidak pernah jatuh ke data dummy; gagal = null (tidak di-cache)
  return CACHE[k]=dummy(M.mk,M.rg)}
+const load=async()=>{const g=await load0();if(g&&window.Ticker)Ticker.watch('maps',g.flatMap(x=>x.it.map(i=>i.s)));return g};
 const loadErr=w=>{const e=$('.mp-map,.mp-two,.mp-sec',w);if(e)e.innerHTML='<p class="mp-ft">Data pasar live tidak bisa dimuat. Coba lagi beberapa saat.</p>'};
 
 // ---------- treemap (squarified) ----------

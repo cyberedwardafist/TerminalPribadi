@@ -1,0 +1,8 @@
+/* Running text di menubar (#tkr). Hanya tampil saat ada pergerakan harga. */
+#mb #tkr{flex:1;min-width:0;height:100%;position:relative;overflow:hidden;display:flex;align-items:center;-webkit-mask-image:linear-gradient(90deg,transparent,#000 24px,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(90deg,transparent,#000 24px,#000 calc(100% - 24px),transparent)}
+#mb #tkr .tk-t{position:absolute;left:0;top:0;height:100%;display:none;align-items:center;gap:22px;white-space:nowrap;will-change:transform;font-variant-numeric:tabular-nums}
+#mb #tkr.on .tk-t{display:flex}
+#mb #tkr .tk-i{display:inline-flex;align-items:center;gap:6px;color:#d4d8de;font-size:12px}
+#mb #tkr .tk-i b{color:#f3f1ea;font-weight:600}
+#mb #tkr .tk-u{color:#35c28a}#mb #tkr .tk-d{color:#ef6a5e}
+#mb #tkr .tk-a{font-size:9px}
