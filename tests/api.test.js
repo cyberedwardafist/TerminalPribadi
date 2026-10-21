@@ -380,6 +380,23 @@ test('peta kripto: kapitalisasi dari CoinGecko, kode kembar memakai yang terbesa
   state.cgFail = false; fresh();
 });
 
+test('peta IHSG/saham luar: kapitalisasi nyata dari Yahoo, mata uang salah atau gagal -> bobot statis', async () => {
+  const { clearCache } = await import('../lib/cache.js');
+  const fresh = () => { clearCache(); fdb.t.kv_cache = (fdb.t.kv_cache || []).filter(r => !/^heat:/.test(r.key)); };
+  fresh();
+  let r = await call('GET', '/api/heatmap?market=ihsg&range=1d'); assert.equal(r.status, 200);
+  let cap = s => r.body.find(x => x.sym === s)?.cap;
+  assert.equal(state.ycapCrumb, 'crumb123');
+  assert.equal(cap('BBCA'), 1200, 'IDR -> Rp triliun');
+  assert.equal(cap('BBRI'), 700, 'mata uang bukan IDR ditolak -> statis');
+  assert.equal(cap('BMRI'), 600, 'tidak ada di respons -> statis');
+  r = await call('GET', '/api/heatmap?market=luar&range=1d'); assert.equal(cap('AAPL'), 3900, 'USD -> miliar');
+  fresh(); state.ycapFail = true;
+  r = await call('GET', '/api/heatmap?market=ihsg&range=1d'); assert.equal(r.status, 200);
+  assert.equal(cap('BBCA'), 1100, 'Yahoo gagal -> bobot statis');
+  state.ycapFail = false; fresh();
+});
+
 test('berita: Finnhub dan Alpha Vantage aktif hanya bila kunci diisi; Alpha Vantage dibatasi 1x per 6 jam', async () => {
   const { refreshNews } = await import('../lib/news.js');
   const { clearCache } = await import('../lib/cache.js');
