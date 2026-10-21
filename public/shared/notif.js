@@ -16,6 +16,8 @@ function paint(){
  panel.querySelector('[data-all]').disabled=!u}
 
 function toast(n){
+ if(window.Island&&Island.ok()){const d=n.data||{},up=typeof d.last==='number'&&typeof d.price==='number'?d.last>=d.price:null;
+  Island.notify({title:n.title,body:n.body,icon:'bell',tone:up==null?'warn':up?'up':'down',timeout:8000,key:'n'+n.id,onClick:()=>go(n)});return}
  const el=document.createElement('div');el.className='nf-toast';el.setAttribute('role','status');
  el.innerHTML=`<b>${esc(n.title)}</b>${n.body?`<span>${esc(n.body)}</span>`:''}`;
  el.onclick=()=>{el.remove();go(n)};toastBox.append(el);setTimeout(()=>el.remove(),7000);

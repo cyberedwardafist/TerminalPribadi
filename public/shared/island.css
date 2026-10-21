@@ -1,0 +1,51 @@
+/* Dynamic Island di tengah menubar (shared/island.js). Selalu gelap seperti aslinya, apa pun tema.
+   Id #isl, kelas berawalan .isl-. Ukuran dianimasikan lewat width/height (diukur di JS), jadi bentuknya "mengalir" antar isi. */
+#isl{--sp:.46s;--ez:cubic-bezier(.34,1.42,.5,1);
+ position:fixed;z-index:9999;top:calc(env(safe-area-inset-top,0px) + 3px);left:50%;box-sizing:border-box;
+ width:84px;height:22px;max-width:calc(100vw - 16px);overflow:hidden;
+ background:#050607;color:#f3f1ea;border-radius:999px;
+ box-shadow:0 0 0 1px rgba(255,255,255,.07),0 10px 30px rgba(0,0,0,.5);
+ transform:translateX(-50%) scale(.35);transform-origin:50% 0;opacity:0;pointer-events:none;
+ transition:width var(--sp) var(--ez),height var(--sp) var(--ez),border-radius var(--sp) var(--ez),transform var(--sp) var(--ez),opacity .18s ease,box-shadow .3s}
+#isl[data-s=on]{opacity:1;pointer-events:auto;transform:translateX(-50%) scale(1)}
+#isl[data-s=on][data-k=ask]{border-radius:26px;box-shadow:0 0 0 1px rgba(255,255,255,.09),0 22px 60px rgba(0,0,0,.6)}
+#isl[data-s=on][data-k=note]{border-radius:22px;max-width:min(400px,calc(100vw - 16px))}
+#isl[data-tone=up]{box-shadow:0 0 0 1px rgba(53,194,138,.45),0 10px 34px rgba(53,194,138,.22)}
+#isl[data-tone=down]{box-shadow:0 0 0 1px rgba(239,106,94,.45),0 10px 34px rgba(239,106,94,.22)}
+#isl[data-tone=warn]{box-shadow:0 0 0 1px rgba(232,163,61,.5),0 10px 34px rgba(232,163,61,.22)}
+.isl-c{opacity:0;transform:scale(.96);transform-origin:50% 0;transition:opacity .2s ease,transform .2s ease}
+#isl[data-s=on] .isl-c{opacity:1;transform:none;transition-delay:.12s}
+#isl.swap .isl-c{opacity:0;transform:scale(.97);transition-delay:0s;transition-duration:.09s}
+
+/* notifikasi / alert */
+.isl-n{position:relative;display:flex;align-items:center;gap:10px;padding:7px 10px 9px 8px;cursor:pointer;min-width:190px;outline-offset:-3px}
+.isl-i{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.12);color:#f3f1ea}
+.isl-i svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+[data-tone=up] .isl-i{background:rgba(53,194,138,.2);color:#35c28a}
+[data-tone=down] .isl-i{background:rgba(239,106,94,.2);color:#ef6a5e}
+[data-tone=warn] .isl-i{background:rgba(232,163,61,.2);color:#e8a33d}
+.isl-x{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.isl-x b{font-size:13px;font-weight:600;overflow-wrap:anywhere}
+.isl-x span{font-size:12px;color:#aeb4bd;overflow-wrap:anywhere}
+.isl-cl{flex:none;width:22px;height:22px;padding:0;border:0;border-radius:50%;background:transparent;color:#8f96a0;font-size:16px;line-height:1;cursor:pointer}
+.isl-cl:hover{background:rgba(255,255,255,.14);color:#fff}
+.isl-t{position:absolute;left:12px;right:12px;bottom:3px;height:2px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden}
+.isl-t i{display:block;height:100%;background:var(--tc,#aeb4bd);opacity:.7;transform-origin:0 50%}
+#isl[data-tone=up]{--tc:#35c28a}#isl[data-tone=down]{--tc:#ef6a5e}#isl[data-tone=warn]{--tc:#e8a33d}
+
+/* pertanyaan (pengganti prompt/confirm/alert) */
+.isl-q{display:flex;flex-direction:column;gap:8px;padding:14px 16px 14px;margin:0;width:min(340px,calc(100vw - 32px));box-sizing:border-box}
+.isl-h{display:flex;align-items:center;gap:10px}
+.isl-h b{font-size:14px;font-weight:600}
+.isl-q p{margin:0;color:#aeb4bd;font-size:13px}
+.isl-in{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(255,255,255,.07);color:#f3f1ea;font:inherit;outline:0}
+.isl-in:focus,.isl-in:focus-visible{border-color:var(--acc,#e8a33d);outline:0}
+.isl-b{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.isl-b button{border:0;border-radius:999px;padding:7px 16px;font:inherit;font-size:13px;cursor:pointer;background:rgba(255,255,255,.12);color:#f3f1ea}
+.isl-b button:hover{background:rgba(255,255,255,.2)}
+.isl-b .go{background:var(--acc,#e8a33d);color:#1a1405;font-weight:600}.isl-b .go:hover{filter:brightness(1.08)}
+.isl-b .go.dng{background:var(--dn,#ef6a5e);color:#fff}
+#isl :focus-visible{outline:2px solid var(--acc,#e8a33d);outline-offset:2px}
+
+@media (prefers-reduced-motion:reduce){#isl,.isl-c{transition:opacity .12s linear!important;transform:translateX(-50%)!important}.isl-c{transform:none!important}}
+#isl.still,#isl.still .isl-c{transition:opacity .12s linear!important}#isl.still{transform:translateX(-50%)!important}#isl.still .isl-c{transform:none!important}#isl.still .isl-t{display:none}

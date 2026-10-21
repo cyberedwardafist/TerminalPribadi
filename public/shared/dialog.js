@@ -4,7 +4,7 @@
 //   dlg.alert('Judul','Pesan') -> Promise<void>
 const dlg=(()=>{
 const esc=s=>String(s).replace(/[&<>"]/g,c=>'&#'+c.charCodeAt(0)+';');
-function show({title,msg,input,ok='OK',cancel='Batal',danger,one}){return new Promise(res=>{
+function modal({title,msg,input,ok='OK',cancel='Batal',danger,one}){return new Promise(res=>{
  const prev=document.activeElement,bd=document.createElement('div');bd.className='dlg-bd';
  bd.innerHTML=`<form class="dlg" role="dialog" aria-modal="true" aria-label="${esc(title)}"><h3>${esc(title)}</h3>${msg?`<p>${esc(msg)}</p>`:''}${input!=null?`<input class="dlg-in" maxlength="40" value="${esc(input.value||'')}" placeholder="${esc(input.label||'')}" aria-label="${esc(input.label||title)}">`:''}<div class="dlg-ft">${one?'':`<button type="button" class="btn" data-c="0">${esc(cancel)}</button>`}<button type="submit" class="btn pri${danger?' dng':''}">${esc(ok)}</button></div></form>`;
  const fm=bd.firstChild,inp=fm.querySelector('input'),done=v=>{bd.remove();removeEventListener('keydown',kd,true);prev&&prev.focus&&prev.focus({preventScroll:true});res(v)};
@@ -13,4 +13,6 @@ function show({title,msg,input,ok='OK',cancel='Batal',danger,one}){return new Pr
  fm.onclick=e=>{if(e.target.dataset.c==='0')done(input!=null?null:false)};
  bd.onpointerdown=e=>{if(e.target===bd)done(input!=null?null:one?undefined:false)};
  addEventListener('keydown',kd,true);document.body.append(bd);(inp||fm.querySelector('[type=submit]')).focus();inp&&inp.select()})}
+// Utama: Dynamic Island (shared/island.js). Modal lama hanya cadangan bila island belum siap.
+const show=o=>window.Island&&Island.ok()?Island.ask(o):modal(o);
 return{prompt:(title,label,value)=>show({title,input:{label,value},ok:'Simpan'}),confirm:(title,msg,o={})=>show({title,msg,ok:o.ok||'Ya',danger:o.danger}),alert:(title,msg)=>show({title,msg,one:1})}})();
