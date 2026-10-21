@@ -3,12 +3,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Terminal Chart</title>
 <script>try{if(!localStorage.getItem("tc.session")&&!sessionStorage.getItem("tc.session"))location.replace("auth/login.html")}catch(e){}</script>
-<link rel="stylesheet" href="core/base.css"><link rel="stylesheet" href="shared/ui.css"></head><body>
+<link rel="stylesheet" href="core/base.css"><link rel="stylesheet" href="shared/ui.css"><link rel="stylesheet" href="shared/status.css"></head><body>
 <canvas id="bg" aria-hidden="true"></canvas>
-<div id="mb"><b id="mbapp">Terminal Chart</b><div id="tkr" aria-hidden="true"></div><span id="mbmode">Data dummy</span><span id="clk"></span></div>
+<div id="mb"><b id="mbapp">Terminal Chart</b><div id="tkr" aria-hidden="true"></div><span id="mbmode">Menghubungkan…</span><span id="clk"></span></div>
 <nav id="dock" aria-label="Dock"></nav>
 <!-- Bersama -->
 <script src="shared/config.js"></script>
+<script src="shared/status.js"></script>
 <script src="auth/auth.js"></script>
 <script src="shared/data.js"></script>
 <script src="shared/dialog.js"></script>
@@ -48,7 +49,7 @@
   'apps/setting/pages/akun.js',
   'core/boot.js'
 ];
-var go=function(){if(window.Live&&Live.on){var m=document.getElementById('mbmode');if(m)m.textContent='Live';if(Live.applySettings)Live.applySettings();}
+var go=function(){var m=document.getElementById('mbmode');if(m)m.textContent=(window.Live&&Live.on)?'Live':'Tidak live';window.addEventListener('tc:qstate',function(){if(m&&window.Live&&Live.on)m.textContent=Live.err?'Live · bermasalah':'Live'});if(window.Live&&Live.on){if(Live.applySettings)Live.applySettings();}
  var i=0;(function n(){if(i>=L.length)return;var e=document.createElement('script');e.src=L[i++];e.async=false;e.onload=n;e.onerror=n;document.head.appendChild(e)})()};
 (window.Live?Live.ready:Promise.resolve()).then(go,go)})();
 </script>

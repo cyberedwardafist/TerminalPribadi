@@ -1,0 +1,30 @@
+/* Panel status galat/kosong dengan ilustrasi SVG. Kelas berawalan .st- */
+.st{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:260px;height:100%;box-sizing:border-box;padding:28px 22px;text-align:center;color:var(--ink)}
+.st svg{width:132px;height:99px;fill:none;stroke:var(--mute);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.st svg .x{stroke:var(--dn)}.st svg .f{fill:var(--mute);stroke:none}.st svg .fx{fill:var(--dn);stroke:none}.st svg .ok{stroke:var(--up)}
+.st h3{margin:2px 0 0;font-size:16px;font-weight:600}
+.st p{margin:0;max-width:440px;font-size:13px;line-height:1.5;color:var(--mute)}
+.st ul{margin:2px 0 0;padding:0;list-style:none;max-width:440px;font-size:12.5px;color:var(--mute);text-align:left}
+.st li{position:relative;padding:2px 0 2px 16px}.st li::before{content:"\203A";position:absolute;left:4px;color:var(--acc);font-weight:700}
+.st-dg{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+.st-dg span{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--win2);font-size:12px;color:var(--mute)}
+.st-dg i{font-style:normal;font-weight:700;width:12px;text-align:center}
+.st-dg .ok i{color:var(--up)}.st-dg .no i{color:var(--dn)}.st-dg .no{color:var(--ink)}
+.st-dg .wt i{animation:stp 1s ease-in-out infinite}
+@keyframes stp{50%{opacity:.25}}
+.st-dt{font:11px ui-monospace,Menlo,Consolas,monospace;color:var(--mute);opacity:.85;max-width:440px;overflow-wrap:anywhere}
+.st-ac{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;justify-content:center}
+.st-ac button{font:inherit;font-size:13px;padding:6px 14px;border-radius:8px;border:1px solid var(--line);background:var(--win2);color:var(--ink);cursor:pointer}
+.st-ac button.pri{background:var(--acc);border-color:var(--acc);color:#1b1304;font-weight:600}
+.st-ac button:disabled{opacity:.6;cursor:default}
+.st-strip{display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:12px;color:var(--ink);background:color-mix(in srgb,var(--dn) 14%,transparent);border-bottom:1px solid color-mix(in srgb,var(--dn) 35%,transparent)}
+.st-strip svg{width:15px;height:15px;flex:none;fill:none;stroke:var(--dn);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.st-strip button{margin-left:auto;font:inherit;font-size:12px;padding:2px 10px;border-radius:6px;border:1px solid var(--line);background:var(--win2);color:var(--ink);cursor:pointer}
+.st-ld{display:flex;align-items:center;justify-content:center;gap:10px;min-height:160px;color:var(--mute);font-size:13px}
+.st-ld::before{content:"";width:16px;height:16px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--acc);animation:sts .8s linear infinite}
+@keyframes sts{to{transform:rotate(360deg)}}
+/* panel di dalam layout app lain */
+.mp-map:has(.st),.mp-map:has(.st-ld){background:transparent;overflow:auto}
+.mp-two>.st,.mp-two>.st-ld{grid-column:1/-1}
+.wl-tb .st,.wl-tb .st-ld{min-height:300px}
+.st-dg .sk{opacity:.6}
