@@ -19,17 +19,13 @@
  <nav class="ln" aria-label="Bantuan akun"><a href="register.html"><i><svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="4"/><path d="M2.500 21c0-4 3.400-6.500 7.500-6.500M18 14v6M15 17h6"/></svg></i>Daftar akun</a><a href="forgot.html"><i><svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></svg></i>Lupa password?</a></nav>
 </div>
 </main>
-<details class="srv"><summary>Koneksi server</summary><div class="box">
- <label class="fld"><span>Sumber akun</span><select class="in" id="sm"><option value="dummy">Dummy (akun di browser ini)</option><option value="live">Live (backend)</option></select></label>
- <label class="fld" style="margin:0"><span>Base URL</span><input class="in" id="sb" type="url" placeholder="https://api.contoh.id" autocomplete="off" spellcheck="false"></label>
-</div></details>
 <script src="../shared/config.js"></script>
 <script src="auth.js"></script>
+<script src="lock.js"></script>
 <script>
 (()=>{
 const q=s=>document.querySelector(s);Auth.scene();
-// jam & tanggal besar ala layar kunci Mac
-const ld=q('#ld'),lc=q('#lc'),tick=()=>{const d=new Date();ld.textContent=d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long'});lc.textContent=d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',hour12:false}).replace('.',':')};tick();setInterval(tick,5000);
+
 const eye=(b,i)=>b.onclick=()=>{const on=i.type==='password';i.type=on?'text':'password';b.setAttribute('aria-pressed',on);b.setAttribute('aria-label',on?'Sembunyikan password':'Tampilkan password');i.focus()};
 
 if(Auth.session()){location.replace('../index.html');return}
@@ -45,10 +41,6 @@ f.onsubmit=async e=>{e.preventDefault();err.textContent='';ok.textContent='';
  go.disabled=true;go.classList.add('busy');
  try{await Auth.login(u,pw,f.rm.checked);location.replace('../index.html')}
  catch(x){err.textContent=x.message;if(x.unverified){const em=x.email||(u.includes('@')?u.toLowerCase():'');const a=document.createElement('a');a.href='#';a.textContent=' Verifikasi sekarang';a.onclick=async ev=>{ev.preventDefault();try{if(em)await Auth.sendOtp('register',em)}catch(_){}location.href='otp.html?p=register&e='+encodeURIComponent(em)};err.append(a)}f.p.value='';f.p.focus();go.disabled=false;go.classList.remove('busy');f.classList.remove('shake');void f.offsetWidth;f.classList.add('shake')}};
-// koneksi server (dummy atau live) bisa diatur sebelum login
-const sm=q('#sm'),sb=q('#sb');sm.value=CFG.api.mode;sb.value=CFG.api.base;
-sm.onchange=()=>{CFG.api.mode=sm.value;cfgSave()};
-sb.oninput=()=>{const v=sb.value.trim(),bad=v&&!/^https?:\/\/[^\s/]+/i.test(v);sb.setAttribute('aria-invalid',!!bad);if(!bad){CFG.api.base=v;cfgSave()}};
 
 })();
 </script></body></html>
