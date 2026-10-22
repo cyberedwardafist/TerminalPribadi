@@ -1,0 +1,8 @@
+/* Setting > Tampilan */
+.swx{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.sx{position:relative;display:block;width:28px;height:28px;cursor:pointer}
+.sx input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.sx i{position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2);transition:transform .15s}
+.sx:hover i{transform:scale(1.08)}
+.sx input:checked+i{box-shadow:inset 0 0 0 1px rgba(0,0,0,.2),0 0 0 2px var(--sg),0 0 0 4px var(--ink)}
+.sx input:focus-visible+i{outline:2px solid var(--acc);outline-offset:5px}

@@ -37,20 +37,22 @@ const Hello=(()=>{
   P.push('M'+i1+' 44 L'+(i1+1)+' 45');P.push('M'+i2+' 44 L'+(i2+1)+' 45');
   return{p:P,w:b.end+10}};
 
+ let mode='full';try{const c=JSON.parse(localStorage.getItem('tc.cfg')||'null'),m=c&&c.ui&&c.ui.hello;if(m==='fast'||m==='off')mode=m}catch(e){}   // Setting > Umum > Layar sambutan
  let el=null,svg=null,paths=[],sub=null,booted=false,gone=false,plays=0,alive=0,tm=0;
  const still=()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){return false}};
  const ready=()=>{const d=document.getElementById('dock');return booted&&!!d&&d.children.length>0};
  const NS='http://www.w3.org/2000/svg';
  const mk=()=>{
-  const B=build();
   el=document.createElement('div');el.id='hello';el.setAttribute('role','status');el.setAttribute('aria-label','Memuat TerminalPribadi');
+  if(mode==='off'){document.body.prepend(el);return}   // tanpa animasi: hanya penutup polos sampai desktop siap
+  const B=build();
   el.innerHTML='<svg viewBox="-20 -6 '+(B.w+40)+' 164" aria-hidden="true"><defs><linearGradient id="hg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="'+B.w+'" y2="0"><stop offset="0" stop-color="#ffb25e"/><stop offset=".35" stop-color="#ff7a8a"/><stop offset=".7" stop-color="#b58cff"/><stop offset="1" stop-color="#6fb2ff"/></linearGradient></defs><g transform="translate(14 0) skewX(-9)">'+B.p.map(d=>'<path class="ink" d="'+d+'"/>').join('')+'</g></svg><div class="sub">Memuat desktop</div>';
   document.body.prepend(el);svg=el.firstChild;paths=[...el.querySelectorAll('.ink')];sub=el.querySelector('.sub');
   paths.forEach(p=>{p._l=p.getTotalLength();p.style.strokeDasharray=p._l;p.style.strokeDashoffset=p._l})};
  const wait=ms=>new Promise(r=>{tm=setTimeout(r,ms)});
  const draw=async()=>{
-  const SPEED=330,PAUSE=90;   // px (satuan viewBox) per detik; jeda antar goresan
-  for(const p of paths){const d=Math.max(110,p._l/SPEED*1000);
+  const SPEED=mode==='fast'?1000:330,PAUSE=mode==='fast'?20:90;   // px (satuan viewBox) per detik; jeda antar goresan
+  for(const p of paths){const d=Math.max(mode==='fast'?60:110,p._l/SPEED*1000);
    if(still()){p.style.strokeDashoffset=0;continue}
    const a=p.animate([{strokeDashoffset:p._l},{strokeDashoffset:0}],{duration:d,easing:p._l<30?'linear':'cubic-bezier(.45,.05,.4,1)',fill:'forwards'});
    await a.finished.catch(()=>{});if(gone)return;await wait(PAUSE)}};
@@ -62,13 +64,14 @@ const Hello=(()=>{
  const run=async()=>{
   for(;;){plays++;
    await draw();if(gone)return;
-   await wait(700);if(gone)return;
+   await wait(mode==='fast'?250:700);if(gone)return;
    if(ready()){leave();return}
    // Desktop belum siap: tampilan masih seperti layar kosong -> ulangi animasi
    sub.classList.add('on');
    if(plays>=3&&!ready()){try{if(!sessionStorage.getItem('tc.hello.rl')){sessionStorage.setItem('tc.hello.rl','1');location.reload();return}}catch(e){}}
    await erase();if(gone)return;await wait(250);if(gone)return}};
- const start=()=>{if(el||!document.body)return;try{mk();run()}catch(e){try{el&&el.remove()}catch(_){}}};
+ const quick=async()=>{for(let i=0;i<150&&!ready()&&!gone;i++)await wait(100);leave()};
+ const start=()=>{if(el||!document.body)return;try{mk();mode==='off'?quick():run()}catch(e){try{el&&el.remove()}catch(_){}}};
  // boot.js memanggil ini setelah dock, jam dan sesi terpasang; sesudahnya pengaman reload dilepas
  const done=()=>{booted=true;try{sessionStorage.removeItem('tc.hello.rl')}catch(e){}};
  if(document.body)start();else document.addEventListener('DOMContentLoaded',start);

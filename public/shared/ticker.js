@@ -28,7 +28,7 @@ async function start(){
  const W=box.clientWidth,T=track.scrollWidth,still=typeof S!=='undefined'&&S.still;
  const done=()=>{run=null;box.classList.remove('on');track.innerHTML='';if(again)setTimeout(start,400)};
  if(still||!track.animate){track.style.transform='translateX(0)';run=setTimeout(done,6000);return}
- const a=track.animate([{transform:`translateX(${W}px)`},{transform:`translateX(${-T}px)`}],{duration:(W+T)/SPEED*1000,easing:'linear',fill:'forwards'});
+ const a=track.animate([{transform:`translateX(${W}px)`},{transform:`translateX(${-T}px)`}],{duration:(W+T)/(typeof UiPref!=='undefined'?UiPref.tkSpeed():SPEED)*1000,easing:'linear',fill:'forwards'});
  run=a;a.onfinish=done;a.oncancel=()=>{run=null}}
 window.Ticker={source(k,fn,refresh){src[k]=fn;if(refresh)rf[k]=refresh}};
 // Watchlist: bandingkan harga nyata WATCH dengan event sebelumnya; hanya simbol di daftar Watchlist atau Maps yang memicu
