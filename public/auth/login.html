@@ -2,20 +2,21 @@
 <html lang="id"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Masuk · Terminal Chart</title>
-<link rel="stylesheet" href="auth.css"></head><body>
-<header class="top"><b>Terminal Chart</b><time id="clk"></time><span class="tray" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 9a15 15 0 0120 0M5 12.5a10 10 0 0114 0M8.5 16a5 5 0 017 0"/><circle cx="12" cy="19" r="1"/></svg><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 010 6"/></svg><svg viewBox="0 0 24 24"><path d="M12 3v9M6.5 6.5a8 8 0 1011 0"/></svg></span></header>
+<link rel="stylesheet" href="auth.css"><link rel="stylesheet" href="lock.css"></head><body class="lock">
+<span class="lk-tray" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 9a15 15 0 0120 0M5 12.5a10 10 0 0114 0M8.5 16a5 5 0 017 0"/><circle cx="12" cy="19" r="1"/></svg><svg viewBox="0 0 24 24"><rect x="2" y="7" width="17" height="10" rx="2.5"/><path d="M22 10.5v3"/></svg></span>
+<div class="lk-time" aria-hidden="true"><div class="lk-date" id="ld"></div><div class="lk-clock" id="lc"></div></div>
 <main>
 <div class="lg">
  <div class="av" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></div>
- <h1>Selamat datang</h1><p class="sub">Masuk untuk membuka desktop</p>
- <form id="f" novalidate>
-  <label class="fld"><span>Username atau email</span><input class="in" name="u" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
-  <label class="fld"><span>Password</span><span class="pw"><input class="in" name="p" type="password" autocomplete="current-password" required><button type="button" class="eye" aria-pressed="false">Tampilkan</button></span></label>
+ <h1>TerminalPribadi</h1>
+ <form id="f" class="lk-f" novalidate>
+  <label class="lk-p"><input class="in" name="u" placeholder="Username atau email" aria-label="Username atau email" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+  <label class="lk-p"><input class="in" name="p" type="password" placeholder="Masukkan kata sandi" aria-label="Password" autocomplete="current-password" required>
+   <span class="rt"><button type="button" class="eye" aria-pressed="false" aria-label="Tampilkan password"><svg class="on" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="off" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A9.6 9.6 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4M6.5 6.7C3.9 8.4 2 12 2 12s3.6 7 10 7a9.700 9.700 0 004.100-.9M9.900 9.900a3 3 0 004.200 4.200"/></svg></button><button class="go" type="submit" aria-label="Masuk"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></span></label>
   <label class="rm"><input type="checkbox" name="rm" checked> Ingat saya di perangkat ini</label>
-  <button class="go" type="submit">Masuk</button>
   <p class="ok" role="status"></p><p class="err" role="alert"></p>
  </form>
- <nav class="ln" aria-label="Bantuan akun"><a href="register.html">Daftar akun</a><a href="forgot.html">Lupa password?</a></nav>
+ <nav class="ln" aria-label="Bantuan akun"><a href="register.html"><i><svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="4"/><path d="M2.500 21c0-4 3.400-6.500 7.500-6.500M18 14v6M15 17h6"/></svg></i>Daftar akun</a><a href="forgot.html"><i><svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></svg></i>Lupa password?</a></nav>
 </div>
 </main>
 <details class="srv"><summary>Koneksi server</summary><div class="box">
@@ -26,8 +27,10 @@
 <script src="auth.js"></script>
 <script>
 (()=>{
-const q=s=>document.querySelector(s);Auth.scene();Auth.clock('clk');
-const eye=(b,i)=>b.onclick=()=>{const on=i.type==='password';i.type=on?'text':'password';b.textContent=on?'Sembunyikan':'Tampilkan';b.setAttribute('aria-pressed',on)};
+const q=s=>document.querySelector(s);Auth.scene();
+// jam & tanggal besar ala layar kunci Mac
+const ld=q('#ld'),lc=q('#lc'),tick=()=>{const d=new Date();ld.textContent=d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long'});lc.textContent=d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',hour12:false}).replace('.',':')};tick();setInterval(tick,5000);
+const eye=(b,i)=>b.onclick=()=>{const on=i.type==='password';i.type=on?'text':'password';b.setAttribute('aria-pressed',on);b.setAttribute('aria-label',on?'Sembunyikan password':'Tampilkan password');i.focus()};
 
 if(Auth.session()){location.replace('../index.html');return}
 const f=q('#f'),go=q('.go'),err=q('.err'),ok=q('.ok'),p=new URLSearchParams(location.search);
@@ -38,10 +41,10 @@ if(p.get('reset'))ok.textContent='Password sudah diganti. Silakan masuk.';
 f.u.value=p.get('u')||'';(f.u.value?f.p:f.u).focus();
 f.onsubmit=async e=>{e.preventDefault();err.textContent='';ok.textContent='';
  const u=f.u.value.trim(),pw=f.p.value;
- if(!u||!pw){err.textContent='Isi username dan password';return}
- go.disabled=true;go.textContent='Memeriksa…';
+ if(!u||!pw){err.textContent='Isi username dan password';f.classList.remove('shake');void f.offsetWidth;f.classList.add('shake');return}
+ go.disabled=true;go.classList.add('busy');
  try{await Auth.login(u,pw,f.rm.checked);location.replace('../index.html')}
- catch(x){err.textContent=x.message;if(x.unverified){const em=x.email||(u.includes('@')?u.toLowerCase():'');const a=document.createElement('a');a.href='#';a.textContent=' Verifikasi sekarang';a.onclick=async ev=>{ev.preventDefault();try{if(em)await Auth.sendOtp('register',em)}catch(_){}location.href='otp.html?p=register&e='+encodeURIComponent(em)};err.append(a)}f.p.value='';f.p.focus();go.disabled=false;go.textContent='Masuk'}};
+ catch(x){err.textContent=x.message;if(x.unverified){const em=x.email||(u.includes('@')?u.toLowerCase():'');const a=document.createElement('a');a.href='#';a.textContent=' Verifikasi sekarang';a.onclick=async ev=>{ev.preventDefault();try{if(em)await Auth.sendOtp('register',em)}catch(_){}location.href='otp.html?p=register&e='+encodeURIComponent(em)};err.append(a)}f.p.value='';f.p.focus();go.disabled=false;go.classList.remove('busy');f.classList.remove('shake');void f.offsetWidth;f.classList.add('shake')}};
 // koneksi server (dummy atau live) bisa diatur sebelum login
 const sm=q('#sm'),sb=q('#sb');sm.value=CFG.api.mode;sb.value=CFG.api.base;
 sm.onchange=()=>{CFG.api.mode=sm.value;cfgSave()};
