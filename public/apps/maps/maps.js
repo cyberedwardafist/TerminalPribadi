@@ -61,8 +61,6 @@ const PG={
   let g;try{g=await load()}catch(e){return fail(w,tk,e,'heatmap')}if(tk!==w._tk)return;const draw=()=>paint(w,g);draw();w._ro&&w._ro.disconnect();w._ro=new ResizeObserver(draw);w._ro.observe($('.mp-map',w))},
  async sum(w,main,tk){main.innerHTML=`<div class="mp-sm">${Fault.loading('Memuat ringkasan pasar…')}</div><p class="mp-ft"></p>`;
   let j;try{j=await apiJson('/api/summary');if(!j||!((j.indices||[]).length+(j.highlights||[]).length))throw new ApiError('empty',{what:'summary',path:'/api/summary'})}catch(e){return fail(w,tk,e,'summary')}if(tk!==w._tk)return;
-  // napas pasar: heatmap 1D tiap pasar (sebagian gagal tidak menggagalkan halaman)
-  const hm={};await Promise.all(MKT.map(async m=>{try{hm[m[0]]=await load0(m[0],'1D')}catch(e){}}));if(tk!==w._tk)return;
   const rows=[...(j.indices||[]),...(j.highlights||[])].filter(r=>r&&r.price!=null);
   const SEC=[['Indeks saham',r=>(j.indices||[]).includes(r)],['Kripto',r=>/USDT$/.test(r.sym)],['Komoditas',r=>['XAUUSD','XAGUSD','WTI','BRENT'].includes(r.sym)],['Valas',r=>/^[A-Z]{6}$/.test(r.sym)]];
   const used=new Set(),secs=SEC.map(([t,fn])=>{const it=rows.filter(r=>!used.has(r)&&fn(r));it.forEach(r=>used.add(r));return[t,it]});
@@ -74,22 +72,9 @@ const PG={
   // status bursa
   const st=j.status||{},STL=[['ihsg','Bursa IDX',st.ihsg],['forex','Valas',st.forex],['kripto','Kripto',st.kripto]];
   const stH=`<div class="mp-st">${STL.map(([k,l,v])=>`<span class="mp-chip" data-o="${v==='open'?1:0}"><s></s>${l} <b>${v==='open'?(k==='kripto'?'24/7':'Buka'):'Tutup'}</b></span>`).join('')}${st.holiday?'<span class="mp-chip" data-o="0"><s></s>Libur bursa IDX hari ini</span>':''}</div>`;
-  // napas pasar
-  const br=MKT.map(([k,l])=>{const g=hm[k];if(!g)return null;const it=g.flatMap(x=>x.it).filter(t=>!STABLE.includes(t.s)&&Number.isFinite(t.c));if(!it.length)return null;
-   const up=it.filter(t=>t.c>0).length,dn=it.filter(t=>t.c<0).length,fl=it.length-up-dn,tot=it.reduce((a,t)=>a+t.v,0),avg=tot?it.reduce((a,t)=>a+t.c*t.v,0)/tot:0;
-   return`<div class="mp-br"><span>${l}</span><div class="mp-bb" title="${up} naik · ${dn} turun · ${fl} datar"><i class="u" style="flex:${up}"></i><i class="f" style="flex:${fl}"></i><i class="d" style="flex:${dn}"></i></div><small><b class="up">${up}</b> naik · <b class="dn">${dn}</b> turun</small><em class="${cls(avg)}">${pc(avg)}</em></div>`}).filter(Boolean);
-  // sektor IHSG
-  const sc=(hm.ihsg||[]).map(x=>{const t=x.it.reduce((a,i)=>a+i.v,0);return{n:x.n,c:t?x.it.reduce((a,i)=>a+i.c*i.v,0)/t:0}}).sort((a,b)=>b.c-a.c),smx=Math.max(...sc.map(x=>Math.abs(x.c)),.01);
-  const sector=sc.length?`<div class="mp-bx"><h3>Sektor IHSG hari ini</h3>${sc.map(x=>`<div class="mp-bar"><span>${esc(x.n)}</span><div><i style="width:${Math.abs(x.c)/smx*50}%;margin-${x.c>=0?'left':'right'}:50%;background:var(--${x.c>=0?'up':'dn'});${x.c<0?'margin-left:auto;':''}"></i></div><em class="${cls(x.c)}">${pc(x.c)}</em></div>`).join('')}</div>`:'';
-  const mv=(j.movers||[]).filter(m=>Number.isFinite(m.changePct));
-  const movers=mv.length?`<div class="mp-bx"><h3>Pergerakan terbesar (universe pemindai)</h3>${mv.map(m=>`<button class="mp-row mp-mv" data-s="${esc(m.sym)}"><b>${esc(m.sym)}</b><span>${esc(m.name||'')}</span><u>${f(m.price)}</u><em class="${cls(m.changePct)}">${pc(m.changePct)}</em></button>`).join('')}</div>`:'';
-  const all=rows.filter(r=>Number.isFinite(r.changePct)),upN=all.filter(r=>r.changePct>0).length,best=[...all].sort((a,b)=>b.changePct-a.changePct)[0],worst=[...all].sort((a,b)=>a.changePct-b.changePct)[0];
-  const kp=[['Instrumen dipantau',String(all.length),''],['Naik / turun',`${upN} / ${all.length-upN}`,''],['Terkuat',best?esc(best.sym):'–',best?pc(best.changePct):''],['Terlemah',worst?esc(worst.sym):'–',worst?pc(worst.changePct):'']];
-  $('.mp-sm',w).innerHTML=`<div class="mp-kp">${kp.map(([l,v,c])=>`<div><span>${l}</span><b>${v}</b>${c?`<em class="${/^−/.test(c)?'dn':'up'}">${c}</em>`:''}</div>`).join('')}</div>${stH}`
-   +secs.filter(([,it])=>it.length).map(([t,it])=>`<h3 class="mp-h">${t}</h3><div class="mp-cards">${it.map(card).join('')}</div>`).join('')
-   +(br.length?`<h3 class="mp-h">Napas pasar (perubahan 1D)</h3><div class="mp-brs">${br.join('')}</div>`:'')
-   +(sector||movers?`<div class="mp-two2">${sector}${movers}</div>`:'');
-  $('.mp-ft',w).textContent='Data live · perubahan harian · garis = 30 penutupan harian terakhir · napas pasar berbobot kapitalisasi · klik kartu untuk buka di Chart · diperbarui '+new Date(j.time||Date.now()).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})},
+  $('.mp-sm',w).innerHTML=stH
+   +secs.filter(([,it])=>it.length).map(([t,it])=>`<h3 class="mp-h">${t}</h3><div class="mp-cards">${it.map(card).join('')}</div>`).join('');
+  $('.mp-ft',w).textContent='Data live · perubahan harian · garis = 30 penutupan harian terakhir · klik kartu untuk buka di Chart · diperbarui '+new Date(j.time||Date.now()).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})},
  async mov(w,main,tk){main.innerHTML=bar(1,1,0)+`<div class="mp-two">${Fault.loading('Memuat data\u2026')}</div>`;let g;try{g=await load()}catch(e){return fail(w,tk,e,'heatmap')}if(tk!==w._tk)return;
   const all=g.flatMap(x=>x.it.map(i=>({...i,g:x.n}))).sort((a,b)=>b.c-a.c),top=all.slice(0,10),low=all.slice(-10).reverse();
   $('.mp-two',w).innerHTML=`<div><h3>Naik terbanyak</h3>${top.map(row).join('')}</div><div><h3>Turun terbanyak</h3>${low.map(row).join('')}</div>`},
