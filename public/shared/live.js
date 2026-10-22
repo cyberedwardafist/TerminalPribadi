@@ -3,7 +3,7 @@
 // Sesudah itu setiap localStorage.setItem pada key yang disinkronkan dikirim ke server (ditunda 1,5 dtk).
 (()=>{
 const on=()=>typeof apiOn==='function'&&apiOn()&&!!sessToken();
-const BLOB={'tc.watchlist':'watchlist','tc.news':'news','tc.maps':'maps','tc.chart.tabs':'chart.tabs'};
+const BLOB={'tc.watchlist':'watchlist','tc.news':'news','tc.maps':'maps','tc.chart.tabs':'chart.tabs','tc.aset':'aset'};
 const KN='tc.notes',KJ='tc.journal';
 const KCFG='tc.cfg',KBG='bg',KBGI='bg.img',KBGV='bg.img.v';   // pengaturan: tc.cfg (hanya tema/simbol/tf/gerakan; blok api TIDAK pernah dikirim), bg, gambar background
 const Live={on:false,extra:{},ready:Promise.resolve(),status:'dummy',q:{state:'idle',err:null,at:0,n:0}};window.Live=Live;

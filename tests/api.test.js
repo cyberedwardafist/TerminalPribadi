@@ -209,6 +209,8 @@ test('state per app: simpan, baca, tolak key asing', async () => {
   assert.ok((await call('GET', '/api/state')).body.watchlist.updatedAt);
   assert.equal((await call('PUT', '/api/state/rahasia', { data: {} })).status, 400);
   assert.equal((await call('PUT', '/api/state/news', { data: 'x' })).status, 400);
+  assert.equal((await call('PUT', '/api/state/aset', { data: { v: 1, tx: [{ id: 'a1', k: 'b', ty: 'saham', sym: 'BBCA', q: 1, p: 6000, d: '2026-10-22' }] } })).status, 200);
+  assert.equal((await call('GET', '/api/state/aset')).body.data.tx[0].sym, 'BBCA');
 });
 test('pengaturan + CORS + 404/405', async () => {
   assert.deepEqual((await call('PUT', '/api/settings/preferences', { theme: 'dark', defaultTf: '4h', ngawur: 1 })).body, { theme: 'dark', defaultTf: '4h' });

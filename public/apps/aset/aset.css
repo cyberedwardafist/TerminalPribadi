@@ -1,0 +1,90 @@
+/* Aset: ringkasan, komposisi, tabel portofolio/riwayat, dan form. Kelas berawalan as- */
+.as-w{flex:1;min-height:0;container:as/inline-size}
+.as{position:relative;height:100%;display:flex;flex-direction:column;min-height:0;background:var(--win)}
+.as [hidden]{display:none!important}
+.as .btn{margin:0}
+.as svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.as .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ringkasan */
+.as-top{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;padding:14px 16px 0}
+.as-kpi{display:flex;gap:12px;flex:1 1 360px;min-width:0;flex-wrap:wrap}
+.as-k{flex:1 1 150px;min-width:0;display:flex;flex-direction:column;gap:2px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--win2)}
+.as-k span,.as-k small{font-size:12px;color:var(--mute)}
+.as-k b{font-size:22px;line-height:1.25;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.as-act{display:flex;gap:8px;flex:none}
+.as-act .btn{padding:8px 14px}
+
+/* komposisi */
+.as-alloc{padding:12px 16px 0}
+.as-ab{display:flex;gap:2px;height:8px;border-radius:99px;overflow:hidden;background:var(--win2)}
+.as-ab i{min-width:3px}
+.as-lg{display:flex;flex-wrap:wrap;gap:4px 16px;margin:8px 0 0;padding:0;list-style:none;font-size:12px;color:var(--mute)}
+.as-lg li{display:flex;align-items:center;gap:6px}.as-lg b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.as-lg i,.as-dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.as-dot{margin-right:6px}
+
+/* bilah tab */
+.as-bar{display:flex;align-items:center;gap:12px;padding:14px 16px 8px}
+.as-msg{flex:1;min-width:0;text-align:right;font-size:12px;color:var(--mute)}
+
+/* tabel */
+.as-body{flex:1;min-height:0;overflow:auto}
+.as-t{min-width:0}
+.as-r{display:grid;gap:10px;align-items:center;padding:10px 16px;border-top:1px solid var(--line)}
+.as-p{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr) minmax(0,1.1fr) minmax(0,1.2fr) 56px 112px}
+.as-l{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr) minmax(0,1.1fr) 68px}
+.as-r>*{min-width:0}
+.as-r .n{text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.as-hd{position:sticky;top:0;z-index:1;padding-top:7px;padding-bottom:7px;background:var(--win);border-top:0;border-bottom:1px solid var(--line);color:var(--mute);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.as-ft{font-weight:600;border-top:1px solid var(--line)}
+.as-nm{display:flex;flex-direction:column;gap:1px}
+.as-nm b{display:flex;align-items:center;gap:8px;font-weight:600;overflow-wrap:anywhere}
+.as-nm small{color:var(--mute);font-size:12px;overflow-wrap:anywhere}
+.as-nr{display:none}
+.as-pc{display:block;font-size:12px}
+.as-ac{display:flex;justify-content:flex-end;gap:6px}
+.as-bj{font-style:normal;font-size:11px;font-weight:600;line-height:17px;padding:0 7px;border-radius:5px;flex:none}
+.as-bj.b{background:color-mix(in srgb,var(--up) 20%,transparent);color:var(--up)}
+.as-bj.s{background:color-mix(in srgb,var(--dn) 20%,transparent);color:var(--dn)}
+.as-bad{background:color-mix(in srgb,var(--dn) 9%,transparent)}
+.as-ib{display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--mute)}
+.as-ib:hover{background:rgba(128,136,150,.16);color:var(--ink)}.as-ib.dn:hover{color:var(--dn)}
+.as-em{padding:8px 16px 16px}
+.as-em .empty{display:flex;flex-direction:column;align-items:center;gap:8px}
+.as-em .empty p{max-width:460px;margin:0 0 6px}
+
+/* form */
+.as-md{position:absolute;inset:0;z-index:5;display:grid;place-items:center;padding:16px;background:rgba(8,10,14,.5);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);overflow:auto}
+.as-sh{width:min(520px,100%);max-height:100%;overflow:auto;box-sizing:border-box;padding:18px;border-radius:14px;background:var(--win);border:1px solid var(--line);box-shadow:0 24px 60px rgba(0,0,0,.55)}
+.as-fm h3{margin:0 0 12px;font-size:16px}
+.as-g{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.as-f{display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:0;min-width:0}
+.as-f>span:first-child{font-size:12px;color:var(--mute)}
+.as-f em{font-style:normal;color:var(--mute)}
+.as-w2{grid-column:1/-1}
+.as-in{box-sizing:border-box;width:100%;min-width:0;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--win2);color:var(--ink);font:inherit}
+.as-in:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.as-in:disabled{opacity:.7}
+.as-ro{display:flex;gap:6px;align-items:stretch}.as-ro .nb{flex:none;padding:0 10px;font-size:12px}
+.as-hv{padding:8px 10px;border-radius:8px;background:var(--win2);color:var(--mute);font-size:12px}.as-hv b{color:var(--ink);font-weight:600}
+.as-pv{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;min-height:20px;margin:14px 0 0;padding:10px 12px;border:1px dashed var(--line);border-radius:10px;color:var(--mute);font-size:13px}
+.as-pv b{font-size:18px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.as-pv small{font-size:12px}.as-pv em{font-style:normal;font-weight:600}
+.as-pv .as-dn{flex-basis:100%;color:var(--ink)}
+.as-er{display:block;min-height:16px;margin-top:8px;color:var(--dn);font-size:12px}
+.as-fb{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+
+/* jendela sempit: kolom sekunder disembunyikan, ringkasannya pindah ke baris kedua */
+@container as (max-width:700px){
+ .as-p{grid-template-columns:minmax(0,1fr) minmax(0,auto) 104px}
+ .as-l{grid-template-columns:minmax(0,1fr) minmax(0,auto) 68px}
+ .as-r .x{display:none}
+ .as-nr{display:inline}
+ .as-top,.as-alloc,.as-bar,.as-r{padding-left:12px;padding-right:12px}
+ .as-g{grid-template-columns:1fr}
+}
+@container as (max-width:460px){
+ .as-act{flex:1 1 100%}.as-act .btn{flex:1}
+ .as-k b{font-size:18px}
+}
