@@ -8,6 +8,16 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;background:rgba(6,10,16
 body[data-bg=angin]{--bg:linear-gradient(#26384d,#9fb1bd)}
 body[data-bg=hutan]{--bg:linear-gradient(#1b3a3a,#5b8466 70%,#1b3528)}
 body[data-bg=laut]{--bg:linear-gradient(#0e2036,#33627f 60%,#14264a)}
+body[data-bg=senja]{--bg:linear-gradient(#2b1b4a,#c4486b 60%,#ffb97a)}
+body[data-bg=malam]{--bg:linear-gradient(#04060d,#1a2444 70%,#0b1020)}
+body[data-bg=aurora]{--bg:linear-gradient(#050a14,#0f6b5c 55%,#5b2a86 85%,#050a14)}
+body[data-bg=gunung]{--bg:linear-gradient(#243b55,#e7b88f 60%,#2a3340)}
+body[data-bg=gurun]{--bg:linear-gradient(#f2a65a,#fbe3b0 55%,#c9803d)}
+body[data-bg=hujan]{--bg:linear-gradient(#171d26,#4b5966)}
+body[data-bg=salju]{--bg:linear-gradient(#2a3b55,#cfdceb 70%,#f4f8fc)}
+body[data-bg=kota]{--bg:linear-gradient(#0a0f24,#3a2a5c 55%,#c4527a)}
+body[data-bg=sakura]{--bg:linear-gradient(#f2b6c6,#fbe3ea 60%,#b97a95)}
+body[data-bg=galaksi]{--bg:linear-gradient(#07040f,#2a1360 55%,#0a1a3a)}
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 a{color:#fff}
 button,input,select{font:inherit}

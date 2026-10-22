@@ -1,7 +1,7 @@
 // Setting > Background: pilih Angin/Hutan/Laut atau unggah gambar sendiri (Cropper.wide / Cropper.shrink). Animasinya sendiri ada di core/background.js.
 (()=>{
 const{row,seg,bindSeg}=Setting;
-const BGS=[['angin','Angin','linear-gradient(#26384d,#9fb1bd)'],['hutan','Hutan','linear-gradient(#1b3a3a,#5b8466 60%,#1b3528)'],['laut','Laut','linear-gradient(#0e2036,#33627f 55%,#14264a)']];
+const BGS=Bg.list;
 Setting.page({id:'bg',title:'Background',color:'#0a84ff',css:'apps/setting/pages/background.css',icon:"<rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"1.6\"/><path d=\"M4 18l5-5 4 4 3-3 4 4\"/>",
  html:()=>`
   <div class="bgv" data-bgview><div class="bgw"><i></i><i></i><i></i></div><div class="bgd"><b></b><b></b><b></b><b></b></div><span class="bgn"><span data-bgname></span></span></div>

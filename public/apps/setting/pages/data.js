@@ -2,7 +2,7 @@
 // Kunci API dan data pribadi (catatan, watchlist, akun) TIDAK ikut diekspor; hanya pengaturan tampilan.
 (()=>{
 const{row}=Setting;
-const OK_THEME=['auto','dark','light'],OK_TF=['1m','5m','1h','1D'],OK_BG=['angin','hutan','laut'];
+const OK_THEME=['auto','dark','light'],OK_TF=['1m','5m','1h','1D'],OK_BG=['angin','hutan','laut','senja','malam','aurora','gunung','gurun','hujan','salju','kota','sakura','galaksi'];
 const kb=n=>n<1024?n+' B':n<1048576?(n/1024).toFixed(1).replace('.',',')+' KB':(n/1048576).toFixed(2).replace('.',',')+' MB';
 // ukuran perkiraan (karakter x 2 byte, seperti cara browser menghitung kuota)
 const usage=()=>{const o=[];try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);o.push([k,(k.length+(localStorage.getItem(k)||'').length)*2])}}catch(e){}return o.sort((a,b)=>b[1]-a[1])};
