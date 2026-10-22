@@ -69,7 +69,7 @@ select.ct-b{appearance:none;padding-right:9px;color-scheme:dark light}
 .ct-la button:hover{background:color-mix(in srgb,var(--ink) 18%,var(--win))}
 .ct-sb{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:5;display:flex;align-items:center;gap:4px;padding:4px 6px;background:var(--win);border:1px solid var(--line);border-radius:9px;box-shadow:0 6px 20px rgba(0,0,0,.4)}
 .ct-sb[hidden]{display:none}
-.ct-sb select{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:5px;font:inherit;font-size:11px;padding:2px 3px;color-scheme:dark light}
+.ct-sb select,.ct-sb .cs-btn{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:5px;font:inherit;font-size:11px;padding:2px 3px;color-scheme:dark light}
 .ct-cs{width:16px;height:16px;border-radius:50%;border:2px solid transparent;padding:0;cursor:pointer}.ct-cs.on{border-color:var(--ink)}
 .ct-sc{position:absolute;right:6px;bottom:3px;z-index:3;display:flex;gap:2px}.ct-sc .ct-b{padding:1px 6px;font-size:11px}
 /* modal */
@@ -83,7 +83,7 @@ select.ct-b{appearance:none;padding-right:9px;color-scheme:dark light}
 .ct-mb footer{display:flex;gap:8px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
 .ct-mc h5{margin:10px 0 4px;font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
 .ct-f{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:12px}.ct-f>span{flex:0 0 120px;color:var(--mute)}
-.ct-f input:not([type=checkbox]):not([type=color]),.ct-f select{flex:1;min-width:0;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink);font:inherit;font-size:12px;color-scheme:dark light}
+.ct-f input:not([type=checkbox]):not([type=color]),.ct-f select,.ct-f .cs-sel,.ct-f .cs-date,.ct-f .cs-time{flex:1;min-width:0;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink);font:inherit;font-size:12px;color-scheme:dark light}
 .ct-f input[type=color]{width:44px;height:26px;padding:0;border:1px solid var(--line);border-radius:5px;background:transparent}
 .ct-il{margin-top:6px;overflow:visible}
 .ct-il .ct-r em{flex:none}
