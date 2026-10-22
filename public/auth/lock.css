@@ -5,8 +5,6 @@ body.lock::before{inset:-40px;transform:scale(1.02);filter:blur(10px) saturate(1
 body.lock::after{background:linear-gradient(rgba(0,0,0,.22),rgba(0,0,0,.08) 40%,rgba(0,0,0,.38))}
 @keyframes lkbg{from{filter:blur(0) saturate(1)}}
 
-.lk-tray{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:18px;display:flex;gap:14px;align-items:center;color:rgba(255,255,255,.92);z-index:2}
-.lk-tray svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block}
 
 .lk-time{position:absolute;left:0;right:0;top:calc(9vh + env(safe-area-inset-top,0px));text-align:center;color:#fff;text-shadow:0 2px 24px rgba(0,0,0,.25);pointer-events:none}
 .lk-date{font-size:clamp(17px,2.3vw,24px);font-weight:600;letter-spacing:.01em;opacity:.92}
