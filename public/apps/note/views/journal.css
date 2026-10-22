@@ -56,15 +56,19 @@
 /* form */
 .jp-form{flex:1;min-height:0;display:flex;flex-direction:column}
 .jp-form.over{outline:2px dashed var(--acc);outline-offset:-4px}
-.jf-sc{flex:1;min-height:0;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:14px}
-.jf-g{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-end}
-.jf-g .nt-lb{flex-direction:column;align-items:flex-start;gap:3px;flex:1 1 110px}.jf-g .nt-in{width:100%}
+.jf-sc{flex:1;min-height:0;overflow-x:hidden;overflow-y:auto;padding:14px 16px 18px;display:flex;flex-direction:column;gap:16px}
+.jf-sc,.jf-sc *{text-align:left}.jf-sc>*{min-width:0}.jf-sc .jf-dz{text-align:center}.jf-sc .jf-dz *{text-align:center}
+.jf-g{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-end;min-width:0}
+.jf-sc>.jf-g:first-child{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.jf-sc>.jf-g:first-child .nt-lb:first-child{grid-column:1/-1}
+.jf-g .nt-lb{flex-direction:column;align-items:flex-start;gap:5px;flex:1 1 110px;min-width:0}.jf-g .nt-in{width:100%}
 .jf-b{display:flex;flex-direction:column;gap:7px}
 .jf-b2{display:flex;flex-direction:column;gap:3px}
 .jf-l{color:var(--mute);font-size:12px}.jf-l small{opacity:.8}
-.jf-amt{flex-direction:row!important;align-items:center}.jf-amt .nt-in{flex:1;font-weight:700;font-size:15px}
-.jf-b:has(.jf-amt){display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center}
-.jf-b:has(.jf-amt) .jf-l{grid-column:1/-1}.jf-pv{grid-column:1/-1;min-height:20px;font-weight:700;font-size:16px}
+.jf-amt{flex-direction:column!important;align-items:stretch!important;gap:5px!important}.jf-amt .nt-in{width:100%;font-weight:700;font-size:15px}
+.jf-b:has(.jf-amt){display:grid;grid-template-columns:minmax(0,1fr);gap:8px;align-items:center}
+.jf-b .seg,.jf-b2 .seg{box-sizing:border-box;padding:3px;gap:2px;border:1px solid var(--line);border-radius:9px;background:var(--win2)}.jf-b .seg button,.jf-b2 .seg button{flex:1;text-align:center;padding:5px 10px;border-radius:7px;color:var(--ink)}.jf-b .seg button[aria-pressed=true],.jf-b2 .seg button[aria-pressed=true]{color:#1a1405}
+.jf-g>.jf-b2{flex:0 1 150px;min-width:0}.jf-g>.jf-b2 .seg{width:100%}
+.jf-b:has(.jf-amt) .jf-l{grid-column:1/-1}.jf-pv{grid-column:1/-1;min-height:0;font-weight:700;font-size:16px}
 .jf-wide{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:3px;text-align:left}.jf-wide .nt-in{width:100%}
 .jf-chips{display:flex;flex-wrap:wrap;gap:5px}
 .jf-fields{display:flex;flex-direction:column;gap:6px}

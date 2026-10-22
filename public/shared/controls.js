@@ -3,7 +3,7 @@
 // di sampingnya; elemen aslinya disembunyikan tapi tetap dipakai sebagai sumber nilai, jadi kode app tidak perlu diubah
 // (.value, event input/change, name, dataset semuanya tetap jalan). Tambah atribut data-native untuk melewatkan satu elemen.
 const Controls=(()=>{
-const D=document,SEL='select,input[type=date],input[type=time],input[type=color]';
+const D=document,SEL='select,input[type=date],input[type=time],input[type=color],input[list]';
 const el=(t,c,h)=>{const e=D.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
 const CHEV='<svg class="cs-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg>';
 const MON=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],DOW=['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
@@ -139,9 +139,32 @@ function enhColor(x){
  b.addEventListener('keydown',e=>{e.stopPropagation()});
  x.addEventListener('change',paint)}
 
+
+// ---------- COMBOBOX (input dengan list="datalist") ----------
+function enhCombo(x){
+ const id=x.getAttribute('list');x._cb=1;x.removeAttribute('list');x.setAttribute('autocomplete','off');x.setAttribute('role','combobox');x.setAttribute('aria-expanded','false');
+ let menu=null,items=[],hi=-1;
+ const opts=()=>{const dl=D.getElementById(id);return dl?[...dl.options].map(o=>o.value).filter(Boolean):[]};
+ const mark=(n,sc)=>{hi=n;items.forEach((it,i)=>it.e.classList.toggle('hi',i===n));if(sc&&items[n])items[n].e.scrollIntoView({block:'nearest'})};
+ const pick=v=>{x.value=v;fire(x);close()};
+ const show=all=>{
+  const q=all?'':x.value.trim().toLowerCase();let list=opts().filter(v=>!q||v.toLowerCase().includes(q));if(q&&list.length===1&&list[0].toLowerCase()===q)list=[];
+  if(!list.length){if(cur&&cur.btn===x)close();return}
+  const m=el('div','cp-menu');m.setAttribute('role','listbox');items=list.map(v=>{const e=el('div','cm-i',esc(v));e.setAttribute('role','option');e.onpointerdown=ev=>ev.preventDefault();e.onclick=()=>pick(v);e.onmousemove=()=>mark(items.findIndex(i=>i.e===e));m.append(e);return{e,v}});
+  const was=cur&&cur.btn===x;menu=m;hi=-1;openPop(x,m,()=>{menu=null;x.setAttribute('aria-expanded','false')});m.style.minWidth=x.offsetWidth+'px';if(was)x.classList.remove('open');x.classList.remove('open')};
+ x.addEventListener('input',()=>show(false));
+ x.addEventListener('focus',()=>{if(!x.value)show(true)});
+ x.addEventListener('click',()=>{if(!menu)show(!x.value)});
+ x.addEventListener('keydown',e=>{const k=e.key;
+  if(k==='ArrowDown'||k==='ArrowUp'){if(!menu)show(true);if(!menu)return;e.preventDefault();mark(k==='ArrowDown'?Math.min(items.length-1,hi+1):Math.max(0,hi-1),1)}
+  else if(k==='Enter'&&menu&&hi>=0){e.preventDefault();pick(items[hi].v)}
+  else if(k==='Tab'&&menu)close()});
+ x.addEventListener('blur',()=>{setTimeout(()=>{if(cur&&cur.btn===x&&D.activeElement!==x)close()},120)})}
+
 // ---------- pasang ke semua elemen ----------
 function enhance(x){
- if(x._cs||x.hasAttribute('data-native')||!x.parentNode)return;
+ if(x._cs||x._cb||x.hasAttribute('data-native')||!x.parentNode)return;
+ if(x.tagName==='INPUT'&&x.hasAttribute('list')&&!/^(date|time|color)$/.test(x.type)){try{enhCombo(x)}catch(e){}return}
  const t=x.tagName==='SELECT'?'select':x.type;
  try{({select:enhSelect,date:enhDate,time:enhTime,color:enhColor})[t](x)}catch(e){if(x._cs){x._cs.remove();x.style.display='';x._cs=null}}}
 const scan=n=>{if(n.nodeType!==1)return;if(n.matches(SEL))enhance(n);n.querySelectorAll&&n.querySelectorAll(SEL).forEach(enhance)};
