@@ -18,11 +18,11 @@ function upd(){$$('.d').forEach(b=>{const g=grp(b.dataset.k).map(i=>S.wins[i]),a
 function focus(id){const w=S.wins[id];if(!w)return;w.el.style.zIndex=++S.z;S.act=id;upd()}
 function open(id){let w=S.wins[id];if(w){if(w.min)restore(id);focus(id);APPS[base(id)].show&&APPS[base(id)].show(w.el);return w.el}
  const A=APPS[base(id)],el=document.createElement('div');el.className='win';el.setAttribute('role','dialog');el.setAttribute('aria-label',A.t);el.tabIndex=-1;
- el.innerHTML=`<div class="tbar"><div class="lights"><button class="l r" aria-label="Tutup"><i>\u00d7</i></button><button class="l y" aria-label="Sembunyikan"><i>\u2212</i></button><button class="l g" aria-label="Layar penuh"><i>+</i></button></div><span class="ttl">${A.t}</span><button class="nb tl" aria-label="Tata letak window">Tata letak</button></div><div class="app${A.flush?' flush':''}">${A.html()}</div>`;
+ el.innerHTML=`<div class="tbar"><div class="lights"><button class="l r" aria-label="Tutup"><i>\u00d7</i></button><button class="l y" aria-label="Sembunyikan"><i>\u2212</i></button><button class="l g" aria-label="Layar penuh"><i>+</i></button></div><span class="ttl">${A.t}</span></div><div class="app${A.flush?' flush':''}">${A.html()}</div>`;
  el.style.cssText=`width:${Math.min(A.w,innerWidth-60)}px;height:${Math.min(A.h,innerHeight-200)}px;left:${40+(S.n%6)*30}px;top:${50+(S.n%6)*28}px`;S.n++;
  document.body.append(el);w=S.wins[id]={el,min:false,full:false};genie(id,true).onfinish=()=>{el.style.transformOrigin=''};
  const tb=$('.tbar',el);
- $('.r',el).onclick=()=>close(id);const gb=$('.g',el);gb.onmouseenter=()=>{keep();st=setTimeout(()=>showSnap(id,gb),350)};gb.onmouseleave=later;$('.tl',el).onclick=e=>showSnap(id,e.currentTarget);$('.y',el).onclick=()=>minimize(id);$('.g',el).onclick=()=>full(id);tb.ondblclick=e=>{if(!e.target.closest('button'))full(id)};
+ $('.r',el).onclick=()=>close(id);const gb=$('.g',el);gb.onmouseenter=()=>{keep();st=setTimeout(()=>showSnap(id,gb),350)};gb.onmouseleave=later;$('.y',el).onclick=()=>minimize(id);$('.g',el).onclick=()=>full(id);tb.ondblclick=e=>{if(!e.target.closest('button'))full(id)};
   el.addEventListener('pointerdown',()=>focus(id));el.onkeydown=e=>{if(e.key==='Escape')close(id)};
  tb.addEventListener('pointerdown',e=>{if(e.target.closest('button')||w.full)return;const r=el.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;tb.setPointerCapture(e.pointerId);const mv=v=>{el.style.left=Math.max(120-r.width,Math.min(innerWidth-80,v.clientX-dx))+'px';el.style.top=Math.max(30,Math.min(innerHeight-120,v.clientY-dy))+'px';edge(v)};const up=()=>{edgeApply(id);tb.removeEventListener('pointermove',mv);tb.removeEventListener('pointerup',up)};tb.addEventListener('pointermove',mv);tb.addEventListener('pointerup',up)});
  A.init&&A.init(el);$$('[data-go]',el).forEach(b=>b.onclick=()=>{open(b.dataset.go)});
@@ -52,7 +52,7 @@ const gpaint=b=>cells.forEach(c=>c.classList.toggle('on',!!(sel&&b&&+c.dataset.c
 cg.onpointerdown=e=>{const b=cellAt(e.clientX,e.clientY);if(!b)return;e.preventDefault();sel=rc(b);end=sel;gpaint(end)};
 cg.onpointermove=e=>{if(!sel)return;const b=cellAt(e.clientX,e.clientY);if(b){end=rc(b);gpaint(end)}};
 addEventListener('pointerup',()=>{if(!sel)return;const a=sel,b=end;sel=null;gpaint(null);if(sid!=null){const c0=Math.min(a.c,b.c),c1=Math.max(a.c,b.c),r0=Math.min(a.r,b.r),r1=Math.max(a.r,b.r);place(sid,[c0/6,r0/4,(c1-c0+1)/6,(r1-r0+1)/4]);hide()}});
-addEventListener('pointerdown',e=>{if(sn.style.display==='block'&&!e.target.closest('#snap,.tl,.l.g'))hide()});
+addEventListener('pointerdown',e=>{if(sn.style.display==='block'&&!e.target.closest('#snap,.l.g'))hide()});
 addEventListener('keydown',e=>{if(e.key==='Escape'&&sn.style.display==='block'){hide();e.stopPropagation()}},true);
 function edge(v){const x=v.clientX,y=v.clientY,A=area(),m=10,q=y<A.y+A.h*.25?0:y>A.y+A.h*.75?1:2;let z=null;if(x<=m||x>=innerWidth-m){const fx=x<=m?0:.5;z=q===2?[fx,0,.5,1]:[fx,q*.5,.5,.5]}else if(y<=34)z=[0,0,1,1];ez=z;if(z){const r=zr(z);Object.assign(pv.style,{display:'block',left:r.x+'px',top:r.y+'px',width:r.w+'px',height:r.h+'px'})}else pv.style.display='none'}
 function edgeApply(id){pv.style.display='none';if(ez){place(id,ez);ez=null}}
