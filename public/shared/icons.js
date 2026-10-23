@@ -21,6 +21,7 @@ const D={
  arrowL:['M19 12H5M11 6l-6 6 6 6'],
  ext:['M7 17L17 7','M9 7h8v8'],
  chevR:['M9 6l6 6-6 6'],
+ chevL:['M15 6l-6 6 6 6'],
  chevD:['M6 9l6 6 6-6'],
  triup:['M12 6.5l7 11H5z'],
  tridn:['M12 17.5l-7-11h14z']

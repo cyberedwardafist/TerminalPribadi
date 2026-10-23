@@ -7,16 +7,14 @@
 .as .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* ringkasan */
-.as-top{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;padding:14px 16px 0}
+.as-top{padding:12px 16px 0}
 .as-kpi{display:flex;gap:12px;flex:1 1 360px;min-width:0;flex-wrap:wrap}
-.as-k{flex:1 1 150px;min-width:0;display:flex;flex-direction:column;gap:2px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--win2)}
+.as-k{flex:1 1 150px;min-width:0;display:flex;flex-direction:column;gap:1px;padding:9px 14px;border:1px solid var(--line);border-radius:10px;background:var(--win2)}
 .as-k span,.as-k small{font-size:12px;color:var(--mute)}
-.as-k b{font-size:22px;line-height:1.25;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-.as-act{display:flex;gap:8px;flex:none}
-.as-act .btn{padding:8px 14px}
+.as-k b{font-size:19px;line-height:1.25;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 
 /* komposisi */
-.as-alloc{padding:12px 16px 0}
+.as-alloc{padding:10px 16px 0}
 .as-ab{display:flex;gap:2px;height:8px;border-radius:99px;overflow:hidden;background:var(--win2)}
 .as-ab i{min-width:3px}
 .as-lg{display:flex;flex-wrap:wrap;gap:4px 16px;margin:8px 0 0;padding:0;list-style:none;font-size:12px;color:var(--mute)}
@@ -24,9 +22,6 @@
 .as-lg i,.as-dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
 .as-dot{margin-right:6px}
 
-/* bilah tab */
-.as-bar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;padding:14px 16px 8px}
-.as-msg{flex:1;min-width:0;text-align:right;font-size:12px;color:var(--mute)}
 
 /* tabel */
 .as-body{flex:1;min-height:0;overflow:auto}
@@ -88,11 +83,11 @@
  .as-nr2{display:block;font-size:12px}
 }
 @container as (max-width:700px){
- .as-top,.as-alloc,.as-bar,.as-r{padding-left:12px;padding-right:12px}
+ .as-top,.as-alloc,.as-r{padding-left:12px;padding-right:12px}
+ .as-sp{margin-left:12px;margin-right:12px}.as-rail{padding-left:12px;padding-right:12px}
  .as-g{grid-template-columns:1fr}
 }
 @container as (max-width:460px){
- .as-act{flex:1 1 100%}.as-act .btn{flex:1}
  .as-k b{font-size:18px}
 }
 
@@ -117,20 +112,16 @@
 .as-mk ul{margin:4px 0 0;padding:0;list-style:none}
 .as-mk li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 0;color:var(--ink);font-variant-numeric:tabular-nums}
 
-/* slide kelompok aset di tab Grafik */
-.as-slw{padding:0 16px 8px;overflow-x:auto;scrollbar-width:none}.as-slw::-webkit-scrollbar{display:none}
-.as-slw .seg{display:inline-flex;white-space:nowrap}
-.as-slw .as-dot{margin-right:6px}
+/* ringkasan di dalam panel slide */
 .as-sm{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;padding:0 16px 8px;font-size:12px;color:var(--mute)}
 .as-sm b{font-size:15px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}.as-sm b.up{color:var(--up)}.as-sm b.dn{color:var(--dn)}
-.as-slw [aria-pressed=true] .as-dot{box-shadow:0 0 0 2px rgba(255,255,255,.8)}
 
 /* tab Hasil */
-.as-hl{display:flex;flex-wrap:wrap;gap:12px 28px;padding:4px 16px 14px}
+.as-hl{display:flex;flex-wrap:wrap;gap:8px 28px;padding:10px 16px 6px}
 .as-hl>div{display:flex;flex-direction:column;gap:2px;min-width:0}
 .as-hl span,.as-hl small{font-size:12px;color:var(--mute)}
 .as-hl b{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.3}
-.as-hl>div:first-child b{font-size:28px}
+.as-hl>div:first-child b{font-size:24px}
 .as-hl em{font-style:normal;font-weight:600}.as-hl em.up{color:var(--up)}.as-hl em.dn{color:var(--dn)}
 .as-h3{margin:4px 16px 4px;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--mute)}
 .as-cbw{display:block;height:4px;margin-top:4px;border-radius:99px;background:var(--win2);overflow:hidden}
@@ -143,3 +134,53 @@
 .as-lv{width:7px;height:7px;border-radius:50%;background:var(--up);flex:none}
 .as-fx.old .as-lv{background:var(--acc)}
 .as-fx.na{white-space:normal;color:var(--acc)}
+
+/* strip tab ala Chrome (sama dengan app Chart) */
+.as-tb{display:flex;align-items:flex-end;flex-wrap:wrap;gap:4px 10px;padding:7px 8px 0;background:color-mix(in srgb,var(--win) 74%,#000);flex:none}
+.as-tl{display:flex;min-width:0;gap:2px;padding:0 9px;overflow-x:auto;scrollbar-width:none}.as-tl::-webkit-scrollbar{display:none}
+.as-tab{position:relative;display:flex;align-items:center;gap:7px;flex:none;height:34px;margin:0;padding:0 16px 0 12px;border:0;border-radius:9px 9px 0 0;background:transparent;color:var(--mute);font:inherit;font-size:12px;white-space:nowrap;cursor:pointer}
+.as-tab svg{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.as-tab:hover{background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.as-tab:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.as-tab.on{background:var(--win);color:var(--ink);z-index:1}
+.as-tab.on::before,.as-tab.on::after{content:"";position:absolute;bottom:0;width:9px;height:9px}
+.as-tab.on::before{left:-9px;background:radial-gradient(circle at 0 0,transparent 8.5px,var(--win) 9px)}
+.as-tab.on::after{right:-9px;background:radial-gradient(circle at 100% 0,transparent 8.5px,var(--win) 9px)}
+.as-tr{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;margin-left:auto;min-width:0;padding:0 4px 5px}
+.as-tr .btn{padding:5px 12px;font-size:12px}
+.as-msg{min-width:0;max-width:240px;font-size:12px;color:var(--mute);text-align:right}
+
+/* panel slide */
+.as-sp{margin:6px 16px 0;border:1px solid var(--line);border-radius:12px;background:var(--win2);overflow:hidden}
+.as-sp-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 8px 4px 14px}
+.as-sp-t{display:flex;align-items:center;min-width:0}.as-sp-t b{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.as-sp-n{display:flex;align-items:center;gap:2px;flex:none;color:var(--mute);font-size:12px}
+.as-cnt{margin-right:6px;font-variant-numeric:tabular-nums}
+.as-sp .as-sm,.as-sp .as-rg{padding-left:14px;padding-right:14px}
+.as-sp .as-rg{padding-top:2px;padding-bottom:6px}
+.as-sv{position:relative;overflow:hidden}
+.as-sv .as-cvw{margin:0 16px 4px}
+.as-sv .as-em{padding:12px 16px 20px}
+.as-sv.as-mv>*{animation:as-in .3s cubic-bezier(.2,.7,.2,1)}
+@keyframes as-in{from{opacity:0;transform:translateX(var(--dx,24px))}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.as-sv.as-mv>*{animation:none}}
+.as-dots{display:flex;justify-content:center;gap:2px;padding:0 0 8px}
+.as-dots button{display:grid;place-items:center;width:20px;height:16px;margin:0;padding:0;border:0;background:transparent;cursor:pointer}
+.as-dots i{width:6px;height:6px;border-radius:99px;background:var(--mute);opacity:.5;transition:width .2s,opacity .2s,background .2s}
+.as-dots [aria-selected=true] i{width:18px;background:var(--acc);opacity:1}
+.as-dots button:focus-visible{outline:2px solid var(--acc);border-radius:6px}
+.as-all{background:var(--acc)}
+
+/* rail miniatur */
+.as-rail{display:flex;gap:10px;padding:12px 16px 6px;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:thin}
+.as-th{flex:0 0 156px;scroll-snap-align:start;display:flex;flex-direction:column;gap:3px;min-width:0;margin:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--win2);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.as-th:hover{border-color:color-mix(in srgb,var(--ink) 30%,var(--line))}
+.as-th.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
+.as-th:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.as-tn{display:flex;align-items:center;gap:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--mute)}
+.as-tn .as-dot{margin-right:0}
+.as-th b{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.as-th small{font-size:12px;color:var(--mute)}.as-th small.up{color:var(--up)}.as-th small.dn{color:var(--dn)}
+.as-spk{display:block;width:100%;height:30px;fill:none;stroke:var(--mute);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.as-spk polyline{vector-effect:non-scaling-stroke}.as-spk.up{stroke:var(--up)}.as-spk.dn{stroke:var(--dn)}
+.as-te{display:flex;align-items:center;height:30px;font-size:12px;color:var(--mute)}

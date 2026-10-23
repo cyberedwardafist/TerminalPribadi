@@ -96,16 +96,18 @@ const IC={
  edit:'<path d="M5 19l1-4L16 5l3 3L9 18z"/><path d="M14 7l3 3"/>',
  del:'<path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/>'};
 const ic=p=>`<svg viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
+// Tab ala Chrome: [kode, label, ikon]. Kode (hs/port/cv/log) dipakai sesi & render.
+const TABS=[['hs','Hasil','<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>'],['port','Portofolio','<path d="M12 3a9 9 0 1 0 9 9h-9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/>'],['cv','Grafik','<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>'],['log','Riwayat','<path d="M12 7v5l3 2"/><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/>']];
 
-registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:940,h:620,flush:1,
+registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:980,h:720,flush:1,
  icon:'<path d="M4 7a2 2 0 012-2h11v3"/><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M16 13h3"/>',
  html:()=>`<div class="as-w"><div class="as">
- <div class="as-top">
-  <div class="as-kpi"></div>
-  <div class="as-act"><button type="button" class="btn pri" data-a="add">Tambah aset</button><button type="button" class="btn" data-a="sell">Jual aset</button></div>
+ <div class="as-tb">
+  <div class="as-tl" role="tablist" aria-label="Tampilan">${TABS.map(([k,l,d],i)=>`<button type="button" role="tab" class="as-tab${i?'':' on'}" data-t="${k}" aria-selected="${!i}" tabindex="${i?-1:0}">${ic(d)}<span>${l}</span></button>`).join('')}</div>
+  <div class="as-tr"><small class="as-msg" role="status" aria-live="polite"></small><span class="as-fx" hidden></span><button type="button" class="btn pri" data-a="add">Tambah aset</button><button type="button" class="btn" data-a="sell">Jual aset</button></div>
  </div>
+ <div class="as-top"><div class="as-kpi"></div></div>
  <div class="as-alloc"></div>
- <div class="as-bar"><div class="seg" role="group" aria-label="Tampilan"><button type="button" data-t="hs" aria-pressed="true">Hasil</button><button type="button" data-t="port" aria-pressed="false">Portofolio</button><button type="button" data-t="cv" aria-pressed="false">Grafik</button><button type="button" data-t="log" aria-pressed="false">Riwayat</button></div><span class="as-fx" hidden></span><small class="as-msg" role="status" aria-live="polite"></small></div>
  <div class="as-body"></div>
  <div class="as-md" hidden></div>
 </div></div>`,
@@ -113,7 +115,7 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:940,h:620,flush:1,
  init(w){
   const q=s=>$(s,w);
   const S0=load();
-  let tx=S0.tx,px=S0.px,tab='hs',sl='all',rng='90',L=ledger(tx),V=[],msgT=0,back=null,ck='';
+  let tx=S0.tx,px=S0.px,tab='hs',sl='all',rng='90',adir=0,L=ledger(tx),V=[],msgT=0,back=null,ck='';
   const HC={};   // penutupan harian pasar per kunci (+ 'fx' = USDIDR): {t:waktu ambil,a:[[tanggal,harga pasar (USD untuk saham luar/kripto)],...]|null}; hanya mode Live
   const save=()=>{try{const keep={};for(const k in px)if(tx.some(t=>kOf(t)===k))keep[k]=px[k];px=keep;localStorage.setItem(KEY,JSON.stringify({v:2,tx,px}));return true}catch(e){return false}};
   const say=(m,bad)=>{const e=q('.as-msg');e.textContent=m;e.style.color=bad?'var(--dn)':'';clearTimeout(msgT);if(m)msgT=setTimeout(()=>{e.textContent=''},5000)};
@@ -154,6 +156,7 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:940,h:620,flush:1,
 
   // ---------- tampilan ----------
   function render(){
+   const fa=document.activeElement,fc=fa&&fa!==document.body&&w.contains(fa)&&fa.closest?fa.closest('.as-tl,.as-rail,.as-dots,.as-sp-n,.as-rg'):null,fk=fc?['data-t','data-s','data-sn','data-r'].find(a=>fa.hasAttribute(a)):null,fv=fk?fa.getAttribute(fk):null,fcl=fc?'.'+fc.className.split(' ')[0]:'';
    L=ledger(tx);
    V=L.hold.map(h=>{const c=cur(h),val=h.u*c.p;return{...h,cp:c.p,src:c.src,sd:c.d,fx:c.fx,usd:c.usd,val,pl:val-h.cost,plp:h.cost?(val-h.cost)/h.cost*100:0}}).sort((a,b)=>b.val-a.val);
    const val=V.reduce((a,h)=>a+h.val,0),cost=L.total,un=val-cost;
@@ -166,9 +169,10 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:940,h:620,flush:1,
    const ks=TK.filter(k=>by[k]>0);
    q('.as-alloc').hidden=!ks.length;
    q('.as-alloc').innerHTML=ks.length?`<div class="as-ab" role="img" aria-label="Komposisi aset">${ks.map(k=>`<i style="flex:${by[k]};background:${TY[k].c}"></i>`).join('')}</div><ul class="as-lg">${ks.map(k=>`<li><i style="background:${TY[k].c}"></i>${TY[k].n} <b>${nfp.format(by[k]/val*100)}%</b></li>`).join('')}</ul>`:'';
-   $$('[data-t]',w).forEach(b=>b.setAttribute('aria-pressed',b.dataset.t===tab));
+   $$('[data-t]',w).forEach(b=>{const on=b.dataset.t===tab;b.classList.toggle('on',on);b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1});
    q('.as-body').innerHTML=tab==='hs'?hasilHtml(val,un):tab==='port'?portHtml(val,un):tab==='cv'?chartHtml():logHtml();
-   if(tab==='cv'||tab==='hs')bindChart()}
+   adir=0;if(tab==='cv'||tab==='hs')bindChart();
+   if(fk&&(!document.activeElement||document.activeElement===document.body)){const f=w.querySelector(fcl+' ['+fk+'="'+fv+'"]');if(f)f.focus({preventScroll:true})}}
 
   const srcTxt=h=>h.src==='pasar'?(h.fx?'US$\u00a0'+nfp.format(h.usd)+' \u00d7 kurs':'harga pasar'):h.src==='manual'?'manual'+(h.sd&&h.sd<today()?' \u00b7 '+fds(h.sd):''):'belum ada harga';
   function portHtml(val,un){
@@ -188,8 +192,8 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:940,h:620,flush:1,
    </div>`}
 
   // ---------- grafik ----------
-  const CH=130,HS_H=170;   // CH: tinggi di luar grafik (slide + ringkasan + rentang); HS_H: tinggi grafik tab Hasil
-  const csz=fix=>{const b=q('.as-body');return[Math.max(280,(b.clientWidth||720)-32),fix||Math.max(180,Math.min(380,(b.clientHeight||310)-CH))]};
+  const CH=300,HS_H=200;   // CH: tinggi di luar grafik (KPI + panel slide + rail); HS_H: tinggi grafik tab Hasil
+  const csz=fix=>{const b=q('.as-body');return[Math.max(280,(b.clientWidth||720)-34),fix||Math.max(200,Math.min(340,(b.clientHeight||310)-CH))]};
   function pts(sub){
    const hist={},now={};
    V.forEach(h=>{const c=HC[h.key];if(c&&c.a)hist[h.key]=TY[h.ty].usd?c.a.map(([d,v])=>[d,v*fxAt(d)]).filter(e=>e[1]>0):c.a;now[h.key]=h.cp});
@@ -220,29 +224,50 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:940,h:620,flush:1,
   const tipVal=p=>{const pl=p.val-p.cost;return`<b>${fd(p.d)}</b><span>Nilai <em>${rp(p.val)}</em></span><span>Modal <em>${rp(p.cost)}</em></span><span class="${cl(Math.round(pl))}">${rp(pl,1)}${p.cost?' ('+pct(pl/p.cost*100)+')':''}</span>`};
   const tipHasil=p=>{const h=p.val-p.cost+p.real;return`<b>${fd(p.d)}</b><span class="${cl(Math.round(h))}">Total hasil <em>${rp(h,1)}</em></span><span>Nilai <em>${rp(p.val)}</em></span><span>Modal <em>${rp(p.cost)}</em></span><span>Terealisasi <em>${rp(p.real,1)}</em></span>`};
 
-  function chartHtml(){
-   const types=TK.filter(k=>k==='kripto'||k==='saham'||k==='sahamx'||tx.some(t=>t.ty===k));
-   if(sl!=='all'&&!types.includes(sl))sl='all';
-   const slides=`<div class="as-slw"><div class="seg" role="group" aria-label="Kelompok aset">${[['all','Semua'],...types.map(k=>[k,TY[k].n])].map(([k,l])=>`<button type="button" data-s="${k}" aria-pressed="${sl===k}">${k!=='all'?`<i class="as-dot" style="background:${TY[k].c}"></i>`:''}${l}</button>`).join('')}</div></div>`;
-   const sub=sl==='all'?tx:tx.filter(t=>t.ty===sl),Vs=sl==='all'?V:V.filter(h=>h.ty===sl);
-   if(!tx.length)return`<div class="as-em"><div class="empty">Grafik muncul setelah ada aset.</div></div>`;
-   if(!sub.length)return`${slides}<div class="as-em"><div class="empty"><b>Belum ada ${TY[sl].n}</b><p>Tambahkan aset jenis ini untuk melihat grafiknya.</p><button type="button" class="btn pri" data-a="add" data-ty="${sl}">Tambah ${TY[sl].n}</button></div></div>`;
+  // ---------- slide kelompok aset (dipakai tab Hasil & Grafik) ----------
+  const slideKeys=()=>['all',...TK.filter(k=>k==='kripto'||k==='saham'||k==='sahamx'||tx.some(t=>t.ty===k))];
+  const sName=k=>k==='all'?'Semua aset':TY[k].n;
+  const dotOf=k=>k==='all'?'<i class="as-dot as-all"></i>':`<i class="as-dot" style="background:${TY[k].c}"></i>`;
+  function stat(k){
+   const sub=k==='all'?tx:tx.filter(t=>t.ty===k),Vs=k==='all'?V:V.filter(h=>h.ty===k);
    const val=Vs.reduce((a,h)=>a+h.val,0),cost=Vs.reduce((a,h)=>a+h.cost,0),un=val-cost;
-   const sm=Vs.length?`<div class="as-sm"><span>${sl==='all'?'Semua aset':TY[sl].n}</span><b>${rp(val)}</b><span>modal ${rp(cost)}</span><b class="${cl(Math.round(un))}">${rp(un,1)}${cost?' ('+pct(un/cost*100)+')':''}</b></div>`:`<div class="as-sm"><span>${TY[sl].n} sudah terjual semua; grafik menunjukkan riwayatnya.</span></div>`;
-   const head=slides+sm+rgHtml('<i class="a"></i>Nilai aset<i class="b"></i>Modal');
-   const P=pts(sub);G=null;
-   if(P.length<2)return`${head}<div class="as-em"><div class="empty"><b>Belum cukup data untuk grafik</b><p>Grafik butuh minimal dua hari. Besok nilainya ikut harga pasar atau harga yang kamu update lewat tombol Harga di tab Portofolio.</p></div></div>`;
-   return head+plot(P,{m:p=>p.val,base:p=>p.cost,tip:tipVal,aria:(a,b)=>`Grafik nilai ${sl==='all'?'semua aset':TY[sl].n}: ${rp(a.val)} pada ${fd(a.d)} menjadi ${rp(b.val)} pada ${fd(b.d)}; modal ${rp(b.cost)}`})}
+   const real=sub.reduce((a,t)=>t.k==='s'?a+((L.per[t.id]||{}).pl||0):a,0),bought=sub.reduce((a,t)=>t.k==='b'?a+U(t)*t.p:a,0);
+   return{sub,Vs,val,cost,un,real,bought,hasil:un+real}}
+  const spark=(P,f,up)=>{
+   if(P.length<2)return'<svg class="as-spk" viewBox="0 0 100 30" aria-hidden="true"><path d="M2 15h96"/></svg>';
+   const st=Math.max(1,Math.ceil(P.length/60)),A=P.filter((p,i)=>i%st===0||i===P.length-1).map(f),mn=Math.min(...A),d=(Math.max(...A)-mn)||1;
+   return`<svg class="as-spk ${up?'up':'dn'}" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><polyline points="${A.map((y,i)=>(2+i/(A.length-1)*96).toFixed(1)+','+(27-(y-mn)/d*24).toFixed(1)).join(' ')}"/></svg>`};
+  // rail miniatur: satu kartu per slide (grafik mini + angka), klik = pindah slide
+  function rail(kind){
+   return`<div class="as-rail" role="tablist" aria-label="Kelompok aset">${slideKeys().map(k=>{
+    const s=stat(k),has=s.sub.length>0,P=has?pts(s.sub):[],hs=kind==='hs',f=hs?p=>p.val-p.cost+p.real:p=>p.val;
+    const m=hs?s.hasil:s.val,pc=hs?(s.bought?s.hasil/s.bought*100:null):(s.cost?s.un/s.cost*100:null),mv=hs?m:s.un;
+    return`<button type="button" role="tab" class="as-th${sl===k?' on':''}" data-s="${k}" aria-selected="${sl===k}"><span class="as-tn">${dotOf(k)}${sName(k)}</span>${has?spark(P,f,mv>=0):'<span class="as-te">belum ada</span>'}<b>${has?rp(m,hs?1:0):'\u2013'}</b>${has&&pc!==null?`<small class="${cl(Math.round(mv))}">${pct(pc)}</small>`:'<small>&nbsp;</small>'}</button>`}).join('')}</div>`}
+  const emptyGrp=()=>`<div class="as-em"><div class="empty"><b>Belum ada ${TY[sl].n}</b><p>Tambahkan aset jenis ini untuk melihat grafiknya.</p><button type="button" class="btn pri" data-a="add" data-ty="${sl}">Tambah ${TY[sl].n}</button></div></div>`;
+  // panel slide: judul + panah + hitungan, ringkasan, rentang, grafik (animasi geser sesuai arah), titik
+  function panel(rg,body,sub){
+   const ks=slideKeys(),i=Math.max(0,ks.indexOf(sl));
+   return`<section class="as-sp" aria-roledescription="carousel" aria-label="Grafik per kelompok aset"><div class="as-sp-h"><div class="as-sp-t">${dotOf(sl)}<b>${sName(sl)}</b></div><div class="as-sp-n"><span class="as-cnt">${i+1} / ${ks.length}</span><button type="button" class="as-ib" data-sn="-1" aria-label="Slide sebelumnya">${Icon('chevL')}</button><button type="button" class="as-ib" data-sn="1" aria-label="Slide berikutnya">${Icon('chevR')}</button></div></div>${sub||''}${rg}<div class="as-sv${adir?' as-mv':''}" style="--dx:${adir*32}px">${body}</div><div class="as-dots" role="tablist" aria-label="Pilih slide">${ks.map(k=>`<button type="button" role="tab" data-s="${k}" aria-selected="${k===sl}" aria-label="${sName(k)}"><i></i></button>`).join('')}</div></section>`}
 
-  // Tab Hasil: akumulasi untung/rugi seluruh aset sejak transaksi pertama = (nilai - modal yang masih dipegang) + untung/rugi terealisasi
+  function chartHtml(){
+   if(!tx.length)return`<div class="as-em"><div class="empty">Grafik muncul setelah ada aset.</div></div>`;
+   if(!slideKeys().includes(sl))sl='all';
+   const g=stat(sl),sm=g.Vs.length?`<div class="as-sm"><b>${rp(g.val)}</b><span>modal ${rp(g.cost)}</span><b class="${cl(Math.round(g.un))}">${rp(g.un,1)}${g.cost?' ('+pct(g.un/g.cost*100)+')':''}</b></div>`:(g.sub.length?`<div class="as-sm"><span>${TY[sl].n} sudah terjual semua; grafik menunjukkan riwayatnya.</span></div>`:'');
+   const P=g.sub.length?pts(g.sub):[];G=null;
+   const body=!g.sub.length?emptyGrp():P.length<2?`<div class="as-em"><div class="empty"><b>Belum cukup data untuk grafik</b><p>Grafik butuh minimal dua hari. Besok nilainya ikut harga pasar atau harga yang kamu update lewat tombol Harga di tab Portofolio.</p></div></div>`
+    :plot(P,{m:p=>p.val,base:p=>p.cost,tip:tipVal,aria:(a,b)=>`Grafik nilai ${sName(sl).toLowerCase()}: ${rp(a.val)} pada ${fd(a.d)} menjadi ${rp(b.val)} pada ${fd(b.d)}; modal ${rp(b.cost)}`});
+   return panel(rgHtml('<i class="a"></i>Nilai aset<i class="b"></i>Modal'),body,sm)+rail('cv')}
+
+  // Tab Hasil: akumulasi untung/rugi = (nilai - modal yang masih dipegang) + untung/rugi terealisasi; per slide kelompok
   function hasilHtml(val,un){
    if(!tx.length)return`<div class="as-em"><div class="empty"><b>Belum ada hasil</b><p>Tambahkan aset pertama. Di sini kamu melihat akumulasi untung/rugi seluruh asetmu, termasuk yang sudah dijual.</p><button type="button" class="btn pri" data-a="add">Tambah aset pertama</button></div></div>`;
-   const hasil=un+L.real,bought=tx.reduce((a,t)=>t.k==='b'?a+U(t)*t.p:a,0),P=pts(tx);G=null;
+   if(!slideKeys().includes(sl))sl='all';
+   const g=stat(sl),hasil=un+L.real,gh=g.hasil,P=g.sub.length?pts(g.sub):[];G=null;
    const dl=P.length>1&&rng!=='all'?(P[P.length-1].val-P[P.length-1].cost+P[P.length-1].real)-(P[0].val-P[0].cost+P[0].real):null;
-   const hl=`<div class="as-hl"><div><span>Total hasil sejak awal</span><b class="${cl(Math.round(hasil))}">${rp(hasil,1)}</b><small>${bought?`<em class="${cl(Math.round(hasil))}">${pct(hasil/bought*100)}</em> dari total pembelian ${rp(bought)}`:''}</small></div>
+   const hl=`<div class="as-hl"><div><span>${sl==='all'?'Total hasil sejak awal':'Total hasil '+TY[sl].n}</span><b class="${cl(Math.round(gh))}">${rp(gh,1)}</b><small>${g.bought?`<em class="${cl(Math.round(gh))}">${pct(gh/g.bought*100)}</em> dari total pembelian ${rp(g.bought)}`:''}</small></div>
     ${dl===null?'':`<div><span>${rng} hari terakhir</span><b class="${cl(Math.round(dl))}">${rp(dl,1)}</b><small>perubahan total hasil</small></div>`}</div>`;
-   const chart=P.length<2?`<div class="as-em"><div class="empty"><b>Belum cukup data untuk grafik</b><p>Grafik akumulasi butuh minimal dua hari.</p></div></div>`
-    :plot(P,{m:p=>p.val-p.cost+p.real,base:()=>0,tip:tipHasil,zero:1,H:HS_H,aria:(a,b)=>`Grafik akumulasi total hasil: ${rp(a.val-a.cost+a.real,1)} pada ${fd(a.d)} menjadi ${rp(b.val-b.cost+b.real,1)} pada ${fd(b.d)}`});
+   const body=!g.sub.length?emptyGrp():P.length<2?`<div class="as-em"><div class="empty"><b>Belum cukup data untuk grafik</b><p>Grafik akumulasi butuh minimal dua hari.</p></div></div>`
+    :plot(P,{m:p=>p.val-p.cost+p.real,base:()=>0,tip:tipHasil,zero:1,H:HS_H,aria:(a,b)=>`Grafik akumulasi total hasil ${sName(sl).toLowerCase()}: ${rp(a.val-a.cost+a.real,1)} pada ${fd(a.d)} menjadi ${rp(b.val-b.cost+b.real,1)} pada ${fd(b.d)}`});
    // per kelompok: siapa yang menggerakkan total
    const rows=TK.filter(k=>tx.some(t=>t.ty===k)).map(k=>{const hs=V.filter(h=>h.ty===k),v=hs.reduce((a,h)=>a+h.val,0),c=hs.reduce((a,h)=>a+h.cost,0),r=tx.reduce((a,t)=>t.k==='s'&&t.ty===k?a+((L.per[t.id]||{}).pl||0):a,0);return{k,v,c,u:v-c,r,h:v-c+r}});
    const mxa=Math.max(1,...rows.map(r=>Math.abs(r.h)));
@@ -251,7 +276,7 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:940,h:620,flush:1,
     ${rows.map(r=>`<div class="as-r as-h" role="row"><span role="cell" class="as-nm"><b><i class="as-dot" style="background:${TY[r.k].c}"></i>${TY[r.k].n}</b></span><span role="cell" class="n">${rp(r.v)}</span><span role="cell" class="n x">${rp(r.c)}</span><span role="cell" class="n x"><span class="${cl(Math.round(r.u))}">${rp(r.u,1)}</span></span><span role="cell" class="n x"><span class="${cl(Math.round(r.r))}">${rp(r.r,1)}</span></span><span role="cell" class="n"><b class="${cl(Math.round(r.h))}">${rp(r.h,1)}</b><span class="as-cbw"><i class="${cl(Math.round(r.h))}" style="width:${Math.abs(r.h)/mxa*100}%"></i></span></span></div>`).join('')}
     <div class="as-r as-h as-ft" role="row"><span role="cell">Total</span><span role="cell" class="n">${rp(val)}</span><span class="n x">${rp(L.total)}</span><span role="cell" class="n x"><span class="${cl(Math.round(un))}">${rp(un,1)}</span></span><span role="cell" class="n x"><span class="${cl(Math.round(L.real))}">${rp(L.real,1)}</span></span><span role="cell" class="n"><b class="${cl(Math.round(hasil))}">${rp(hasil,1)}</b></span></div>
    </div>`;
-   return hl+rgHtml('<i class="a"></i>Total hasil<i class="b"></i>Impas (0)')+chart+`<h3 class="as-h3">Per kelompok aset</h3>`+tb}
+   return hl+panel(rgHtml('<i class="a"></i>Total hasil<i class="b"></i>Impas (0)'),body)+rail('hs')+`<h3 class="as-h3">Per kelompok aset</h3>`+tb}
 
   function bindChart(){
    const svg=q('.as-cv');if(!svg||!G)return;const {P,X,Y,W,m,tip}=G,hv=$('.as-hv2',svg),tp=q('.as-tp');
@@ -396,11 +421,25 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:940,h:620,flush:1,
    closeForm();render();say(ok);ensureHist()}
 
   // ---------- interaksi ----------
+  const setTab=k=>{if(k!==tab)q('.as-body').scrollTop=0;tab=k;render();if(tab==='cv'||tab==='hs')ensureHist()};
+  const go=(k,d)=>{adir=d;sl=k;render();const a=q('.as-th.on');if(a&&a.scrollIntoView)a.scrollIntoView({block:'nearest',inline:'nearest'})};
+  const step=d=>{const ks=slideKeys(),i=Math.max(0,ks.indexOf(sl));go(ks[(i+d+ks.length)%ks.length],d)};
+  // keyboard: panah kiri/kanan memilih tab (di strip tab) atau slide (di panel/rail)
+  w.addEventListener('keydown',e=>{
+   if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;const el=e.target.closest?e.target:null;if(!el)return;const d=e.key==='ArrowRight'?1:-1;
+   const tb=el.closest('.as-tab');
+   if(tb){const bs=Array.from(w.querySelectorAll('.as-tab')),n=bs[(bs.indexOf(tb)+d+bs.length)%bs.length];e.preventDefault();setTab(n.dataset.t);const f=q('.as-tab.on');f&&f.focus();return}
+   if((tab==='hs'||tab==='cv')&&el.closest('.as-sp,.as-rail')){e.preventDefault();step(d);const f=q('.as-th.on');f&&f.focus({preventScroll:true})}});
+  // geser di layar sentuh = pindah slide
+  let sx=null;
+  w.addEventListener('pointerdown',e=>{sx=e.pointerType==='touch'&&e.target.closest&&e.target.closest('.as-sv')?[e.clientX,e.clientY]:null});
+  w.addEventListener('pointerup',e=>{if(!sx)return;const dx=e.clientX-sx[0],dy=e.clientY-sx[1];sx=null;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)step(dx<0?1:-1)});
   w.addEventListener('click',async e=>{
    const b=e.target.closest('button');if(!b)return;const D=b.dataset;
-   if(D.t){tab=D.t;render();if(tab==='cv'||tab==='hs')ensureHist();return}
+   if(D.t){setTab(D.t);return}
    if(D.r){rng=D.r;render();return}
-   if(D.s){sl=D.s;render();return}
+   if(D.sn){step(+D.sn);return}
+   if(D.s){const ks=slideKeys();go(D.s,Math.sign(ks.indexOf(D.s)-ks.indexOf(sl)));return}
    const act=D.a;if(!act)return;
    if(act==='add')buyForm(D.ty?{ty:D.ty}:{});
    else if(act==='more'){const h=L.hold.find(x=>x.key===D.k);if(h)buyForm({ty:h.ty,sym:h.sym})}
