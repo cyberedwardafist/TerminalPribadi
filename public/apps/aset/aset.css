@@ -3,7 +3,7 @@
 .as{position:relative;height:100%;display:flex;flex-direction:column;min-height:0;background:var(--win)}
 .as [hidden]{display:none!important}
 .as .btn{margin:0}
-.as svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.as-ib svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .as .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* ringkasan */
@@ -25,25 +25,27 @@
 .as-dot{margin-right:6px}
 
 /* bilah tab */
-.as-bar{display:flex;align-items:center;gap:12px;padding:14px 16px 8px}
+.as-bar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;padding:14px 16px 8px}
 .as-msg{flex:1;min-width:0;text-align:right;font-size:12px;color:var(--mute)}
 
 /* tabel */
 .as-body{flex:1;min-height:0;overflow:auto}
 .as-t{min-width:0}
 .as-r{display:grid;gap:10px;align-items:center;padding:10px 16px;border-top:1px solid var(--line)}
-.as-p{grid-template-columns:minmax(0,1.5fr) minmax(0,.9fr) minmax(0,1fr) minmax(0,1.1fr) minmax(0,1.1fr) minmax(0,1.1fr) 140px}
+.as-p{grid-template-columns:minmax(104px,1.2fr) minmax(76px,.8fr) minmax(118px,1fr) minmax(118px,1fr) minmax(108px,1fr) minmax(128px,1fr) 142px}
 .as-l{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr) minmax(0,1.1fr) 68px}
+.as-h{grid-template-columns:minmax(0,1.3fr) repeat(5,minmax(0,1fr))}
 .as-r>*{min-width:0}
-.as-r .n{text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.as-r .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .as-hd{position:sticky;top:0;z-index:1;padding-top:7px;padding-bottom:7px;background:var(--win);border-top:0;border-bottom:1px solid var(--line);color:var(--mute);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
 .as-ft{font-weight:600;border-top:1px solid var(--line)}
 .as-nm{display:flex;flex-direction:column;gap:1px}
 .as-nm b{display:flex;align-items:center;gap:8px;font-weight:600;overflow-wrap:anywhere}
 .as-nm small{color:var(--mute);font-size:12px;overflow-wrap:anywhere}
-.as-nr{display:none}
+.as-nr,.as-nr2{display:none}
+.as-src{color:var(--mute)}.as-src.wn{color:var(--acc)}
 .as-pc{display:block;font-size:12px}
-.as-ac{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:6px}
+.as-ac{display:flex;justify-content:flex-end;gap:6px}
 .as-bj{font-style:normal;font-size:11px;font-weight:600;line-height:17px;padding:0 7px;border-radius:5px;flex:none}
 .as-bj.b{background:color-mix(in srgb,var(--up) 20%,transparent);color:var(--up)}
 .as-bj.s{background:color-mix(in srgb,var(--dn) 20%,transparent);color:var(--dn)}
@@ -76,13 +78,17 @@
 .as-fb{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
 
 /* jendela sempit: kolom sekunder disembunyikan, ringkasannya pindah ke baris kedua */
-@container as (max-width:700px){
- .as-p{grid-template-columns:minmax(0,1fr) minmax(0,auto) minmax(0,auto) 96px}
+@container as (max-width:880px){
+ .as-p{grid-template-columns:minmax(0,1fr) minmax(0,auto) 100px}
+ .as-ac{flex-wrap:wrap}
  .as-l{grid-template-columns:minmax(0,1fr) minmax(0,auto) 68px}
+ .as-h{grid-template-columns:minmax(0,1fr) minmax(0,auto) minmax(0,auto)}
  .as-r .x{display:none}
  .as-nr{display:inline}
+ .as-nr2{display:block;font-size:12px}
+}
+@container as (max-width:700px){
  .as-top,.as-alloc,.as-bar,.as-r{padding-left:12px;padding-right:12px}
- .as-ch{margin-left:12px;margin-right:12px}
  .as-g{grid-template-columns:1fr}
 }
 @container as (max-width:460px){
@@ -90,46 +96,50 @@
  .as-k b{font-size:18px}
 }
 
-/* pita peringatan data harga (Fault.strip) */
-.as-fs:empty{display:none}
+/* grafik */
+.as-rg{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:0 16px 8px}
+.as-lgd{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mute)}
+.as-lgd i{display:inline-block;width:16px;height:0;border-top:2.5px solid var(--acc)}
+.as-lgd i.b{margin-left:10px;border-top:2px dashed var(--mute)}
+.as-cvw{position:relative;margin:0 16px 16px;overflow:hidden}
+.as-cv{display:block;touch-action:pan-y}
+.as-cg{--c:var(--mute)}.as-cg.up{--c:var(--up)}.as-cg.dn{--c:var(--dn)}
+.as-ln{fill:none;stroke:var(--c);stroke-width:2.2;stroke-linejoin:round;stroke-linecap:round}
+.as-ar{fill:var(--c);fill-opacity:.12;stroke:none}
+.as-cl2{fill:none;stroke:var(--mute);stroke-width:1.5;stroke-dasharray:5 4;opacity:.9}
+.as-gl{stroke:var(--line);stroke-width:1}
+.as-tx{fill:var(--mute);font-size:11px;font-variant-numeric:tabular-nums}
+.as-xl{stroke:var(--mute);stroke-width:1;stroke-dasharray:3 3}
+.as-dt{fill:var(--win);stroke:var(--ink);stroke-width:2}
+.as-tp{position:absolute;z-index:2;display:flex;flex-direction:column;gap:1px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--win);box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:12px;color:var(--mute);pointer-events:none;white-space:nowrap}
+.as-tp b{color:var(--ink);font-size:12px}.as-tp em{font-style:normal;color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.as-mk{margin-top:10px;font-size:12px;color:var(--mute)}
+.as-mk ul{margin:4px 0 0;padding:0;list-style:none}
+.as-mk li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 0;color:var(--ink);font-variant-numeric:tabular-nums}
 
-/* harga sekarang: sumber harga */
-.as-sr{display:block;font-size:11px;color:var(--mute)}
-.as-sr.live{color:var(--up)}
+/* slide kelompok aset di tab Grafik */
+.as-slw{padding:0 16px 8px;overflow-x:auto;scrollbar-width:none}.as-slw::-webkit-scrollbar{display:none}
+.as-slw .seg{display:inline-flex;white-space:nowrap}
+.as-slw .as-dot{margin-right:6px}
+.as-sm{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;padding:0 16px 8px;font-size:12px;color:var(--mute)}
+.as-sm b{font-size:15px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}.as-sm b.up{color:var(--up)}.as-sm b.dn{color:var(--dn)}
+.as-slw [aria-pressed=true] .as-dot{box-shadow:0 0 0 2px rgba(255,255,255,.8)}
 
-/* grafik nilai aset */
-.as-ch{margin:0 16px;padding:10px 12px 8px;border:1px solid var(--line);border-radius:10px;background:var(--win2)}
-.as-chh{display:flex;align-items:center;justify-content:space-between;gap:6px 12px;flex-wrap:wrap;margin-bottom:6px}
-.as-chh h3{margin:0;font-size:13px;font-weight:600}
-.as-cc{display:flex;gap:10px;flex-wrap:wrap}
-.as-cv{position:relative;min-height:190px;transition:opacity .15s}
-.as-cv.ld{opacity:.6}
-.as .as-sv{display:block;width:100%;height:auto;overflow:visible;stroke:none;stroke-width:1;fill:none;user-select:none}
-.as-sv text{font-size:10.5px;fill:var(--mute);font-variant-numeric:tabular-nums}
-.as-sv .gl{stroke:var(--line);stroke-width:1}
-.as-sv .zl{stroke:var(--mute);stroke-width:1;stroke-dasharray:3 3}
-.as-sv .ln{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
-.as-sv.up .ln{stroke:var(--up)}.as-sv.dn .ln{stroke:var(--dn)}
-.as-sv .ar{stroke:none;fill-opacity:.12}.as-sv.up .ar{fill:var(--up)}.as-sv.dn .ar{fill:var(--dn)}
-.as-sv .cl{fill:none;stroke:var(--mute);stroke-width:1.4;stroke-dasharray:4 3}
-.as-sv .vl{stroke:var(--mute);stroke-width:1;stroke-dasharray:2 2}
-.as-sv .dt{fill:var(--win);stroke-width:2}.as-sv.up .dt{stroke:var(--up)}.as-sv.dn .dt{stroke:var(--dn)}
-.as-sv .ov{touch-action:pan-y;cursor:crosshair}
-.as-sv:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:6px}
-.as-tt{position:absolute;top:8px;z-index:2;display:flex;flex-direction:column;gap:1px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--win);box-shadow:0 8px 24px rgba(0,0,0,.35);font-size:12px;pointer-events:none;white-space:nowrap}
-.as-tt span{color:var(--mute)}
-.as-tt em{font-style:normal;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
-.as-tt em.up{color:var(--up)}.as-tt em.dn{color:var(--dn)}
-.as-cn{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:4px;font-size:12px;color:var(--mute)}
-.as-lgd{display:inline-flex;align-items:center;gap:6px}
-.as-lgd i{display:inline-block;width:16px;height:0;border-top:2px solid var(--ink)}
-.as-lgd i.cl{border-top:2px dashed var(--mute)}
-.as-w2n{flex-basis:100%}
-.as-cm{margin:0;padding:64px 8px;text-align:center;color:var(--mute);font-size:13px}
-.as-pt{margin-top:10px}
+/* tab Hasil */
+.as-hl{display:flex;flex-wrap:wrap;gap:12px 28px;padding:4px 16px 14px}
+.as-hl>div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.as-hl span,.as-hl small{font-size:12px;color:var(--mute)}
+.as-hl b{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.3}
+.as-hl>div:first-child b{font-size:28px}
+.as-hl em{font-style:normal;font-weight:600}.as-hl em.up{color:var(--up)}.as-hl em.dn{color:var(--dn)}
+.as-h3{margin:4px 16px 4px;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--mute)}
+.as-cbw{display:block;height:4px;margin-top:4px;border-radius:99px;background:var(--win2);overflow:hidden}
+.as-cbw i{display:block;height:100%;border-radius:99px;background:var(--mute)}.as-cbw i.up{background:var(--up)}.as-cbw i.dn{background:var(--dn)}
 
-/* form harga manual: harga yang sudah dicatat */
-.as-pts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}.as-pts:empty{display:none}
-.as-chp{display:inline-flex;align-items:center;gap:4px;padding:2px 4px 2px 9px;border:1px solid var(--line);border-radius:99px;font-size:12px;color:var(--mute)}
-.as-x{display:grid;place-items:center;width:20px;height:20px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--mute);font-size:15px;line-height:1}
-.as-x:hover{background:rgba(128,136,150,.2);color:var(--dn)}
+/* label kurs USD/IDR */
+.as-fx{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--line);border-radius:99px;background:var(--win2);font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums;white-space:nowrap}
+.as-fx b{color:var(--ink);font-weight:600}
+.as-fx small{font-size:12px}.as-fx small.up{color:var(--up)}.as-fx small.dn{color:var(--dn)}
+.as-lv{width:7px;height:7px;border-radius:50%;background:var(--up);flex:none}
+.as-fx.old .as-lv{background:var(--acc)}
+.as-fx.na{white-space:normal;color:var(--acc)}

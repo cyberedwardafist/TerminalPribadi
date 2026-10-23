@@ -1,0 +1,23 @@
+/* Gaya app Headmaps. Semua kelas berawalan .hdm- (hm- dipakai app Home) */
+.hdm{display:flex;flex-direction:column;flex:1;min-height:0;position:relative}
+.hdm-t1,.hdm-t2{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;padding:8px 12px 0;flex:none}
+.hdm-sym{width:140px;font:inherit;font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--ink);background:var(--win2);border:1px solid var(--line);border-radius:7px;padding:5px 9px;text-transform:uppercase}
+.hdm-q{display:flex;gap:4px;flex-wrap:wrap}.hdm-q .nb{cursor:pointer}
+.hdm-px{font-size:18px;font-variant-numeric:tabular-nums;margin-left:6px;min-width:90px}
+.hdm-sts{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.hdm-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border:1px solid var(--line);border-radius:999px;font-size:11px;color:var(--mute);white-space:nowrap}.hdm-chip b{color:var(--ink);font-weight:600}
+.hdm-chip s{width:7px;height:7px;border-radius:50%;background:var(--dn)}.hdm-chip s.on{background:var(--up);box-shadow:0 0 0 3px color-mix(in srgb,var(--up) 25%,transparent)}.hdm-chip s.wt{background:var(--acc)}
+.hdm-gear,.hdm-open{font-size:12px;line-height:1.2;padding:3px 9px;cursor:pointer}.hdm-gear{font-size:14px}
+.hdm-t2 .nb{cursor:pointer}
+.hdm-cv{flex:1;min-height:240px;position:relative;margin:10px 12px 0;overflow:hidden;border-radius:6px;background:#070b20}
+.hdm-c,.hdm-o{position:absolute;left:0;top:0}.hdm-o{cursor:crosshair}
+.hdm-msg[hidden]{display:none}.hdm-msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:#aab2c0;font-size:13px;pointer-events:none}
+.hdm-ft{margin:8px 12px 10px;color:var(--mute);font-size:11px;flex:none;line-height:1.45}
+.hdm-tip{position:absolute;z-index:10;min-width:170px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--win);box-shadow:0 10px 26px rgba(0,0,0,.45);font-size:12px;pointer-events:none}
+.hdm-tip small{margin-left:8px;color:var(--mute)}.hdm-tg{display:grid;grid-template-columns:auto auto;gap:2px 14px;margin-top:5px}.hdm-tg span{color:var(--mute)}.hdm-tg em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums}
+.hdm-pop{position:absolute;z-index:12;right:14px;top:46px;width:min(380px,calc(100% - 28px));padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--win);box-shadow:0 18px 50px rgba(0,0,0,.5);font-size:12px}
+.hdm-pop h4{margin:0 0 10px;font-size:13px}.hdm-pop label{display:flex;flex-direction:column;align-items:stretch;gap:4px;color:var(--mute);text-align:left}
+.hdm-pop input{width:100%;box-sizing:border-box;font:inherit;font-size:13px;color:var(--ink);background:var(--win2);border:1px solid var(--line);border-radius:7px;padding:6px 9px}
+.hdm-pr{display:flex;align-items:center;gap:10px;margin:10px 0}.hdm-pop ol{margin:8px 0 6px;padding-left:18px;color:var(--mute);line-height:1.55}.hdm-pop ol b{color:var(--ink)}.hdm-pop p{margin:6px 0 0;color:var(--mute);line-height:1.5}
+.hdm-pop code{font-size:11px;padding:1px 5px;border-radius:4px;background:var(--win2);color:var(--ink)}
+@media(max-width:700px){.hdm-q{display:none}.hdm-sts{margin-left:0}}

@@ -1,4 +1,4 @@
-// App Aset (public/apps/aset): hitungan buku transaksi (beli menambah aset, jual mengurangi sebesar modal, untung/rugi terealisasi), nilai pasar per hari (grafik), sumber harga, dan pembacaan angka format Indonesia.
+// App Aset (public/apps/aset): hitungan buku transaksi (beli menambah aset, jual mengurangi sebesar modal, untung/rugi terealisasi) dan pembacaan angka format Indonesia.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -6,7 +6,7 @@ import fs from 'node:fs';
 
 const win = {};
 vm.runInNewContext(fs.readFileSync(new URL('../public/apps/aset/aset.js', import.meta.url), 'utf8'), { window: win, registerApp() {}, Intl, Date, Math, JSON, Number, String, Array, Map, Object, localStorage: {} });
-const { ledger, num, series, lastLE, feedOf, niceTicks } = win.AsetCalc;
+const { ledger, series, num } = win.AsetCalc;
 
 let n = 0;
 const tx = (k, ty, sym, q, p, d = '2026-10-01') => ({ id: 't' + ++n, k, ty, sym, q, p, d, n: '', cre: n, upd: n });
@@ -68,67 +68,75 @@ test('angka format Indonesia', () => {
   assert.ok(Number.isNaN(num(''))); assert.ok(Number.isNaN(num('abc')));
 });
 
-// ---------- nilai pasar & grafik ----------
-const days = (a, b) => { const o = []; for (let t = Date.parse(a + 'T00:00:00Z'); t <= Date.parse(b + 'T00:00:00Z'); t += 864e5) o.push(new Date(t).toISOString().slice(0, 10)); return o; };
-// px dari tabel {kunci: {tanggal: harga}}; tanggal tanpa isi memakai harga terakhir sebelumnya (akhir pekan/libur), sebelum data pertama = null
-const pxOf = tbl => (k, d) => { const r = lastLE(Object.entries(tbl[k] || {}).sort().map(([dd, p]) => ({ d: dd, p })), d); return r ? r.p : null; };
-
-test('BBCA beli 6.000 lalu turun ke 3.000: nilai turun 50% terhadap modal', () => {
-  const L = ledger([tx('b', 'saham', 'BBCA', 1, 6000, '2026-10-01')]);
-  const { pts } = series(L.hist, '2026-10-01', '2026-10-05', pxOf({ 'saham|bbca': { '2026-10-01': 6000, '2026-10-03': 4500, '2026-10-05': 3000 } }));
-  assert.equal(pts.length, 5);
-  near(pts[0].v, 600000); near(pts[0].c, 600000);
-  near(pts[2].v, 450000);                       // 4.500 x 100 lembar
-  near(pts[3].v, 450000);                       // hari tanpa harga memakai harga terakhir
-  near(pts[4].v, 300000); near(pts[4].c, 600000);
-  near((pts[4].v / pts[4].c - 1) * 100, -50);   // grafik persen: turun 50%
+test('beli lagi: 1 lot @5.000 lalu 1 lot @6.000 -> rata-rata 5.500', () => {
+  const L = ledger([tx('b', 'saham', 'BBCA', 1, 5000, '2026-10-01'), tx('b', 'saham', 'BBCA', 1, 6000, '2026-10-05')]);
+  near(L.hold[0].avg, 5500); near(L.total, 1_100_000);
+  const L2 = ledger([tx('b', 'saham', 'BBCA', 1, 5000, '2026-10-01'), tx('b', 'saham', 'BBCA', 3, 6000, '2026-10-05')]);
+  near(L2.hold[0].avg, 5750);
 });
 
-test('beberapa aset digabung: rugi satu aset ditutup untung aset lain', () => {
-  // BBCA modal 1.000.000 turun 100.000; BTC modal 1.000.000 naik 50.000 -> total hanya turun 50.000
-  const L = ledger([tx('b', 'saham', 'BBCA', 1, 10000, '2026-10-01'), tx('b', 'kripto', 'BTC', 1, 1_000_000, '2026-10-01')]);
-  const { pts } = series(L.hist, '2026-10-01', '2026-10-02', pxOf({ 'saham|bbca': { '2026-10-01': 10000, '2026-10-02': 9000 }, 'kripto|btc': { '2026-10-01': 1_000_000, '2026-10-02': 1_050_000 } }));
-  near(pts[0].v, 2_000_000);
-  near(pts[1].v, 1_950_000); near(pts[1].v - pts[1].c, -50000);
+const last = a => a[a.length - 1];
+
+test('grafik: BBCA beli 6.000 lalu harga 3.000 -> nilai turun 50%, modal tetap', () => {
+  const t = [tx('b', 'saham', 'BBCA', 1, 6000, '2026-10-01')];
+  const S = series(t, {}, {}, { 'saham|bbca': 3000 }, '2026-10-05');
+  assert.equal(S.length, 5);
+  near(S[0].val, 600000); near(last(S).val, 300000); near(last(S).cost, 600000);
+  near(last(S).val / S[0].val, 0.5);
 });
 
-test('beli lagi di harga berbeda: harga rata-rata berubah, modal grafik ikut bertambah di tanggal beli', () => {
-  const t = [tx('b', 'saham', 'BBCA', 1, 5000, '2026-10-01'), tx('b', 'saham', 'BBCA', 1, 6000, '2026-10-03')];
-  const L = ledger(t);
-  near(L.hold[0].avg, 5500); near(L.hold[0].u, 200);
-  const { pts } = series(L.hist, '2026-10-01', '2026-10-04', () => 5800);
-  near(pts[0].c, 500000); near(pts[1].c, 500000); near(pts[2].c, 1_100_000); near(pts[3].v, 200 * 5800);
+test('grafik: aset lain saling mengimbangi (BBCA -100.000, aset lain +50.000 -> total turun 50.000)', () => {
+  const t = [tx('b', 'saham', 'BBCA', 2, 6000, '2026-10-01'), tx('b', 'emas', 'Emas Antam', 10, 1_000_000, '2026-10-01')];
+  const before = series(t, {}, {}, {}, '2026-10-01')[0].val;
+  const S = series(t, { 'emas|emas antam': [['2026-10-03', 1_005_000]] }, {}, { 'saham|bbca': 5000 }, '2026-10-03');
+  near(before, 1_200_000 + 10_000_000);
+  near(last(S).val - before, -200_000 + 50_000);
+  const S2 = series([tx('b', 'saham', 'BBCA', 1, 6000, '2026-10-01'), tx('b', 'emas', 'Emas Antam', 1, 1_000_000, '2026-10-01')], { 'emas|emas antam': [['2026-10-03', 1_050_000]] }, {}, { 'saham|bbca': 5000 }, '2026-10-03');
+  near(last(S2).val - S2[0].val, -100000 + 50000);
 });
 
-test('jual: nilai dan modal yang dipegang berkurang di tanggal jual, aset terjual hilang dari grafik', () => {
-  const t = [tx('b', 'saham', 'BBCA', 2, 6000, '2026-10-01'), tx('s', 'saham', 'BBCA', 2, 6500, '2026-10-03')];
-  const { pts } = series(ledger(t).hist, '2026-10-01', '2026-10-04', () => 6200);
-  near(pts[1].v, 200 * 6200); near(pts[2].v, 0); near(pts[2].c, 0); near(pts[3].v, 0);
+test('grafik: harga pasar harian mengisi hari-hari, penjualan menurunkan jumlah yang dihitung', () => {
+  const t = [tx('b', 'saham', 'BBCA', 2, 6000, '2026-10-01'), tx('s', 'saham', 'BBCA', 1, 6500, '2026-10-03')];
+  const S = series(t, {}, { 'saham|bbca': [['2026-10-01', 6000], ['2026-10-02', 5000], ['2026-10-03', 6500]] }, {}, '2026-10-04');
+  assert.deepEqual(Array.from(S.map(p => Math.round(p.val))), [1_200_000, 1_000_000, 650_000, 650_000]);
+  assert.deepEqual(Array.from(S.map(p => Math.round(p.cost))), [1_200_000, 1_200_000, 600_000, 600_000]);
 });
 
-test('aset tanpa harga dihitung sebesar modal dan ditandai (fb)', () => {
-  const L = ledger([tx('b', 'emas', 'Emas Antam', 10, 1_000_000, '2026-10-01'), tx('b', 'saham', 'BBCA', 1, 6000, '2026-10-01')]);
-  const { pts, fb } = series(L.hist, '2026-10-01', '2026-10-02', (k) => (k === 'saham|bbca' ? 7000 : null));
-  near(pts[1].v, 10_000_000 + 700000); assert.deepEqual([...fb], ['emas|emas antam']);
+test('grafik: harga manual dipakai sampai ada harga yang lebih baru, hari sebelum transaksi tidak ada', () => {
+  const t = [tx('b', 'emas', 'Emas', 5, 1_000_000, '2026-10-02')];
+  const S = series(t, { 'emas|emas': [['2026-10-04', 1_100_000]] }, {}, {}, '2026-10-06');
+  assert.equal(S[0].d, '2026-10-02');
+  assert.deepEqual(Array.from(S.map(p => Math.round(p.val))), [5e6, 5e6, 5.5e6, 5.5e6, 5.5e6]);
+  assert.equal(series([], {}, {}, {}, '2026-10-06').length, 0);
 });
 
-test('lastLE: harga terakhir pada atau sebelum tanggal', () => {
-  const a = [{ d: '2026-10-01', p: 1 }, { d: '2026-10-05', p: 2 }];
-  assert.equal(lastLE(a, '2026-09-30'), null); assert.equal(lastLE(a, '2026-10-01').p, 1);
-  assert.equal(lastLE(a, '2026-10-04').p, 1); assert.equal(lastLE(a, '2026-12-01').p, 2); assert.equal(lastLE([], '2026-10-01'), null);
+test('grafik: rentang panjang disampling maksimal ~400 titik dan titik terakhir = hari ini', () => {
+  const S = series([tx('b', 'saham', 'BBCA', 1, 6000, '2020-01-01')], {}, {}, {}, '2026-10-22');
+  assert.ok(S.length <= 402); assert.equal(last(S).d, '2026-10-22');
 });
 
-test('sumber harga live: saham IDX .JK, kripto USDT, lainnya manual', () => {
-  assert.deepEqual({ ...feedOf({ ty: 'saham', sym: 'BBCA' }) }, { sym: 'BBCA.JK', usd: false });
-  assert.equal(feedOf({ ty: 'saham', sym: 'bbca.jk' }).sym, 'BBCA.JK');
-  assert.equal(feedOf({ ty: 'saham', sym: 'Bank Central Asia' }), null);
-  assert.deepEqual({ ...feedOf({ ty: 'kripto', sym: 'BTC' }) }, { sym: 'BTCUSDT', usd: true });
-  assert.equal(feedOf({ ty: 'kripto', sym: 'ethusdt' }).sym, 'ETHUSDT');
-  assert.equal(feedOf({ ty: 'emas', sym: 'Antam' }), null); assert.equal(feedOf({ ty: 'lain', sym: 'Motor' }), null);
+test('saham luar: per lembar (bukan lot), boleh pecahan; kelompok jenis dihitung terpisah dari saham IHSG', () => {
+  const L = ledger([tx('b', 'sahamx', 'AAPL', 2.5, 3_000_000), tx('b', 'saham', 'AAPL', 1, 1000)]);
+  assert.equal(L.hold.length, 2);
+  near(L.hold.find(h => h.ty === 'sahamx').cost, 7_500_000); near(L.hold.find(h => h.ty === 'saham').cost, 100_000);
+  const S = series([tx('b', 'sahamx', 'AAPL', 2, 3_000_000, '2026-10-01')], {}, {}, { 'sahamx|aapl': 4_000_000 }, '2026-10-03');
+  near(S[0].val, 6_000_000); near(last(S).val, 8_000_000);
 });
 
-test('sumbu grafik: tick rapi', () => {
-  const t = [...niceTicks(0, 1_000_000, 4)];   // salin: array dari vm beda realm
-  assert.deepEqual(t, [0, 200000, 400000, 600000, 800000, 1000000]);
-  assert.ok(niceTicks(-55, 3, 4).includes(0));
+test('grafik: untung terealisasi terakumulasi per hari, total hasil = nilai - modal + terealisasi', () => {
+  const t = [tx('b', 'saham', 'BBCA', 2, 6000, '2026-10-01'), tx('s', 'saham', 'BBCA', 1, 6500, '2026-10-03'), tx('s', 'saham', 'BBCA', 1, 5000, '2026-10-05')];
+  const S = series(t, {}, {}, {}, '2026-10-06');
+  assert.deepEqual(Array.from(S.map(p => Math.round(p.real))), [0, 0, 50_000, 50_000, -50_000, -50_000]);
+  const hasil = p => p.val - p.cost + p.real;
+  near(hasil(S[0]), 0);            // baru beli: belum ada hasil
+  near(hasil(last(S)), -50_000);   // semua terjual: hasil = total terealisasi (+50.000 - 100.000 + ... = -50.000)
+  assert.equal(Math.round(last(S).val), 0);
+});
+
+test('grafik: total hasil = belum terealisasi + terealisasi (BBCA turun 100.000, aset lain naik 50.000, ada penjualan)', () => {
+  const t = [tx('b', 'saham', 'BBCA', 2, 6000, '2026-10-01'), tx('b', 'emas', 'Emas', 10, 1_000_000, '2026-10-01'), tx('s', 'saham', 'BBCA', 1, 6500, '2026-10-02')];
+  const S = series(t, { 'emas|emas': [['2026-10-03', 1_005_000]] }, {}, { 'saham|bbca': 5500 }, '2026-10-03');
+  const p = last(S), hasil = p.val - p.cost + p.real;
+  // sisa BBCA 1 lot: nilai 550.000 vs modal 600.000 = -50.000; emas +50.000; terealisasi +50.000
+  near(p.real, 50_000); near(hasil, -50_000 + 50_000 + 50_000);
 });
