@@ -11,6 +11,7 @@ Desktop ala Mac untuk terminal chart trading. Frontend statis (plain JS, tanpa b
 - **Mode Dummy** (localhost/`file://`): data di localStorage. **Mode Live** (domain sungguhan + login): `shared/live.js` menarik data server → menulis ke localStorage dalam format yang dipakai tiap app → tiap `localStorage.setItem` pada key tersinkron dikirim ke server (tunda 1,5 dtk). Server menang saat hidrasi; konflik antar perangkat = tulisan terakhir menang. Jadi **app tidak perlu tahu server**; cukup baca/tulis key `tc.*`.
 - Jangan pakai `prompt/confirm/alert` bawaan browser: pakai `dlg.prompt/confirm/alert` (`shared/dialog.js`). Semuanya tampil di Dynamic Island menubar (`shared/island.js`); alert/pemberitahuan pakai `Island.notify({title,body,tone,timeout})` (ada batas waktu, default 6 dtk).
 - Tema/CSS dasar: `core/base.css` (variabel, menubar, dock, window), komponen bersama `shared/ui.css`.
+- **Tanpa emoji.** Semua ikon memakai SVG: `shared/icons.js` (`Icon('nama','kelas')` -> string `<svg class="ic">`, `Icon.d('nama')` untuk `Path2D` di kanvas) dengan gaya garis dari `.ic` di `shared/ui.css`. Tambah ikon baru di tabel `D` dalam `icons.js`; jangan menulis emoji/simbol gambar langsung di teks UI.
 
 ## 2. Peta App (cari di sini dulu)
 

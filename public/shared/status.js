@@ -3,6 +3,7 @@
 // kind: offline | noserver | timeout | server | provider | auth | limit | notfound | nolive | nologin | empty | unknown
 (()=>{
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>'&#'+c.charCodeAt(0)+';');
+const SI=d=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg>`;
 const SV=b=>`<svg viewBox="0 0 120 90" aria-hidden="true">${b}</svg>`;
 const RACK='<rect x="26" y="14" width="56" height="22" rx="4"/><rect x="26" y="42" width="56" height="22" rx="4"/><circle class="f" cx="37" cy="25" r="2.5"/><circle class="f" cx="37" cy="53" r="2.5"/><path d="M48 25h24M48 53h24"/>';
 const ART={
@@ -59,7 +60,7 @@ async function diag0(){
  if(!d.server)return d;
  try{const r=await apiFetch('/api/quotes?symbols=BTCUSDT,BBCA');if(!r.ok){d.data=false;d.status=r.status;return d}const j=await r.json();d.data=Array.isArray(j)&&j.some(q=>q.price>0)}catch(e){d.data=false}
  return d}
-const chip=(l,v)=>`<span class="${v===true?'ok':v===false?'no':v==='-'?'sk':'wt'}"><i>${v===true?'\u2713':v===false?'\u2715':v==='-'?'\u2013':'\u2026'}</i>${l}</span>`;
+const chip=(l,v)=>`<span class="${v===true?'ok':v===false?'no':v==='-'?'sk':'wt'}"><i>${SI(v===true?'M5 12.5l4.5 4.5L19 7':v===false?'M6 6l12 12M18 6L6 18':v==='-'?'M7 12h10':'M6 12h.01M12 12h.01M18 12h.01')}</i>${l}</span>`;
 const diagHtml=d=>`<div class="st-dg" role="status" aria-label="Hasil pemeriksaan">${chip('Internet',d.net)}${chip('Server',d.net===false?'-':d.server)}${chip('Data pasar',d.done?(d.server===true?d.data:'-'):null)}</div>`;
 const kindFromDiag=(k0,d)=>{if(d.net===false)return'offline';if(d.server===false&&d.status===0)return k0==='timeout'?'timeout':'noserver';if(d.server===false)return d.status===404?'notfound':'server';if(d.data===false)return'provider';return k0};
 function html(kind,o={}){const K=KIND[kind]||KIND.unknown;

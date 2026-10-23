@@ -106,7 +106,7 @@ async function loadBars(D){
    if(D!==cur)return;D.src=s;srcPref=s;D.bars=b;D.ready=true;D.busy=false;D.err='';D.dirty=1;D.bstep=niceStep(b[b.length-1].c/20000);D.since=Date.now();liveSync(true);return}
   catch(e){lastErr=e}}
  if(D!==cur)return;D.busy=false;D.err='Gagal memuat '+D.sym+' dari Binance ('+(lastErr&&lastErr.message||'jaringan')+'). Cek nama simbol/koneksi.';D.dirty=1}
-function mtAsk(D){if(MT.st!=='open'){D.err='MT5 belum terhubung. Jalankan mt5-bridge lalu buka ⚙ untuk alamatnya.';D.busy=false;D.dirty=1;return}
+function mtAsk(D){if(MT.st!=='open'){D.err='MT5 belum terhubung. Jalankan mt5-bridge lalu buka Pengaturan MT5 untuk alamatnya.';D.busy=false;D.dirty=1;return}
  D.err='';D.busy=true;D.reqId=++mtReq;MT.send({t:'rates',s:D.sym,tf:D.tf,n:1000,id:D.reqId});clearTimeout(D.rto);D.rto=setTimeout(()=>{if(D===cur&&!D.ready){D.busy=false;D.err='Bridge tidak mengirim riwayat '+D.sym+' (simbol belum ada di Market Watch MT5?).';D.dirty=1}},8000)}
 function mtRates(m){const D=cur;if(!D||D.kind!=='mt5'||m.s!==D.sym||m.tf!==D.tf)return;clearTimeout(D.rto);mtOff=+m.off||0;
  const b=(m.bars||[]).map(x=>({t:+x[0],o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[5]||0})).filter(x=>x.c>0);
@@ -252,7 +252,7 @@ async function symbols(w){try{const j=await jget(API.spot+'/ticker/24hr',15000);
 
 registerApp('headmaps',{css:'apps/headmaps/headmaps.css',icon:"<rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M3 9h18M3 14h18M8 4v16M14 4v16\"/>",t:'Headmaps',w:1100,h:680,flush:1,
  notes:['Tanpa endpoint server. Kripto: REST klines/depth + WebSocket Binance (futures, cadangan spot). XAUUSD/forex: <code>mt5-bridge/mt5_bridge.py</code> (WebSocket lokal, alamat di <code>tc.headmaps</code> browser ini).','Mode Likuidasi adalah MODEL estimasi dari volume candle x leverage, bukan data bursa. Mode Order Book hanya merekam sejak app dibuka.'],
- html:()=>`<div class="hdm"><div class="hdm-t1"><input class="hdm-sym" list="hdm-dl" spellcheck="false" autocomplete="off" aria-label="Simbol" placeholder="BTCUSDT / XAUUSD"><datalist id="hdm-dl"></datalist><div class="hdm-q"></div><b class="hdm-px">–</b><button class="nb hdm-open" title="Buka di Chart">Chart ↗</button><span class="hdm-sts"></span><button class="hdm-gear nb" aria-label="Pengaturan MT5" title="Pengaturan MT5">⚙</button></div>
+ html:()=>`<div class="hdm"><div class="hdm-t1"><input class="hdm-sym" list="hdm-dl" spellcheck="false" autocomplete="off" aria-label="Simbol" placeholder="BTCUSDT / XAUUSD"><datalist id="hdm-dl"></datalist><div class="hdm-q"></div><b class="hdm-px">–</b><button class="nb hdm-open" title="Buka di Chart">Chart ${Icon('ext')}</button><span class="hdm-sts"></span><button class="hdm-gear nb" aria-label="Pengaturan MT5" title="Pengaturan MT5">${Icon('gear')}</button></div>
   <div class="hdm-t2"></div><div class="hdm-cv"><canvas class="hdm-c"></canvas><canvas class="hdm-o"></canvas><div class="hdm-msg"></div></div><p class="hdm-ft"></p><div class="hdm-tip" hidden></div><div class="hdm-pop" hidden></div></div>`,
  init(w){if(CW&&CW!==w)stop(CW);CW=w;popOpen=false;const cs=getComputedStyle(document.documentElement);UPC=cs.getPropertyValue('--up').trim()||UPC;DNC=cs.getPropertyValue('--dn').trim()||DNC;
   mount(w);dlist(w);MT.start();reset(w);loop(w);if(!SYMS.length)symbols(w)}});

@@ -5,10 +5,11 @@
 .st h3{margin:2px 0 0;font-size:16px;font-weight:600}
 .st p{margin:0;max-width:440px;font-size:13px;line-height:1.5;color:var(--mute)}
 .st ul{margin:2px 0 0;padding:0;list-style:none;max-width:440px;font-size:12.5px;color:var(--mute);text-align:left}
-.st li{position:relative;padding:2px 0 2px 16px}.st li::before{content:"\203A";position:absolute;left:4px;color:var(--acc);font-weight:700}
+.st li{position:relative;padding:2px 0 2px 16px}.st li::before{content:"";position:absolute;left:3px;top:50%;width:12px;height:12px;margin-top:-6px;background:var(--acc);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E") center/12px no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E") center/12px no-repeat}
 .st-dg{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px}
 .st-dg span{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--win2);font-size:12px;color:var(--mute)}
-.st-dg i{font-style:normal;font-weight:700;width:12px;text-align:center}
+.st-dg i{font-style:normal;font-weight:700;width:12px;text-align:center;display:inline-flex;align-items:center;justify-content:center}
+.st-dg i svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .st-dg .ok i{color:var(--up)}.st-dg .no i{color:var(--dn)}.st-dg .no{color:var(--ink)}
 .st-dg .wt i{animation:stp 1s ease-in-out infinite}
 @keyframes stp{50%{opacity:.25}}

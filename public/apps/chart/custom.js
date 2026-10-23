@@ -41,7 +41,7 @@ function series(inst,D,key,done,ctx){
   if(lang!=='pine')for(const i of known)p[i.key]=inst.p&&inst.p[i.key]!==undefined?inst.p[i.key]:i.def;
   exec(lang,inst.src||'',p,D,ctx).then(r=>{if(inst._runKey!==key)return;const o=r.ok;o.plots.forEach((pl,i)=>{pl.c=pl.c||COL[i%COL.length];if(lang==='pine')pl.px=1;pl.k=pl.k+(o.plots.slice(0,i).some(q=>q.k===pl.k)?'#'+i:'')});inst._res=o;inst._ck=key;inst.err=null;done()}).catch(e=>{if(inst._runKey!==key)return;inst.err=e.message;inst._res=inst._res||{overlay:null,plots:[],levels:[],markers:[]};inst._ck=key;console.warn('Indikator custom:',e.message);done()})}
  return inst._res&&inst._ck===key?build(inst):null}
-function build(inst){const r=inst._res,d=def(inst);if(inst.err)d.name=(inst.name||'Custom')+' \u26a0 '+inst.err;const s={};r.plots.forEach(pl=>{s[pl.k]=pl.data});const p={};for(const i of d.inputs)p[i.key]=inst.p&&inst.p[i.key]!==undefined?inst.p[i.key]:i.def;return{p,series:s,def:d}}
+function build(inst){const r=inst._res,d=def(inst);if(inst.err)d.name=(inst.name||'Custom')+' - galat: '+inst.err;const s={};r.plots.forEach(pl=>{s[pl.k]=pl.data});const p={};for(const i of d.inputs)p[i.key]=inst.p&&inst.p[i.key]!==undefined?inst.p[i.key]:i.def;return{p,series:s,def:d}}
 
 // ---------- penyimpanan: server (bila login) atau lokal ----------
 const jl=()=>{try{return JSON.parse(localStorage.getItem(LKEY)||'[]')}catch(e){return[]}};

@@ -122,7 +122,9 @@ function draw(w,T,deps){
  // alert
  const AL=deps.alerts();
  for(const a of AL){const y=Math.round(Y(a.price))+.5;if(y<0||y>mH)continue;x.setLineDash([6,4]);x.strokeStyle='#e8a33d';x.beginPath();x.moveTo(0,y);x.lineTo(pw,y);x.stroke();x.setLineDash([]);
-  const t='\u{1F514} '+F(a.price)+'  ×';x.font='11px '+MONO;const tw=x.measureText(t).width+10;x.fillStyle='#e8a33d';x.fillRect(pw-tw-6,y-9,tw,18);x.fillStyle='#1a1405';x.fillText(t,pw-tw-1,y+.5);a._box=[pw-tw-6,y-9,tw,18]}
+  const t=F(a.price)+'  ×';x.font='11px '+MONO;const IW=14,tw=x.measureText(t).width+10+IW+4,bx=pw-tw-1;x.fillStyle='#e8a33d';x.fillRect(pw-tw-6,y-9,tw,18);
+  if(typeof Path2D!=='undefined'&&typeof Icon!=='undefined'){x.save();x.translate(bx,y-IW/2);x.scale(IW/24,IW/24);x.strokeStyle='#1a1405';x.lineWidth=2.2;x.lineCap='round';x.lineJoin='round';Icon.d('bell').forEach(d=>x.stroke(new Path2D(d)));x.restore()}
+  x.fillStyle='#1a1405';x.fillText(t,bx+IW+4,y+.5);a._box=[pw-tw-6,y-9,tw,18]}
  // harga terakhir
  const ly=Y(last.c),lu=last.c>=last.o;
  if(ly>0&&ly<mH){x.setLineDash([4,3]);x.strokeStyle=lu?col.up:col.dn;x.beginPath();x.moveTo(0,Math.round(ly)+.5);x.lineTo(pw,Math.round(ly)+.5);x.stroke();x.setLineDash([])}

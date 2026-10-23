@@ -136,5 +136,5 @@
  .kl-n summary{min-height:44px}
 }
 /* penanda bahwa judul berita bisa dibuka (detail ringkasan) */
-.kl-nh::before{content:"\25B8";display:inline-block;width:14px;color:var(--mute)}
-.kl-n[open] .kl-nh::before{content:"\25BE"}
+.kl-nh::before{content:"";display:inline-block;width:14px;height:14px;vertical-align:-3px;background:var(--mute);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E") center/12px no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E") center/12px no-repeat;transition:transform .15s}
+.kl-n[open] .kl-nh::before{transform:rotate(90deg)}

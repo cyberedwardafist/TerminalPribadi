@@ -105,3 +105,6 @@ select.ct-b{appearance:none;padding-right:9px;color-scheme:dark light}
 .ct-cc::-webkit-color-swatch-wrapper{padding:0}.ct-cc::-webkit-color-swatch{border:0;border-radius:50%}
 .ct-fly .ct-r kbd,.ct-r em kbd,kbd.ct-k{margin-left:auto;font:10px ui-monospace,Menlo,monospace;padding:1px 5px;border:1px solid var(--line);border-radius:4px;color:var(--mute)}
 .ct-r em{margin-left:auto}
+
+.ct-rt:not(:empty)::before{content:"";display:inline-block;box-sizing:border-box;width:6px;height:6px;margin-right:5px;border-radius:50%;border:1.5px solid currentColor;vertical-align:1px}
+.ct-rt[data-c=on]::before{background:currentColor}
