@@ -299,7 +299,7 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:1020,h:720,flush:1,
    const parts=ui.grp==='all'?TK.map(k=>({k,n:TY[k].n,c:TY[k].c,v:V.filter(h=>h.ty===k).reduce((a,h)=>a+h.val,0)})).filter(p=>p.v>0):g.Vs.map(h=>({k:h.key,n:h.sym,c:colOf(h.sym),v:h.val})).filter(p=>p.v>0);
    const tot=parts.reduce((a,p)=>a+p.v,0),top=[...g.Vs].sort((a,b)=>b.val-a.val).slice(0,6);
    const comp=`<section class="as-card as-comp"><h3 class="as-h3">Komposisi</h3>${tot>0?`<div class="as-cmp">${donut(parts,tot,g.Vs.length,'aset')}<ul class="as-lg">${parts.slice(0,8).map(p=>`<li><i style="background:${p.c}"></i><span>${esc(p.n)}</span><b>${nfp.format(p.v/tot*100)}%</b></li>`).join('')}</ul></div>`:'<p class="as-mt">Belum ada aset yang dipegang di kelompok ini.</p>'}</section>`;
-   const tops=`<section class="as-card"><h3 class="as-h3">Aset terbesar</h3>${top.length?`<div class="as-tops">${top.map(h=>`<button type="button" class="as-trw" data-open="${esc(h.key)}">${nm(h)}<span class="as-tn"><b>${esc(h.sym)}</b><small>${qt(h.ty,h.u)}</small></span><span class="as-tv"><b>${rp(h.val)}</b><small class="${cl(Math.round(h.pl))}">${pct(h.plp)}</small></span></button>`).join('')}</div>`:'<p class="as-mt">Belum ada aset yang dipegang di kelompok ini.</p>'}</section>`;
+   const tops=`<section class="as-card"><h3 class="as-h3">Aset terbesar</h3>${top.length?`<div class="as-tops">${top.map(h=>`<button type="button" class="as-trw" data-open="${esc(h.key)}">${nm(h)}<span class="as-tn"><b>${esc(h.sym)}</b><small>${qt(h.ty,h.u)} · avg ${rp(h.avg)}</small></span><span class="as-tv"><b>${rp(h.val)}</b><small class="${cl(Math.round(h.pl))}">${pct(h.plp)}</small></span></button>`).join('')}</div>`:'<p class="as-mt">Belum ada aset yang dipegang di kelompok ini.</p>'}</section>`;
    let rows='';
    if(ui.grp==='all'&&ks.length>2){
     const R=TK.filter(k=>tx.some(t=>t.ty===k)).map(k=>{const s=stat(k);return{k,v:s.val,c:s.cost,u:s.un,r:s.real,h:s.hasil}}),mxa=Math.max(1,...R.map(r=>Math.abs(r.h))),all=stat('all');
@@ -322,7 +322,7 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:1020,h:720,flush:1,
      <span role="cell" class="n x">${qt(h.ty,h.u)}</span>
      <span role="cell" class="n x">${rp(h.avg)}${h.uavg?`<small class="as-pc">${usd(h.uavg)}</small>`:''}</span>
      <span role="cell" class="n x">${rp(h.cp)}<small class="as-pc as-src${h.src==='modal'?' wn':''}">${srcTxt(h)}</small></span>
-     <span role="cell" class="n"><b>${rp(h.val)}</b><small class="as-nr2 ${cl(Math.round(h.pl))}">${rp(h.pl,1)} (${pct(h.plp)})</small></span>
+     <span role="cell" class="n"><b>${rp(h.val)}</b><small class="as-pc">modal ${rp(h.cost)}</small><small class="as-nr2 ${cl(Math.round(h.pl))}">${rp(h.pl,1)} (${pct(h.plp)})</small></span>
      <span role="cell" class="n x"><b class="${cl(Math.round(h.pl))}">${rp(h.pl,1)}</b><small class="as-pc ${cl(Math.round(h.pl))}">${pct(h.plp)}</small></span>
      <span role="cell" class="as-ac"><button type="button" class="nb" data-a="more" data-k="${esc(h.key)}" aria-label="Beli lagi ${esc(h.sym)}">Beli</button><button type="button" class="nb" data-a="sell" data-k="${esc(h.key)}" aria-label="Jual ${esc(h.sym)}">Jual</button><button type="button" class="nb" data-a="price" data-k="${esc(h.key)}" aria-label="Update harga ${esc(h.sym)}">Harga</button></span>
     </div>`).join('')}
@@ -357,7 +357,7 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:1020,h:720,flush:1,
    const real=sub.reduce((a,t)=>t.k==='s'?a+((L.per[t.id]||{}).pl||0):a,0),ns=sub.filter(t=>t.k==='s'&&!L.bad.includes(t.id)).length,bought=sub.reduce((a,t)=>t.k==='b'?a+t.q*t.p:a,0);
    const un=h?h.pl:0,hasil=un+real,P=pts(sub);
    const prc=h?`<div class="as-pr"><span>Harga sekarang</span><b>${rp(h.cp)}</b><small class="${h.src==='modal'?'wn':''}">${h.fx?usd(h.usd)+' × kurs · ':''}${srcTxt(h)}</small></div>`:'';
-   const kp=h?`<section class="as-kp">${kpi('Nilai sekarang',rp(h.val),`${qt(ty,h.u,1)}`)}${kpi('Modal',rp(h.cost),'rata-rata '+rp(h.avg)+(h.uavg?' · '+usd(h.uavg):''))}${kpi('Belum terealisasi',rp(un,1),pct(h.plp),cl(Math.round(un)))}${kpi('Terealisasi',rp(real,1),ns?`dari ${ns} penjualan`:'belum ada penjualan',cl(Math.round(real)))}</section>`
+   const kp=h?`<section class="as-kp as-kp6">${kpi('Jumlah dimiliki',qt(ty,h.u,1),T.hint)}${kpi('Harga rata-rata',rp(h.avg),(h.uavg?usd(h.uavg)+' · ':'')+'per '+T.b)}${kpi('Total modal',rp(h.cost),'dari '+sub.filter(t=>t.k==='b').length+' pembelian')}${kpi('Nilai sekarang',rp(h.val),rp(h.cp)+' per '+T.b)}${kpi('Belum terealisasi',rp(un,1),pct(h.plp),cl(Math.round(un)))}${kpi('Terealisasi',rp(real,1),ns?`dari ${ns} penjualan`:'belum ada penjualan',cl(Math.round(real)))}</section>`
     :`<div class="as-so"><b>Sudah terjual semua</b><span>Total hasil dari aset ini ${rp(real,1)} dari ${ns} penjualan.</span><button type="button" class="btn pri" data-a="more" data-k="${esc(key)}">Beli lagi</button></div>`;
    return`<div class="as-pg"><header class="as-ah">${nm({sym})}<div class="as-an"><h2>${esc(sym)}</h2><span><i class="as-dot" style="background:${T.c}"></i>${T.n}${h?' · '+qt(ty,h.u):''}</span></div>${prc}
     <div class="as-aa">${h?`<button type="button" class="btn pri" data-a="more" data-k="${esc(key)}">Beli lagi</button><button type="button" class="btn" data-a="sell" data-k="${esc(key)}">Jual</button><button type="button" class="btn" data-a="price" data-k="${esc(key)}">Update harga</button>`:''}${T.mk?`<button type="button" class="btn" data-a="chart" data-s="${esc(msym(ty,sym))}">Buka Chart</button>`:''}</div></header>
@@ -471,7 +471,7 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:1020,h:720,flush:1,
      <div class="as-f"><label class="as-fl" for="as-d">${sell?'Tanggal jual':'Tanggal beli'}</label><input class="as-in" id="as-d" type="date" name="d" value="${e?e.d:today()}"></div>
      <div class="as-f"><label class="as-fl" for="as-n">Catatan (opsional)</label><input class="as-in" id="as-n" name="n" value="${e?esc(e.n):''}" maxlength="300" autocomplete="off"></div>
     </div>
-    <div class="as-pv" aria-live="polite"></div><small class="as-er" role="alert"></small>
+    <div class="as-pv" aria-live="polite"></div><div class="as-pos" data-pos></div><small class="as-er" role="alert"></small>
     <footer class="as-fb"><button type="button" class="btn" data-a="x">Batal</button><button type="submit" class="btn pri">${e?'Simpan perubahan':sell?'Catat penjualan':'Simpan'}</button></footer></form>`);
    const f=fm.elements,er=$('.as-er',fm),pv=$('.as-pv',fm);
    const curH=()=>sell?(hsel.find(h=>h.key===f.key.value)||h0):null;
@@ -505,6 +505,14 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:1020,h:720,flush:1,
     const base=qv>0?qv*u[2]:0,pIdr=pvv>0&&(!usdc||fxv>0)?ptoIdr(pvv,uk):0,sym=symNow();
     const mp=sym?mq(ty,sym):0,mkc=T.usd?'USD':'IDR';
     $('[data-mk]',fm).innerHTML=mp>0?`Harga pasar ${mkc==='USD'?usd(mp):rp(mp)} <button type="button" class="nb" data-a="usemk">Pakai</button>`:'';
+    // posisi otomatis setelah transaksi ini: jumlah, harga rata-rata, modal
+    const pos=$('[data-pos]',fm),sy=symNow().toLowerCase(),hl=(e?ledger(tx.filter(x=>x.id!==e.id)).hold:L.hold).find(h=>h.key===ty+'|'+sy)||null;
+    if(sy&&base>0&&pIdr>0&&!sell){
+     const nu=r8((hl?hl.u:0)+base),nc=(hl?hl.cost:0)+base*pIdr,pm=u[3],ua=usdc&&(!hl||hl.uavg)?((hl?hl.uc:0)+base*pvv/pm)/((hl?hl.uq:0)+base):null,avgU=(nc/nu)*pm;
+     pos.innerHTML=`<h4>${hl?'Posisi setelah beli':'Posisi aset'}</h4><div class="as-pg3"><div><span>Jumlah</span><b>${qt(ty,nu,1)}</b>${hl?`<small>sekarang ${qt(ty,hl.u)}</small>`:''}</div><div><span>Harga rata-rata</span><b>${rp(avgU)}</b><small>${ua?usd(ua*pm)+' · ':''}per ${pm===1?T.b:u[1].toLowerCase()}${hl?` · sekarang ${rp(hl.avg*pm)}`:''}</small></div><div><span>Total modal</span><b>${rp(nc)}</b>${hl?`<small>sekarang ${rp(hl.cost)}</small>`:''}</div></div>`}
+    else if(sell&&base>0&&base<=curH().u+EPS){const h=curH(),ru=r8(h.u-base),pm=u[3];
+     pos.innerHTML=`<h4>Sisa posisi</h4><div class="as-pg3"><div><span>Jumlah</span><b>${ru>EPS?qt(ty,ru,1):'habis terjual'}</b></div><div><span>Harga rata-rata</span><b>${rp(h.avg*pm)}</b><small>tetap, per ${pm===1?T.b:u[1].toLowerCase()}</small></div><div><span>Modal tersisa</span><b>${rp(ru>EPS?h.cost*ru/h.u:0)}</b></div></div>`}
+    else pos.innerHTML='';
     if(sell){const h=curH();
      $('[data-hv]',fm).innerHTML=`Dimiliki <b>${qt(h.ty,h.u,1)}</b> · harga rata-rata <b>${rp(h.avg)}</b> · modal <b>${rp(h.cost)}</b>`;
      if(base>0&&base>h.u+EPS){pv.innerHTML=`<span class="dn">Melebihi yang dimiliki (${qt(h.ty,h.u)})</span>`;return}

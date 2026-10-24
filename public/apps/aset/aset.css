@@ -266,3 +266,15 @@
  .as-ex{grid-template-columns:minmax(0,1fr)}
  .as-msg{display:none}
 }
+
+/* posisi otomatis (jumlah, harga rata-rata, modal) */
+.as-pos:empty{display:none}
+.as-pos{padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--acc) 8%,var(--win2))}
+.as-pos h4{margin:0 0 8px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--mute)}
+.as-pg3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.as-pg3>div{display:flex;flex-direction:column;min-width:0}
+.as-pg3 span,.as-pg3 small{font-size:12px;color:var(--mute)}
+.as-pg3 b{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.as-kp6{grid-template-columns:repeat(3,minmax(0,1fr))}
+@container as (max-width:720px){.as-pg3{grid-template-columns:minmax(0,1fr)}}
+@container as (max-width:520px){.as-kp6{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
