@@ -22,7 +22,7 @@ fake.copy_rates_from_pos, fake.copy_rates_from = rates_pos, rates_from
 sys.modules["MetaTrader5"] = fake
 
 import os
-os.environ["HEADMAPS_SYMBOLS"] = "XAUUSD,EURUSD,FOO"; os.environ["HEADMAPS_PORT"] = "18765"; os.environ["HEADMAPS_POLL_MS"] = "50"
+os.environ["HEADMAPS_SYMBOLS"] = "XAUUSD,EURUSD,FOO"; os.environ["HEADMAPS_PORT"] = "18765"; os.environ["HEADMAPS_POLL_MS"] = "50"; os.environ["HEADMAPS_ORIGINS_URL"] = ""; os.environ["HEADMAPS_ORIGINS"] = "https://domain-baru.example"
 import mt5_bridge as b
 from websockets.asyncio.client import connect
 
@@ -33,6 +33,8 @@ async def run():
     await asyncio.sleep(.4)
     async with connect("ws://127.0.0.1:18765") as ws:
         hello = json.loads(await ws.recv()); assert hello["t"] == "hello" and hello["symbols"] == ["XAUUSD", "EURUSD"], hello
+        assert hello["ver"] == b.BRIDGE_VERSION and isinstance(b.BRIDGE_VERSION, int), hello   # app membandingkan ini dengan mt5-version.json
+        assert b.autostart_install() is False and b.FROZEN is False   # jalan otomatis hanya untuk .exe di Windows
         tk = json.loads(await asyncio.wait_for(ws.recv(), 2))
         assert tk["s"] == "XAUUSD" and tk["b"] == 2650.10 and tk["a"] == 2650.35 and tk["d"] == 2, tk
         assert tk["hi"] == 2660.0 and tk["lo"] == 2590.0 and tk["r"]["1d"] == 2640.0 and tk["r"]["1h"] > 0, tk
@@ -52,6 +54,20 @@ async def run():
         tk2 = json.loads(await asyncio.wait_for(ws.recv(), 2))
         while tk2["t"] != "tick" or tk2["b"] != 2651.0:
             tk2 = json.loads(await asyncio.wait_for(ws.recv(), 2))
+    # ---- penjagaan Origin: halaman web asing ditolak, app resmi dan domain tambahan boleh, klien tanpa Origin (non-peramban) boleh ----
+    from websockets.exceptions import InvalidStatus
+    try:
+        async with connect("ws://127.0.0.1:18765", additional_headers={"Origin": "https://situs-jahat.example"}) as bad:
+            raise AssertionError("origin asing seharusnya ditolak")
+    except InvalidStatus as e:
+        assert e.response.status_code == 403, e.response.status_code
+    for ok in ("https://terminalpribadi.vercel.app", "http://localhost:3000", "https://domain-baru.example", "HTTPS://TerminalPribadi.vercel.app/"):
+        async with connect("ws://127.0.0.1:18765", additional_headers={"Origin": ok}) as good:
+            assert json.loads(await good.recv())["t"] == "hello", ok
+    # daftar dari app: origin baru dari server ikut diizinkan; "*" dari server diabaikan; entri aneh dibuang
+    b.REMOTE = [o for o in ["https://nanti-beli-domain.id", "*", "javascript:alert(1)"] if b.valid_origin(o)]
+    assert b.REMOTE == ["https://nanti-beli-domain.id"], b.REMOTE
+    assert b.origin_ok("https://nanti-beli-domain.id") and not b.origin_ok("https://lain.id") and b.origin_ok(None)
     task.cancel()
     print("OK bridge")
 asyncio.run(run())

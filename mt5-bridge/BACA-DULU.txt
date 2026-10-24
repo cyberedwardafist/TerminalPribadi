@@ -1,0 +1,15 @@
+HEADMAPS MT5 BRIDGE (untuk pengembang)
+======================================
+Folder ini adalah SUMBER bridge. Pengguna tidak mendapat folder ini; mereka mengunduh satu file HeadmapsMT5Bridge.exe dari app
+(public/downloads/HeadmapsMT5Bridge.exe). Bridge hanya mengirim harga dan candle MT5 lewat WebSocket lokal; tidak ada data keluar.
+
+Membuat / memperbarui .exe (di Windows):
+1. Ubah mt5_bridge.py bila perlu. Kalau perilakunya berubah, NAIKKAN BRIDGE_VERSION (bilangan bulat) di bagian atas file.
+2. Klik dua kali build-exe.bat. Ia membangun .exe, menyalinnya ke ..\public\downloads, dan menulis versi + SHA-256 ke ..\public\mt5-version.json.
+3. Tes: buka MT5 (login), jalankan .exe, buka app, status MT5 harus "terhubung".
+4. Commit public/downloads/HeadmapsMT5Bridge.exe dan public/mt5-version.json, lalu deploy.
+Pengguna dengan versi lama otomatis melihat pesan "unduh ulang" di app.
+
+Jalan sebagai skrip (tanpa .exe): start.bat (butuh Python). Argumen .exe: --autostart, --no-autostart, --version.
+Domain app: bawaan ada di mt5_bridge.py (APP_URL) dan daftar resmi di ..\public\mt5-origins.json (diambil bridge tiap jam).
+Origin tambahan lokal (opsional): origins.txt di samping bridge/.exe (lihat origins.txt.example).

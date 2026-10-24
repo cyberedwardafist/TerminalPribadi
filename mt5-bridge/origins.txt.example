@@ -1,3 +1,3 @@
-# Salin menjadi origins.txt lalu ganti dengan alamat app kamu (satu baris, dipisah koma).
-# Hanya halaman dari alamat ini yang boleh membaca harga dari bridge.
-https://NAMA-PROYEKMU.vercel.app,http://localhost:3000
+# OPSIONAL. Origin TAMBAHAN yang boleh membaca bridge (satu baris, dipisah koma). Alamat app resmi sudah otomatis diizinkan.
+# Salin file ini menjadi origins.txt bila perlu.
+https://domain-lain-milikmu.example

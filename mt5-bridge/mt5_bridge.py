@@ -13,8 +13,11 @@ Pengaturan lewat environment variable (semua opsional):
                      Nama broker berimbuhan (XAUUSDm, XAUUSD.a, XAUUSD#) dikenali otomatis; ke browser selalu dikirim nama baku (XAUUSD).
   HEADMAPS_HOST      alamat bind, bawaan 127.0.0.1 (hanya komputer ini). Isi 0.0.0.0 agar perangkat lain di LAN bisa memakai.
   HEADMAPS_PORT      bawaan 8765
-  HEADMAPS_ORIGINS   daftar Origin halaman yang boleh tersambung, dipisah koma (mis. https://appku.vercel.app,http://localhost:3000). Kosong = semua.
-                     Alternatif tanpa env: buat berkas origins.txt di folder ini berisi alamat yang sama (satu baris, dipisah koma). SANGAT DISARANKAN diisi.
+  HEADMAPS_APP_URL   alamat app (bawaan https://terminalpribadi.vercel.app). Hanya halaman dari alamat yang diizinkan yang boleh membaca bridge.
+  HEADMAPS_ORIGINS   origin TAMBAHAN yang diizinkan, dipisah koma (atau berkas origins.txt di folder ini). "*" = semua halaman (tidak disarankan).
+  HEADMAPS_ORIGINS_URL  daftar origin resmi yang diambil bridge dari app (bawaan <APP_URL>/mt5-origins.json, disegarkan tiap jam, disimpan di
+                     origins.cache.json). Dengan ini, kalau nanti app pindah ke domain baru, bridge lama ikut tahu tanpa diunduh ulang. Kosongkan untuk mematikan.
+  Versi .exe: argumen --autostart / --no-autostart mengaktifkan / mematikan jalan otomatis saat Windows menyala; --version menampilkan nomor versi.
   HEADMAPS_POLL_MS   jeda baca tick, bawaan 200
   MT5_PATH           lokasi terminal64.exe bila MT5 tidak terdeteksi otomatis
 
@@ -31,8 +34,11 @@ Permintaan dari klien -> jawaban (riwayat candle untuk heatmap):
 import asyncio
 import json
 import os
+import re
+import subprocess
 import sys
 import time
+from http import HTTPStatus
 
 import MetaTrader5 as mt5
 from websockets.asyncio.server import serve
@@ -42,21 +48,96 @@ DEFAULT = "XAUUSD,XAGUSD,EURUSD,GBPUSD,USDJPY,AUDUSD,USDCAD,USDCHF,NZDUSD,EURJPY
 HOST = os.environ.get("HEADMAPS_HOST", "127.0.0.1")
 PORT = int(os.environ.get("HEADMAPS_PORT", "8765"))
 WANT = [s.strip().upper() for s in os.environ.get("HEADMAPS_SYMBOLS", DEFAULT).split(",") if s.strip()]
-def _origins():
-    """Daftar Origin yang boleh tersambung: env HEADMAPS_ORIGINS, atau berkas origins.txt di folder ini (satu baris, dipisah koma).
-    Kosong = semua halaman web di peramban ini bisa membaca harga dari bridge (tetap hanya harga, tapi sebaiknya dibatasi)."""
+APP_URL = os.environ.get("HEADMAPS_APP_URL", "https://terminalpribadi.vercel.app").strip().rstrip("/")
+ORIGINS_URL = os.environ.get("HEADMAPS_ORIGINS_URL", APP_URL + "/mt5-origins.json").strip()
+BRIDGE_VERSION = 1   # NAIKKAN setiap kali bridge berubah, lalu bangun ulang .exe dan jalankan "npm run release:bridge" (app memberi tahu pengguna versi lama)
+FROZEN = bool(getattr(sys, "frozen", False))
+_HERE = os.path.dirname(sys.executable) if FROZEN else os.path.dirname(os.path.abspath(__file__))   # .exe: folder tempat file berada
+CACHE_FILE = os.path.join(_HERE, "origins.cache.json")
+BUILTIN = [APP_URL, "http://localhost:3000", "http://127.0.0.1:3000"]
+
+
+def norm_origin(o):
+    return str(o or "").strip().rstrip("/").lower()
+
+
+def valid_origin(o):
+    return bool(re.fullmatch(r"https?://[a-z0-9.\-\[\]:]{1,100}", o))
+
+
+def _local_origins():
+    """Origin tambahan dari env HEADMAPS_ORIGINS atau origins.txt (satu baris / beberapa baris, dipisah koma atau spasi; # = komentar)."""
     raw = os.environ.get("HEADMAPS_ORIGINS", "")
     if not raw.strip():
         try:
-            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "origins.txt"), encoding="utf-8") as f:
+            with open(os.path.join(_HERE, "origins.txt"), encoding="utf-8") as f:
                 raw = " ".join(l.split("#", 1)[0] for l in f)
         except OSError:
             raw = ""
-    out = [o.strip().rstrip("/") for o in raw.replace(" ", ",").split(",") if o.strip()]
-    return out or None
+    return [norm_origin(o) for o in raw.replace(",", " ").split() if o.strip()]
 
 
-ORIGINS = _origins()
+def _cached_origins():
+    try:
+        with open(CACHE_FILE, encoding="utf-8") as f:
+            return [norm_origin(o) for o in json.load(f).get("origins", []) if valid_origin(norm_origin(o))][:50]
+    except Exception:
+        return []
+
+
+REMOTE = _cached_origins()   # daftar dari app (cache dulu; disegarkan di latar belakang)
+
+
+def allowed_origins():
+    return {norm_origin(o) for o in BUILTIN} | set(_local_origins()) | set(REMOTE)
+
+
+def origin_ok(origin):
+    """Peramban selalu mengirim Origin; klien non-peramban (tanpa Origin) boleh, karena sudah berada di komputer ini."""
+    if origin is None:
+        return True
+    al = allowed_origins()
+    return "*" in al or norm_origin(origin) in al
+
+
+def fetch_origins():
+    """Ambil daftar origin dari app (HTTPS saja). Hanya origin http(s) yang valid yang diterima; '*' dari sumber jarak jauh diabaikan."""
+    if not ORIGINS_URL.lower().startswith("https://"):
+        return None
+    import urllib.request
+    req = urllib.request.Request(ORIGINS_URL, headers={"User-Agent": "headmaps-mt5-bridge"})
+    with urllib.request.urlopen(req, timeout=6) as r:
+        data = json.loads(r.read(20000).decode("utf-8"))
+    out = [norm_origin(o) for o in data.get("origins", []) if isinstance(o, str)]
+    return [o for o in out if valid_origin(o)][:50]
+
+
+async def sync_origins():
+    global REMOTE
+    while True:
+        try:
+            got = await asyncio.to_thread(fetch_origins)
+            if got:
+                if got != REMOTE:
+                    log("Daftar origin dari app diperbarui:", ", ".join(got))
+                REMOTE = got
+                try:
+                    with open(CACHE_FILE, "w", encoding="utf-8") as f:
+                        json.dump({"origins": got}, f)
+                except OSError:
+                    pass
+        except Exception as e:
+            log("Tidak bisa mengambil daftar origin dari app (pakai cadangan):", type(e).__name__)
+        await asyncio.sleep(3600)
+
+
+async def guard(connection, request):
+    """Tolak sambungan dari halaman web yang origin-nya tidak diizinkan (sebelum handshake WebSocket selesai)."""
+    o = request.headers.get("Origin")
+    if origin_ok(o):
+        return None
+    log("Sambungan ditolak, origin tidak diizinkan:", o)
+    return connection.respond(HTTPStatus.FORBIDDEN, "Origin tidak diizinkan\n")
 POLL = max(0.05, int(os.environ.get("HEADMAPS_POLL_MS", "200")) / 1000)
 REF_EVERY = 20  # detik
 TF = {"1m": "TIMEFRAME_M1", "5m": "TIMEFRAME_M5", "15m": "TIMEFRAME_M15", "1h": "TIMEFRAME_H1", "4h": "TIMEFRAME_H4"}
@@ -205,7 +286,7 @@ async def handler(ws):
     CLIENTS.add(ws)
     log("Klien tersambung (%d)" % len(CLIENTS))
     try:
-        await ws.send(json.dumps({"t": "hello", "v": 1, "symbols": list(MAP), "map": MAP, "off": server_offset() * 1000}))
+        await ws.send(json.dumps({"t": "hello", "v": 1, "ver": BRIDGE_VERSION, "symbols": list(MAP), "map": MAP, "off": server_offset() * 1000}))
         for m in list(LAST.values()):
             await ws.send(json.dumps(m))
         async for raw in ws:
@@ -229,16 +310,65 @@ async def main():
     if not MAP:
         log("Tidak ada simbol yang cocok. Tambahkan simbol ke Market Watch MT5 atau atur HEADMAPS_SYMBOLS.")
         sys.exit(1)
-    if ORIGINS is None:
-        log("PERINGATAN: HEADMAPS_ORIGINS / origins.txt belum diisi, halaman web MANA PUN di peramban ini bisa membaca harga dari bridge.")
-        log("             Isi origins.txt dengan alamat app kamu, mis. https://appku.vercel.app,http://localhost:3000")
     log("Simbol:", ", ".join("%s%s" % (c, "" if c == b else " (%s)" % b) for c, b in MAP.items()))
-    async with serve(handler, HOST, PORT, origins=ORIGINS):
+    async with serve(handler, HOST, PORT, process_request=guard):
         log("Headmaps bridge aktif di ws://%s:%d" % (HOST, PORT))
-        await asyncio.gather(poll(), beat())
+        log("Halaman yang boleh membaca bridge:", ", ".join(sorted(allowed_origins())))
+        tasks = [poll(), beat()] + ([sync_origins()] if ORIGINS_URL else [])
+        await asyncio.gather(*tasks)
+
+
+# ---------- jalan otomatis saat Windows menyala (hanya versi .exe) ----------
+def _lnk():
+    return os.path.join(os.environ.get("APPDATA", ""), "Microsoft", "Windows", "Start Menu", "Programs", "Startup", "Headmaps MT5 Bridge.lnk")
+
+
+def autostart_on():
+    return sys.platform == "win32" and os.path.exists(_lnk())
+
+
+def autostart_install():
+    if sys.platform != "win32" or not FROZEN:
+        return False
+    ps = "$s=(New-Object -ComObject WScript.Shell).CreateShortcut($env:HM_LNK); $s.TargetPath=$env:HM_TARGET; $s.WorkingDirectory=(Split-Path $env:HM_TARGET); $s.WindowStyle=7; $s.Save()"
+    env = dict(os.environ, HM_LNK=_lnk(), HM_TARGET=sys.executable)
+    try:
+        return subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps], env=env, capture_output=True, timeout=30).returncode == 0
+    except Exception:
+        return False
+
+
+def autostart_remove():
+    try:
+        os.remove(_lnk())
+        return True
+    except OSError:
+        return False
+
+
+def first_run_prompt():
+    """Sekali saja (penanda .autostart-asked di samping .exe): tawarkan jalan otomatis saat Windows menyala."""
+    mark = os.path.join(_HERE, ".autostart-asked")
+    if not FROZEN or sys.platform != "win32" or os.path.exists(mark) or autostart_on() or not sys.stdin or not sys.stdin.isatty():
+        return
+    try:
+        a = input("Jalankan bridge otomatis setiap Windows menyala? [Y/n] ").strip().lower()
+        if a in ("", "y", "ya", "yes"):
+            print("Jalan otomatis diaktifkan." if autostart_install() else "Gagal mengaktifkan jalan otomatis. Coba jalankan dengan --autostart.")
+        open(mark, "w").close()
+    except (EOFError, OSError):
+        pass
 
 
 if __name__ == "__main__":
+    if "--version" in sys.argv:
+        print(BRIDGE_VERSION)
+        sys.exit(0)
+    if "--autostart" in sys.argv or "--no-autostart" in sys.argv:
+        ok = autostart_install() if "--autostart" in sys.argv else autostart_remove()
+        print("Berhasil." if ok else "Gagal (jalan otomatis hanya untuk versi .exe di Windows).")
+        sys.exit(0 if ok else 1)
+    first_run_prompt()
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
