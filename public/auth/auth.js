@@ -29,13 +29,13 @@ const Auth=(()=>{
  const live=()=>true;   // selalu server; dipertahankan agar pemanggil lama tetap jalan
  async function remote(path,body){
   let r;try{r=await apiFetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})}
-  catch(e){throw new Error(e.name==='AbortError'?'Timeout, server tidak menjawab':'Server tidak terjangkau (cek Base URL atau CORS)')}
+  catch(e){throw new Error(e.name==='AbortError'?'Server terlalu lama menjawab. Coba lagi':'Server tidak terjangkau. Periksa koneksi internet')}
   let j={};try{j=await r.json()}catch(e){}
   if(!r.ok)throw Object.assign(new Error(j.message||apiHttpMsg(r.status)),{unverified:!!j.unverified,email:j.email});return j}
 
  const session=()=>rd(SK)||rd(SK,true);
  const setSession=(user,remember,token)=>{rm(SK);wr(SK,{user,token:token||null,mode:'live',at:Date.now()},!remember)};
- const logout=()=>{rm(SK);try{localStorage.removeItem('tc.ui')}catch(e){}};
+ const logout=()=>{rm(SK);try{localStorage.removeItem('tc.ui')}catch(e){}try{if(typeof CFG!=='undefined'&&CFG.api&&CFG.api.key){CFG.api.key='';cfgSave()}}catch(e){}};   // API key manual ikut dihapus (komputer bersama)
 
  // batas percobaan login: 5 gagal -> kunci 30 detik
  const lock=()=>{const f=rd(FK)||{n:0,until:0};return Math.max(0,Math.ceil((f.until-Date.now())/1000))};

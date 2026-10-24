@@ -32,7 +32,7 @@ test('fault: status HTTP dipetakan ke penyebab yang tepat', async () => {
   const E = env(), k = async (st, m, w = 'quotes') => (await E.Fault.explain(http(E, st, m), { what: w }));
   assert.equal((await k(502, 'Sumber data pasar sedang tidak bisa dihubungi')).kind, 'upstream');
   assert.deepEqual([...(await k(502)).st], ['ok', 'ok', 'ok', 'fail']);
-  assert.equal((await k(503, 'Database belum siap. Periksa pengaturan Supabase')).kind, 'db');
+  assert.equal((await k(503, 'Layanan data sedang tidak tersedia. Coba lagi sebentar')).kind, 'db');
   assert.equal((await k(401)).kind, 'auth');
   assert.equal((await k(404)).kind, 'nobackend');
   assert.equal((await k(429)).kind, 'rate');

@@ -28,7 +28,7 @@ const CACHE={};
 const ckey=(y,m)=>y+'-'+pad(m+1);
 async function fetchMonth(y,m){
  const k=ckey(y,m);if(CACHE[k])return CACHE[k];
- if(!apiOn())throw new Error('Alamat server belum diatur (Setting > API > Base URL)');
+ if(!apiOn())throw new Error('Layanan belum tersedia');
  let r,d;
  try{r=await apiFetch('/api/calendar?month='+y+'-'+pad(m+1))}
  catch(e){throw new Error(e.name==='AbortError'?'Timeout, server tidak menjawab':'Tidak terjangkau (cek URL, server, atau CORS)')}

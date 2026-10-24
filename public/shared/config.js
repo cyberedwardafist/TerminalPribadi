@@ -10,8 +10,11 @@ const applyTheme=()=>{const r=document.documentElement;CFG.theme==='auto'?r.remo
 applyTheme();
 
 // ---------- helper API (dipakai app lain saat backend siap) ----------
-const apiOn=()=>!!CFG.api.base||/^https?:$/.test(location.protocol);
-const apiUrl=p=>(CFG.api.base||location.origin).replace(/\/+$/,'')+p;
+// Base URL buatan sendiri hanya dipakai saat dibuka dari file:// atau localhost (pengembangan). Di domain publik diabaikan, supaya token login
+// tidak pernah terkirim ke server lain (mis. bila pengguna dibujuk menempelkan alamat milik orang lain).
+const baseCustom=()=>{const b=CFG.api.base;if(!b)return'';if(location.protocol==='file:'||/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname))return b;try{return new URL(b).origin===location.origin?b:''}catch(e){return''}};
+const apiOn=()=>!!baseCustom()||/^https?:$/.test(location.protocol);
+const apiUrl=p=>(baseCustom()||location.origin).replace(/\/+$/,'')+p;
 // token sesi hasil login (Auth.setSession) dipakai otomatis; API key manual hanya cadangan
 const sessToken=()=>{for(const st of[localStorage,sessionStorage]){try{const j=JSON.parse(st.getItem('tc.session')||'null');if(j&&j.token)return j.token}catch(e){}}return''};
 async function apiFetch(path,opt={}){
@@ -19,9 +22,9 @@ async function apiFetch(path,opt={}){
  const h={...(opt.headers||{})};const tk=sessToken()||CFG.api.key;if(tk&&!h.Authorization)h.Authorization='Bearer '+tk;
  try{return await fetch(apiUrl(path),{...o,headers:h,signal:c.signal})}finally{clearTimeout(t)}}
 // Pesan untuk status HTTP tanpa isi JSON dari backend. 404 di sini berarti alamat ini TIDAK menjalankan backend (server statis / Live Server / deploy tanpa folder api).
-const apiHttpMsg=st=>st===404?'Backend tidak ditemukan di alamat ini (HTTP 404). Jalankan lewat "npm run dev" (atau deploy Vercel yang menyertakan folder api),':'Server membalas HTTP '+st;
+const apiHttpMsg=st=>st===404?'Layanan tidak ditemukan. Muat ulang halaman lalu coba lagi':st>=500?'Layanan sedang bermasalah. Coba lagi sebentar':'Permintaan belum berhasil ('+st+')';
 async function apiPing(){
- if(!apiOn())throw new Error('Alamat server belum diatur');
+ if(!apiOn())throw new Error('Layanan belum tersedia');
  const t0=performance.now();
  try{const r=await apiFetch('/api/health');if(!r.ok)throw new Error(apiHttpMsg(r.status));return Math.round(performance.now()-t0)}
- catch(e){if(e.name==='AbortError')throw new Error('Timeout, server tidak menjawab');if(e instanceof TypeError)throw new Error('Tidak terjangkau (cek URL, server, atau CORS)');throw e}}
+ catch(e){if(e.name==='AbortError')throw new Error('Server terlalu lama menjawab');if(e instanceof TypeError)throw new Error('Server tidak terjangkau. Periksa koneksi internet');throw e}}

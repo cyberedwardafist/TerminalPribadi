@@ -21,17 +21,17 @@ const ART={
  unknown:SV('<path d="M60 12l44 70H16z"/><path d="M60 38v20"/><circle class="f" cx="60" cy="68" r="2.6"/>')};
 const KIND={
  offline:{t:'Tidak ada koneksi internet',c:'Perangkat ini tidak tersambung ke internet, jadi data tidak bisa diambil. Penyebabnya ada di sisi koneksimu, bukan di server.',s:['Periksa Wi\u2011Fi atau data seluler','Coba buka situs lain untuk memastikan','Data dimuat ulang otomatis begitu tersambung lagi']},
- noserver:{t:'Server tidak dapat dihubungi',c:'Internet tersambung, tetapi server aplikasi tidak menjawab. Server sedang mati atau diperbaiki, atau alamat API di pengaturan salah.',s:['Tunggu beberapa saat lalu tekan Coba lagi','Periksa Setting > API (alamat server)','Jika dijalankan lokal, pastikan "npm run dev" masih berjalan']},
+ noserver:{t:'Server tidak dapat dihubungi',c:'Internet tersambung, tetapi server aplikasi tidak menjawab. Server sedang diperbaiki atau sibuk.',s:['Tunggu beberapa saat lalu tekan Coba lagi']},
  timeout:{t:'Server terlalu lama menjawab',c:'Server tidak membalas dalam batas waktu. Biasanya server sedang sibuk atau koneksimu sangat lambat.',s:['Coba lagi beberapa saat','Pindah ke jaringan yang lebih stabil']},
- server:{t:'Server mengalami galat',c:'Server tersambung tetapi gagal memproses permintaan (galat di sisi server, mis. database belum siap).',s:['Coba lagi beberapa saat','Jika terus terjadi, cek log server atau /api/health?deep=1']},
- provider:{t:'Sumber data pasar tidak menjawab',c:'Server aplikasi hidup, tetapi penyedia data harga (bursa atau layanan data) sedang gagal atau membatasi permintaan. Bukan masalah internetmu.',s:['Tunggu beberapa menit, data akan dicoba lagi otomatis','Jika berulang, periksa kunci API penyedia data di server']},
+ server:{t:'Server mengalami galat',c:'Server tersambung tetapi gagal memproses permintaan (gangguan di sisi layanan).',s:['Coba lagi beberapa saat']},
+ provider:{t:'Sumber data pasar tidak menjawab',c:'Server aplikasi hidup, tetapi penyedia data harga (bursa atau layanan data) sedang gagal atau membatasi permintaan. Bukan masalah internetmu.',s:['Tunggu beberapa menit, data akan dicoba lagi otomatis']},
  auth:{t:'Sesi login berakhir',c:'Server menolak permintaan karena sesi loginmu sudah tidak berlaku.',s:['Masuk lagi untuk melanjutkan']},
  limit:{t:'Terlalu banyak permintaan',c:'Server membatasi jumlah permintaan sementara waktu.',s:['Tunggu sekitar satu menit lalu coba lagi']},
- notfound:{t:'Backend tidak ditemukan',c:'Alamat ini tidak menjalankan backend aplikasi (HTTP 404).',s:['Jalankan lewat "npm run dev" atau deploy yang menyertakan folder api','Periksa Setting > API']},
- nolive:{t:'Alamat server belum diatur',c:'Aplikasi ini hanya menampilkan data nyata dari server. Halaman dibuka tanpa alamat server (mis. lewat file://), jadi tidak ada data yang bisa ditampilkan.',s:['Jalankan lewat npm run dev atau buka dari alamat deploy','Atau isi Base URL di Setting > API']},
+ notfound:{t:'Layanan tidak ditemukan',c:'Bagian layanan yang diminta tidak tersedia saat ini.',s:['Muat ulang halaman lalu coba lagi']},
+ nolive:{t:'Layanan belum tersedia',c:'Data hanya bisa ditampilkan saat tersambung ke server.',s:['Buka aplikasi dari alamat resminya']},
  nologin:{t:'Belum masuk ke akun',c:'Data nyata diambil dengan akunmu. Tidak ada sesi login yang aktif.',s:['Masuk dulu, lalu data akan dimuat']},
  empty:{t:'Tidak ada data',c:'Server menjawab dengan normal, tetapi belum ada data untuk bagian ini.',s:['Coba lagi nanti atau ubah filter']},
- unknown:{t:'Data gagal dimuat',c:'Terjadi masalah yang tidak dikenali saat mengambil data.',s:['Coba lagi','Jika berulang, buka Setting > API dan uji koneksi']}};
+ unknown:{t:'Data gagal dimuat',c:'Terjadi masalah yang tidak dikenali saat mengambil data.',s:['Coba lagi','Jika berulang, muat ulang halaman']}};
 function classify(e){
  if(!e)return'unknown';if(e.kind)return e.kind;
  if(typeof navigator!=='undefined'&&navigator.onLine===false)return'offline';

@@ -342,7 +342,7 @@ test('galat konfigurasi Supabase -> 503 jelas (bukan 500 generik) dan petunjuk d
   db.setFetch(async () => new Response(JSON.stringify({ message: 'Invalid API key' }), { status: 401 }));
   try {
     const r = await call('POST', '/api/auth/register', { name: 'Ani', username: 'ani.x', email: 'ani@mail.id', password: 'rahasia123' });
-    assert.equal(r.status, 503); assert.match(r.body.message, /Database belum siap/);
+    assert.equal(r.status, 503); assert.match(r.body.message, /Layanan data sedang tidak tersedia/);
     const h = await call('GET', '/api/health?deep=1', undefined, ADM);
     assert.equal(h.status, 503); assert.match(h.body.db_hint, /Key ditolak/);
   } finally { db.setFetch((...a) => fetch(...a)); }

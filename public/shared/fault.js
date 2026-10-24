@@ -41,7 +41,22 @@ const SRC={quotes:['Yahoo Finance atau Binance','Sumber data','src'],heatmap:['Y
 const NAME={quotes:'harga',heatmap:'data peta pasar',summary:'data ringkasan',candles:'data candle',news:'berita','news-detail':'isi berita'};
 const isLocal=()=>location.protocol==='file:'||/^(localhost|127\.|\[::1\]|192\.168\.|10\.)/.test(location.hostname);
 const A={setting:{label:'Buka Setting > API',run:'setting'},login:{label:'Masuk lagi',run:'login'}};
-const make=(kind,st,title,o)=>({kind,st,title,cause:o.cause||'',hint:o.hint||'',tech:o.tech||'',lab4:o.lab4||'Sumber data',ic4:o.ic4||'src',act:o.act||null,at:Date.now()});
+// Di domain publik pengguna tidak perlu tahu soal backend, database, atau alamat server: tampilkan kalimat awam, tanpa detail teknis.
+// Di localhost / file:// (pengembangan) penjelasan lengkap tetap muncul.
+const PUB={
+ nobackend:['Layanan tidak bisa dijangkau','Layanan sedang tidak bisa dihubungi. Biasanya hanya sementara.'],
+ down:['Layanan tidak bisa dijangkau','Layanan sedang tidak bisa dihubungi. Biasanya hanya sementara.'],
+ mode:['Layanan tidak bisa dijangkau','Layanan sedang tidak bisa dihubungi. Biasanya hanya sementara.'],
+ db:['Layanan sedang bermasalah','Terjadi gangguan di sisi layanan, bukan di perangkatmu.'],
+ server:['Layanan sedang bermasalah','Terjadi gangguan di sisi layanan, bukan di perangkatmu.'],
+ busy:['Layanan sedang sibuk','Layanan sedang tidak bisa memproses permintaan.'],
+ slow:['Layanan menjawab lambat','Layanan menjawab lebih lambat dari biasanya.'],
+ empty:['Data belum tersedia','Belum ada data yang bisa ditampilkan saat ini.'],
+ forbidden:['Akses ditolak','Akunmu tidak bisa membuka data ini.'],
+ missing:['Data tidak tersedia','Data ini belum tersedia.'],
+ unknown:['Data gagal dimuat','Terjadi masalah saat mengambil data.']};
+const make=(kind,st,title,o)=>{const pub=!isLocal()&&PUB[kind];
+ return{kind,st,title:pub?pub[0]:title,cause:pub?pub[1]:(o.cause||''),hint:pub?'Coba lagi beberapa saat.':(o.hint||''),tech:pub?'':(o.tech||''),lab4:o.lab4||'Sumber data',ic4:o.ic4||'src',act:o.act===A.setting&&!isLocal()?null:(o.act||null),at:Date.now()}};
 const techOf=e=>{const p=(e.path||'').replace(/symbols=[^&]+/,'symbols=\u2026').replace(/cursor=\d+/,'cursor=\u2026').slice(0,80);
  if(e.kind==='timeout')return`GET ${p} \u2192 tidak ada jawaban dalam ${Math.round(e.ms/1000)} dtk`;
  if(e.kind==='net')return`GET ${p} \u2192 ${(e.orig&&e.orig.name)||'Error'}: ${(e.orig&&e.orig.message)||'gagal terhubung'}`;
@@ -60,7 +75,7 @@ function httpInfo(e,S,N,lab){
  if(s===404)return make('missing',['ok','ok','ok','warn'],'Data tidak tersedia di server',{...lab,cause:m,hint:'Sumber untuk data ini belum didukung server.'});
  if(s===429)return make('rate',['ok','ok','warn','idle'],'Terlalu banyak permintaan',{...lab,cause:'Server membatasi jumlah permintaan'+(e.retryAfter?'. Tunggu sekitar '+e.retryAfter+' detik.':'.'),hint:'Aplikasi mencoba lagi sendiri. Hindari membuka terlalu banyak jendela data sekaligus.'});
  if(s===502)return make('upstream',['ok','ok','ok','fail'],S[1]==='Sumber berita'?'Sumber berita tidak menjawab':'Sumber data pasar tidak menjawab',{...lab,cause:'Internet dan server kamu normal. Yang bermasalah penyedia data ('+S[0]+'): tidak bisa dihubungi atau menolak permintaan. Ini di luar aplikasi dan biasanya pulih sendiri.',hint:'Coba lagi dalam beberapa menit.'});
- if(s===503&&/database/i.test(m))return make('db',['ok','ok','ok','fail'],'Database belum siap',{...lab,lab4:'Database',ic4:'db',cause:'Server hidup, tetapi tidak bisa membaca database (Supabase): pengaturan salah, tabel belum dibuat, atau layanan sedang turun.',hint:'Buka /api/health?deep=1 di alamat server untuk rincian, atau jalankan migrasi database.'});
+ if(s===503&&/layanan data/i.test(m))return make('db',['ok','ok','ok','fail'],'Database belum siap',{...lab,lab4:'Database',ic4:'db',cause:'Server hidup, tetapi tidak bisa membaca database (Supabase): pengaturan salah, tabel belum dibuat, atau layanan sedang turun.',hint:'Buka /api/health?deep=1 di alamat server untuk rincian, atau jalankan migrasi database.'});
  if(s===503||s===504||s===408)return make('busy',['ok','ok','warn','idle'],s===503?'Server sedang tidak tersedia':'Server terlalu lama menjawab',{...lab,cause:'Server hidup di alamat ini, tetapi '+(s===503?'sedang tidak bisa melayani permintaan (kelebihan beban atau sedang restart).':'melewati batas waktu saat memproses permintaan.'),hint:'Coba lagi sebentar.'});
  if(s>=500)return make('server',['ok','ok','fail','idle'],'Server mengalami error internal',{...lab,cause:'Server hidup dan terjangkau, tetapi kodenya gagal memproses permintaan ini. Bukan masalah internet kamu.',hint:'Lihat log server untuk penyebab pastinya.'});
  return make('rejected',['ok','ok','warn','idle'],'Server menolak permintaan (HTTP '+s+')',{...lab,cause:m||'Permintaan tidak diterima server.',hint:'Coba lagi atau muat ulang halaman.'})}
