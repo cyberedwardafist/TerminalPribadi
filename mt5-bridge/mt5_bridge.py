@@ -50,7 +50,7 @@ PORT = int(os.environ.get("HEADMAPS_PORT", "8765"))
 WANT = [s.strip().upper() for s in os.environ.get("HEADMAPS_SYMBOLS", DEFAULT).split(",") if s.strip()]
 APP_URL = os.environ.get("HEADMAPS_APP_URL", "https://terminalpribadi.vercel.app").strip().rstrip("/")
 ORIGINS_URL = os.environ.get("HEADMAPS_ORIGINS_URL", APP_URL + "/mt5-origins.json").strip()
-BRIDGE_VERSION = 1   # NAIKKAN setiap kali bridge berubah, lalu bangun ulang .exe dan jalankan "npm run release:bridge" (app memberi tahu pengguna versi lama)
+BRIDGE_VERSION = 2   # NAIKKAN setiap kali bridge berubah, lalu bangun ulang .exe dan jalankan "npm run release:bridge" (app memberi tahu pengguna versi lama)
 FROZEN = bool(getattr(sys, "frozen", False))
 _HERE = os.path.dirname(sys.executable) if FROZEN else os.path.dirname(os.path.abspath(__file__))   # .exe: folder tempat file berada
 CACHE_FILE = os.path.join(_HERE, "origins.cache.json")
@@ -302,14 +302,22 @@ async def handler(ws):
 
 
 async def main():
-    if not connect():
-        log("Gagal menyambung ke MT5:", mt5.last_error())
-        log("Pastikan MetaTrader 5 terbuka dan sudah login (atau isi MT5_PATH).")
-        sys.exit(1)
+    # MT5 belum tentu sudah terbuka (mis. saat Windows baru menyala): tunggu sampai siap, jangan keluar.
+    shown = False
+    while not connect():
+        if not shown:
+            log("Belum bisa tersambung ke MT5:", mt5.last_error())
+            log("Buka MetaTrader 5 dan login ke broker (atau isi MT5_PATH). Bridge menunggu dan mencoba lagi otomatis; jendela ini boleh dibiarkan.")
+            shown = True
+        await asyncio.sleep(5)
     resolve_all()
-    if not MAP:
-        log("Tidak ada simbol yang cocok. Tambahkan simbol ke Market Watch MT5 atau atur HEADMAPS_SYMBOLS.")
-        sys.exit(1)
+    shown = False
+    while not MAP:
+        if not shown:
+            log("Tidak ada simbol yang cocok. Tampilkan XAUUSD (dan simbol lain) di Market Watch MT5, atau atur HEADMAPS_SYMBOLS. Menunggu...")
+            shown = True
+        await asyncio.sleep(10)
+        resolve_all()
     log("Simbol:", ", ".join("%s%s" % (c, "" if c == b else " (%s)" % b) for c, b in MAP.items()))
     async with serve(handler, HOST, PORT, process_request=guard):
         log("Headmaps bridge aktif di ws://%s:%d" % (HOST, PORT))
@@ -369,12 +377,24 @@ if __name__ == "__main__":
         print("Berhasil." if ok else "Gagal (jalan otomatis hanya untuk versi .exe di Windows).")
         sys.exit(0 if ok else 1)
     first_run_prompt()
+    code = 0
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
         pass
+    except BaseException as e:   # galat tak terduga: tampilkan, jangan menutup jendela diam-diam
+        import traceback
+        traceback.print_exc()
+        log("Bridge berhenti karena galat di atas. Kirim tangkapan layar ini bila butuh bantuan.")
+        code = 1
     finally:
         try:
             mt5.shutdown()
         except Exception:
             pass
+    if code and FROZEN and sys.stdin and sys.stdin.isatty():
+        try:
+            input("Tekan Enter untuk menutup jendela ini...")
+        except EOFError:
+            pass
+    sys.exit(code)

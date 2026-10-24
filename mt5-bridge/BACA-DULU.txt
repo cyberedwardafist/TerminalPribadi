@@ -13,3 +13,5 @@ Pengguna dengan versi lama otomatis melihat pesan "unduh ulang" di app.
 Jalan sebagai skrip (tanpa .exe): start.bat (butuh Python). Argumen .exe: --autostart, --no-autostart, --version.
 Domain app: bawaan ada di mt5_bridge.py (APP_URL) dan daftar resmi di ..\public\mt5-origins.json (diambil bridge tiap jam).
 Origin tambahan lokal (opsional): origins.txt di samping bridge/.exe (lihat origins.txt.example).
+
+Jika .exe berhenti dengan "No module named numpy" / "multiarray failed to import": build-exe.bat sudah memakai --collect-all numpy. Hapus folder mt5-bridge\.venv-build, \build-tmp, \dist lalu jalankan build-exe.bat lagi. Jika masih gagal, tambahkan "numpy<2" di requirements.txt dan ulangi. Pakai Python 64-bit.

@@ -5,10 +5,11 @@ where python >nul 2>nul
 if errorlevel 1 goto nopython
 echo [1/4] Menyiapkan lingkungan build...
 python -m venv .venv-build
-".venv-build\Scripts\python.exe" -m pip install --quiet -r requirements.txt pyinstaller
+".venv-build\Scripts\python.exe" -m pip install --quiet --upgrade pip
+".venv-build\Scripts\python.exe" -m pip install --quiet --upgrade -r requirements.txt pyinstaller pyinstaller-hooks-contrib
 if errorlevel 1 goto gagal
 echo [2/4] Membangun .exe (beberapa menit)...
-".venv-build\Scripts\pyinstaller.exe" --onefile --noconfirm --name HeadmapsMT5Bridge --distpath dist --workpath build-tmp --hidden-import MetaTrader5 --hidden-import websockets mt5_bridge.py
+".venv-build\Scripts\pyinstaller.exe" --onefile --clean --noconfirm --name HeadmapsMT5Bridge --distpath dist --workpath build-tmp --collect-all numpy --collect-all MetaTrader5 --hidden-import websockets mt5_bridge.py
 if not exist "dist\HeadmapsMT5Bridge.exe" goto gagal
 echo [3/4] Menyalin ke ..\public\downloads
 if not exist "..\public\downloads" mkdir "..\public\downloads"
