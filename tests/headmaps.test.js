@@ -19,7 +19,29 @@ const bar = (t, o, h, l, c, v = 1000) => ({ t, o, h, l, c, v });
 test('terdaftar sebagai app headmaps; pengaturan tersimpan yang rusak dikembalikan ke bawaan', () => {
   const { apps, HM } = mk({ sym: 'x', tf: '9z', mode: 'zz', bars: 7, rg: 'q', pal: 'q' });
   assert.ok(apps.headmaps && apps.headmaps.t === 'Headmaps' && apps.headmaps.icon && apps.headmaps.notes.length);
-  assert.deepEqual(J(HM.H), { sym: 'BTCUSDT', tf: '15m', mode: 'liq', bars: 120, rg: 'n', pal: 'a', bub: true, liq: true, mt5: 'ws://127.0.0.1:8765' });
+  const H = J(HM.H), t = H.tabs[0];
+  assert.deepEqual(Object.fromEntries(HM.TABF.map(k => [k, H[k]])), { sym: 'BTCUSDT', tf: '15m', mode: 'liq', bars: 120, rg: 'n', pal: 'a', bub: true, liq: true });
+  assert.equal(H.mt5, 'ws://127.0.0.1:8765');
+  assert.equal(H.tabs.length, 1); assert.equal(H.act, t.id); assert.equal(t.sym, 'BTCUSDT'); assert.equal(t.tf, '15m');
+});
+
+test('tab: data lama (tanpa tabs) dibungkus jadi satu tab; tab rusak/ganda dibuang; tab aktif dimuat ke pengaturan', () => {
+  const old = mk({ sym: 'ETHUSDT', tf: '1h', mode: 'ob', bars: 200, rg: 'w', pal: 'b', bub: false, liq: false }).HM.H;
+  assert.equal(old.tabs.length, 1); assert.equal(old.tabs[0].sym, 'ETHUSDT'); assert.equal(old.tabs[0].mode, 'ob'); assert.equal(old.tabs[0].bub, false); assert.equal(old.act, old.tabs[0].id);
+  const { HM } = mk({ tabs: [{ id: 3, sym: 'SOLUSDT', tf: '5m' }, { id: 3, sym: 'DUP', tf: '1m' }, { id: 'x', sym: 'BAD' }, null, { id: 7, sym: 'zz', tf: '9z', mode: '??' }], act: 7, uid: 2 });
+  const H = HM.H;
+  assert.deepEqual(J(H.tabs.map(t => t.id)), [3, 7]);
+  assert.equal(H.tabs[0].sym, 'SOLUSDT'); assert.equal(H.tabs[0].tf, '5m'); assert.equal(H.tabs[0].mode, 'liq');
+  assert.equal(H.tabs[1].sym, 'BTCUSDT'); assert.equal(H.tabs[1].tf, '15m');
+  assert.equal(H.act, 7); assert.equal(H.sym, 'BTCUSDT'); assert.ok(H.uid >= 7);
+  assert.equal(mk({ tabs: [{ id: 3, sym: 'SOLUSDT' }], act: 99 }).HM.H.act, 3);
+  assert.equal(mk({ tabs: Array.from({ length: 30 }, (_, i) => ({ id: i + 1, sym: 'BTCUSDT' })) }).HM.H.tabs.length, HM.MAXTAB);
+});
+
+test('favorit: daftar rusak diganti bawaan, simbol tidak valid & ganda dibuang', () => {
+  assert.deepEqual(J(mk({ fav: 'x' }).HM.H.fav).slice(0, 2), ['BTCUSDT', 'ETHUSDT']);
+  assert.deepEqual(J(mk({ fav: ['SOLUSDT', 'SOLUSDT', 'a', 5, 'XAUUSD'] }).HM.H.fav), ['SOLUSDT', 'XAUUSD']);
+  assert.equal(mk({ sdv: '??' }).HM.H.sdv, 'fav'); assert.equal(mk({ side: false }).HM.H.side, false);
 });
 
 test('niceStep & pctl', () => {

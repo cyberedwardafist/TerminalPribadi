@@ -8,7 +8,8 @@
 //   Likuidasi (MODEL): tiap candle membuka posisi seberat volumenya, dibagi tingkat leverage 10/25/50/100x (long & short); harga likuidasinya jadi garis panas
 //                      sampai harga menyentuhnya. Ini ESTIMASI (seperti Coinglass), bukan data bursa.
 //   Order Book       : order book Binance direkam tiap 0,5 dtk (hanya sejak app dibuka); terang = likuiditas pasang besar.
-// localStorage 'tc.headmaps' {sym,tf,mode,bars,rg,pal,bub,liq,mt5}; alamat bridge khusus perangkat ini, tidak disinkronkan ke server.
+// Tab ala Chart: tiap tab menyimpan {id,sym,tf,mode,bars,rg,pal,bub,liq}; panel samping ala Watchlist (Favorit / Kripto / MT5) untuk ganti simbol.
+// localStorage 'tc.headmaps' {sym,tf,mode,bars,rg,pal,bub,liq (= tab aktif), tabs,act,uid,side,sdv,fav,mt5}; alamat bridge khusus perangkat ini, tidak disinkronkan ke server.
 (()=>{
 const KEY='tc.headmaps';
 const TFS=[['1m',60e3],['5m',300e3],['15m',900e3],['1h',3600e3],['4h',14400e3]],TFM=Object.fromEntries(TFS);
@@ -17,11 +18,22 @@ const QUICK=['BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT','BNBUSDT','DOGEUSDT','XAUUS
 const TIERS=[[10,.3],[25,.3],[50,.25],[100,.15]],MMR=.005;           // tingkat leverage & porsi volume; margin pemeliharaan 0,5%
 const API={fut:'https://fapi.binance.com/fapi/v1',spot:'https://data-api.binance.vision/api/v3'};
 const WSH={fut:['wss://fstream.binance.com/stream'],spot:['wss://data-stream.binance.vision/stream','wss://stream.binance.com:9443/stream']};
-const DEF={sym:'BTCUSDT',tf:'15m',mode:'liq',bars:120,rg:'n',pal:'a',bub:true,liq:true,mt5:'ws://127.0.0.1:8765'};
+const TABF=['sym','tf','mode','bars','rg','pal','bub','liq'],MAXTAB=12;
+const DEF={sym:'BTCUSDT',tf:'15m',mode:'liq',bars:120,rg:'n',pal:'a',bub:true,liq:true,mt5:'ws://127.0.0.1:8765',tabs:[],act:0,uid:0,side:true,sdv:'fav',fav:QUICK.slice()};
+const SVS=[['fav','Favorit'],['cry','Kripto'],['mt5','MT5']];
+const fix=o=>{if(!TFM[o.tf])o.tf=DEF.tf;if(!MODES.some(m=>m[0]===o.mode))o.mode=DEF.mode;if(!BARS.includes(o.bars))o.bars=DEF.bars;if(!RGS.some(r=>r[0]===o.rg))o.rg=DEF.rg;if(!PALS.some(p=>p[0]===o.pal))o.pal=DEF.pal;
+ if(typeof o.sym!=='string'||!/^[A-Z0-9._-]{3,20}$/.test(o.sym))o.sym=DEF.sym;o.bub=o.bub!==false;o.liq=o.liq!==false;return o};
+const pickTab=o=>Object.fromEntries(TABF.map(k=>[k,o[k]]));
 let H={...DEF};try{H={...H,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch(e){}
-if(!TFM[H.tf])H.tf=DEF.tf;if(!MODES.some(m=>m[0]===H.mode))H.mode=DEF.mode;if(!BARS.includes(H.bars))H.bars=DEF.bars;if(!RGS.some(r=>r[0]===H.rg))H.rg=DEF.rg;if(!PALS.some(p=>p[0]===H.pal))H.pal=DEF.pal;
-if(typeof H.sym!=='string'||!/^[A-Z0-9._-]{3,20}$/.test(H.sym))H.sym=DEF.sym;if(typeof H.mt5!=='string')H.mt5=DEF.mt5;H.bub=H.bub!==false;H.liq=H.liq!==false;
-const store=()=>{try{localStorage.setItem(KEY,JSON.stringify(H))}catch(e){}};
+fix(H);if(typeof H.mt5!=='string')H.mt5=DEF.mt5;H.side=H.side!==false;if(!SVS.some(v=>v[0]===H.sdv))H.sdv=DEF.sdv;
+H.fav=Array.isArray(H.fav)?[...new Set(H.fav.filter(x=>typeof x==='string'&&/^[A-Z0-9._-]{3,20}$/.test(x)))].slice(0,60):DEF.fav.slice();
+// tab: buang yang rusak/ganda; tanpa tab (data lama) -> satu tab dari pengaturan lama
+{const seen=new Set();H.tabs=(Array.isArray(H.tabs)?H.tabs:[]).filter(t=>t&&typeof t==='object'&&Number.isInteger(t.id)&&t.id>0&&!seen.has(t.id)&&seen.add(t.id)).slice(0,MAXTAB).map(t=>({id:t.id,...pickTab(fix({...DEF,...t}))}));
+ H.uid=Math.max(Number.isInteger(H.uid)?H.uid:0,0,...H.tabs.map(t=>t.id));
+ if(!H.tabs.length)H.tabs=[{id:++H.uid,...pickTab(H)}];
+ if(!H.tabs.some(t=>t.id===H.act))H.act=H.tabs[0].id;
+ Object.assign(H,pickTab(H.tabs.find(t=>t.id===H.act)))}
+const store=()=>{const t=H.tabs.find(t=>t.id===H.act);if(t)for(const k of TABF)t[k]=H[k];try{localStorage.setItem(KEY,JSON.stringify(H))}catch(e){}};
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>'&#'+c.charCodeAt(0)+';');
 
 // ---------- util murni (diuji) ----------
@@ -141,7 +153,7 @@ function sample(D){if(!D||!D.ready||!D.bars.length)return;const now=Date.now(),c
 const MT=new Link({url:()=>/^wss?:\/\//i.test(H.mt5||'')?H.mt5.trim():null,
  onopen(){const D=cur;if(D&&D.kind==='mt5'&&!D.ready)mtAsk(D)},
  onmsg(raw){const m=JSON.parse(raw);
-  if(m.t==='hello'){MT.info=m;mtOff=+m.off||mtOff;(m.symbols||[]).forEach(s=>MTS.add(s));if(cur&&cur.kind==='mt5'&&!cur.ready)mtAsk(cur);if(cw())dlist(cw());return}
+  if(m.t==='hello'){MT.info=m;mtOff=+m.off||mtOff;(m.symbols||[]).forEach(s=>MTS.add(s));if(cur&&cur.kind==='mt5'&&!cur.ready)mtAsk(cur);if(cw()){dlist(cw());if(H.sdv==='mt5'||sq(cw()))sideList(cw())}return}
   if(m.t==='hb')return;
   if(m.t==='rates')return mtRates(m);
   if(m.t==='tick'&&typeof m.s==='string'&&+m.b>0){const r=FX.get(m.s)||{s:m.s,p:0,d:5,at:0};r.p=+m.b;r.a=+m.a||0;r.d=Number.isInteger(m.d)?m.d:r.d;r.at=Date.now();FX.set(m.s,r);MTS.add(m.s);
@@ -212,8 +224,7 @@ function overlay(w,e){const o=$('.hdm-o',w),dpr=Math.min(2,window.devicePixelRat
  tip.hidden=false;const r=$('.hdm',w).getBoundingClientRect();tip.style.left=Math.max(4,Math.min(r.width-200,e.clientX-r.left+14))+'px';tip.style.top=Math.max(4,Math.min(r.height-170,e.clientY-r.top+14))+'px'}
 const seg=(a,items,v)=>`<div class="seg" data-seg="${a}">${items.map(([k,l])=>`<button data-v="${k}" aria-pressed="${String(k)===String(v)}">${l}</button>`).join('')}</div>`;
 const tog=(k,l,on)=>`<button class="nb" data-t="${k}" aria-pressed="${on}">${l}</button>`;
-function bars2(w){$('.hdm-q',w).innerHTML=QUICK.map(s=>`<button class="nb" data-q="${s}" aria-pressed="${s===H.sym}">${s.replace('USDT','')}</button>`).join('');
- $('.hdm-t2',w).innerHTML=seg('mode',MODES,H.mode)+seg('tf',TFS.map(t=>[t[0],t[0]]),H.tf)+seg('bars',BARS.map(n=>[n,n+' bar']),H.bars)+seg('rg',RGS.map(r=>[r[0],r[1]]),H.rg)+seg('pal',PALS,H.pal)+tog('bub','Bubble trade',H.bub)+tog('liq','Likuidasi riil',H.liq)}
+function bars2(w){$('.hdm-t2',w).innerHTML=seg('mode',MODES,H.mode)+seg('tf',TFS.map(t=>[t[0],t[0]]),H.tf)+seg('bars',BARS.map(n=>[n,n+' bar']),H.bars)+seg('rg',RGS.map(r=>[r[0],r[1]]),H.rg)+seg('pal',PALS,H.pal)+tog('bub','Bubble trade',H.bub)+tog('liq','Likuidasi riil',H.liq)}
 function dlist(w){const dl=$('#hdm-dl',w);if(!dl)return;dl.innerHTML=[...new Set([...MTS,...SYMS])].map(s=>`<option value="${esc(s)}">`).join('')}
 function status(w){const D=cur,dot=s=>`<s class="${s==='open'?'on':s==='connecting'?'wt':''}"></s>`;let s='';
  if(D&&D.kind==='cry')s+=`<span class="hdm-chip">${dot(LIVE.st)}Binance ${D.src==='fut'?'Futures':'Spot'} <b>${stTxt[LIVE.st]||LIVE.st}</b></span>`;
@@ -226,8 +237,48 @@ function pop(w){const p=$('.hdm-pop',w);p.hidden=!popOpen;if(!popOpen)return;
  <div class="hdm-pr"><button class="nb hdm-save">Simpan &amp; sambung ulang</button><span class="hdm-chip">${MT.st==='open'?'<s class="on"></s>':'<s></s>'}<b>${stTxt[MT.st]||MT.st}</b></span></div>
  <ol><li>Pasang MetaTrader 5 (Windows), login ke broker, tampilkan <b>XAUUSD</b> di Market Watch.</li><li>Di folder <code>mt5-bridge/</code>: <code>pip install -r requirements.txt</code></li><li>Jalankan <code>python mt5_bridge.py</code> (atau <code>start.bat</code>) dan biarkan terbuka.</li></ol>
  <p>Bridge hanya mengirim harga dan riwayat candle lewat WebSocket lokal. Chrome, Edge, dan Firefox mengizinkan <code>ws://127.0.0.1</code> dari halaman https; Safari tidak. Bila jam candle MT5 meleset, isi <code>MT5_UTC_OFFSET_HOURS</code> pada bridge.</p>`}
+// ---------- tab (ala Chart) ----------
+const hue=s=>{let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))%360;return h};
+const modeName=k=>(MODES.find(m=>m[0]===k)||[,''])[1];
+function tabsUI(w){const tl=$('.hdm-tl',w);if(!tl)return;const many=H.tabs.length>1;
+ tl.innerHTML=H.tabs.map(t=>{const x=t.id===H.act?H:t;return`<div class="hdm-tab${t.id===H.act?' on':''}" data-id="${t.id}" role="tab" aria-selected="${t.id===H.act}" draggable="true" title="${esc(x.sym)} · ${x.tf} · ${esc(modeName(x.mode))}"><i class="hdm-ic" style="background:hsl(${hue(x.sym)} 55% 42%)">${esc(x.sym[0])}</i><span>${esc(x.sym)} · ${x.tf}</span>${many?'<button class="hdm-x" aria-label="Tutup tab">×</button>':''}</div>`}).join('');
+ const nb=$('.hdm-new',w);if(nb)nb.disabled=H.tabs.length>=MAXTAB}
+function loadTab(w,t){Object.assign(H,pickTab(fix({...t})));H.act=t.id;store();bars2(w);reset(w)}
+function actTab(w,id){const t=H.tabs.find(t=>t.id===id);if(!t||id===H.act)return;store();loadTab(w,t)}
+function newTab(w,sym){if(H.tabs.length>=MAXTAB)return;store();const b=pickTab(H);
+ b.sym=sym||[...H.fav,...QUICK].find(s=>!H.tabs.some(t=>t.sym===s))||H.sym;
+ const t={id:++H.uid,...b};H.tabs.push(t);loadTab(w,t)}
+function closeTab(w,id){if(H.tabs.length<2)return;const i=H.tabs.findIndex(t=>t.id===id);if(i<0)return;
+ if(id!==H.act){H.tabs.splice(i,1);store();tabsUI(w);return}
+ H.tabs.splice(i,1);loadTab(w,H.tabs[Math.min(i,H.tabs.length-1)])}
+// ---------- panel samping (ala Watchlist) ----------
+const TK=new Map();
+const sq=w=>{const e=$('.hdm-sq',w);return e?e.value.trim().toUpperCase():''};
+const sname=s=>isFut(s)?s.replace(/USDT$/,''):s;
+function sideQuote(s){const D=cur,t=TK.get(s);
+ if(D&&D.ready&&D.sym===s&&D.bars.length)return{p:D.bars[D.bars.length-1].c,c:t?t.c:null};
+ const f=FX.get(s);if(f&&f.p>0)return{p:f.p,c:null};return t?{p:t.p,c:t.c}:{p:null,c:null}}
+function sideRows(w){const q=sq(w);let ls;
+ if(q){const all=[...new Set([...H.fav,...SYMS,...MTS,...QUICK])];ls=all.filter(s=>s.includes(q)).slice(0,60);
+  if(!ls.length&&/^[A-Z0-9._-]{3,20}$/.test(q))ls.push(q)}
+ else ls=H.sdv==='fav'?H.fav:H.sdv==='cry'?(SYMS.length?SYMS:QUICK.filter(isFut)):[...MTS];
+ return ls}
+function sideList(w){const el=$('.hdm-sl',w);if(!el)return;
+ $$('.hdm-sv button',w).forEach(b=>b.setAttribute('aria-pressed',String(!sq(w)&&b.dataset.sv===H.sdv)));
+ const ls=sideRows(w),q=sq(w);
+ el.innerHTML=ls.length?ls.map(s=>{const on=H.fav.includes(s);return`<div class="hdm-sr${s===H.sym?' on':''}" data-s="${esc(s)}" role="button" tabindex="0" title="${esc(s)}"><button class="hdm-fv" data-fav="${esc(s)}" aria-pressed="${on}" aria-label="${on?'Hapus dari':'Tambah ke'} favorit">${Icon('star',on?'on':'')}</button><b>${esc(sname(s))}</b><span class="hdm-sv2"><span class="hdm-sp">–</span><span class="hdm-sc"></span></span></div>`}).join('')
+  :`<p class="hdm-se">${q?'Tidak ada simbol yang cocok.':H.sdv==='fav'?'Belum ada favorit. Klik bintang pada simbol di daftar Kripto atau MT5.':H.sdv==='cry'?'Memuat daftar kripto…':'Belum ada simbol MT5.'}</p>`;
+ if(!q&&H.sdv==='mt5'&&MT.st!=='open')el.insertAdjacentHTML('beforeend','<p class="hdm-se">MT5 belum terhubung: jalankan mt5-bridge lalu cek alamat di pengaturan (ikon gir).</p>');
+ sidePatch(w)}
+function sidePatch(w){const el=$('.hdm-sl',w);if(!el)return;
+ for(const r of $$('.hdm-sr[data-s]',w)){const s=r.dataset.s,q=sideQuote(s),p=r.querySelector('.hdm-sp'),c=r.querySelector('.hdm-sc');if(!p||!c)continue;
+  p.textContent=q.p>0?fmtPx(q.p):'–';c.textContent=q.c==null?'':(q.c>0?'+':q.c<0?'−':'')+Math.abs(q.c).toFixed(2)+'%';c.className='hdm-sc'+(q.c>0?' up':q.c<0?' dn':'')}}
+function sideMark(w){for(const r of $$('.hdm-sr[data-s]',w))r.classList.toggle('on',r.dataset.s===H.sym)}
+function pickSym(w,s,nt){const root=$('.hdm',w);if(root.clientWidth<640)root.classList.add('nosd');
+ if(nt){newTab(w,s);return}
+ if(s===H.sym)return;const o=H.tabs.find(t=>t.sym===s&&t.id!==H.act);if(o){actTab(w,o.id);return}setSym(w,s)}
 function setSym(w,s){s=String(s||'').trim().toUpperCase();if(!/^[A-Z0-9._-]{3,20}$/.test(s))return;H.sym=s;store();reset(w)}
-function reset(w){clearTimeout(cur&&cur.rto);LIVE.stop();cur=mkD(H.sym,H.tf);V=null;$('.hdm-sym',w).value=H.sym;bars2(w);loadBars(cur).then(()=>{status(w)});draw(w);status(w)}
+function reset(w){clearTimeout(cur&&cur.rto);LIVE.stop();cur=mkD(H.sym,H.tf);V=null;$('.hdm-sym',w).value=H.sym;tabsUI(w);sideMark(w);bars2(w);loadBars(cur).then(()=>{status(w)});draw(w);status(w)}
 function mount(w){const root=$('.hdm',w);
  root.addEventListener('click',e=>{
   const sb=e.target.closest('[data-seg] button');if(sb){const a=sb.parentNode.dataset.seg,v=sb.dataset.v;
@@ -235,10 +286,34 @@ function mount(w){const root=$('.hdm',w);
    if(a==='mode'&&v==='ob'&&TFM[H.tf]>TFM['5m']){H.mode='ob';H.tf='1m';store();reset(w);return}
    H[a]=a==='bars'?+v:v;store();bars2(w);if(a==='mode')liveSync();cur&&(cur.dirty=2);draw(w);status(w);return}
   const t=e.target.closest('[data-t]');if(t){H[t.dataset.t]=!H[t.dataset.t];store();bars2(w);liveSync();cur&&(cur.dirty=1);draw(w);status(w);return}
-  const q=e.target.closest('[data-q]');if(q){setSym(w,q.dataset.q);return}
+  const xb=e.target.closest('.hdm-x');if(xb){closeTab(w,+xb.closest('.hdm-tab').dataset.id);return}
+  const tb=e.target.closest('.hdm-tab');if(tb){actTab(w,+tb.dataset.id);return}
+  const ab=e.target.closest('[data-a]');if(ab){if(ab.dataset.a==='new'){newTab(w);return}
+   if(ab.dataset.a==='sd'){const on=root.classList.toggle('nosd');H.side=!on;store();return}}
+  const sv=e.target.closest('[data-sv]');if(sv){H.sdv=sv.dataset.sv;store();sideList(w);return}
+  const fv=e.target.closest('[data-fav]');if(fv){const s=fv.dataset.fav,i=H.fav.indexOf(s);i<0?H.fav.push(s):H.fav.splice(i,1);store();sideList(w);return}
+  const sr=e.target.closest('.hdm-sr');if(sr){pickSym(w,sr.dataset.s,e.ctrlKey||e.metaKey||e.shiftKey);return}
   if(e.target.closest('.hdm-gear')){popOpen=!popOpen;pop(w);return}
   if(e.target.closest('.hdm-open')&&cur){S.sym=S.go=cur.sym;open('chart');return}
   if(e.target.closest('.hdm-save')){H.mt5=($('.hdm-url',w).value||'').trim();store();MT.restart();setTimeout(()=>pop(w),600)}});
+ root.addEventListener('auxclick',e=>{const tb=e.target.closest('.hdm-tab');if(tb&&e.button===1){e.preventDefault();closeTab(w,+tb.dataset.id)}});
+ root.addEventListener('keydown',e=>{const sr=e.target.closest&&e.target.closest('.hdm-sr');
+  if(sr&&e.key==='Enter'&&!e.target.closest('[data-fav]')){pickSym(w,sr.dataset.s,e.ctrlKey||e.metaKey||e.shiftKey);return}
+  if(e.target.matches&&e.target.matches('.hdm-sq')){const q=sq(w);if(e.key==='Escape'&&q){e.target.value='';sideList(w);e.stopPropagation()}
+   else if(e.key==='Enter'){const f=$('.hdm-sr',w);if(f)pickSym(w,f.dataset.s,e.ctrlKey||e.metaKey||e.shiftKey)}return}
+  if(!e.altKey)return;const k=e.key.toLowerCase();
+  if(k==='t'){e.preventDefault();newTab(w)}else if(k==='w'){e.preventDefault();closeTab(w,H.act)}
+  else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){const i=H.tabs.findIndex(t=>t.id===H.act),n=H.tabs.length;actTab(w,H.tabs[(i+(e.key==='ArrowRight'?1:n-1))%n].id);e.preventDefault()}});
+ // seret tab untuk mengurutkan ulang
+ const tl=$('.hdm-tl',w);let dragId=0;
+ tl.addEventListener('dragstart',e=>{const tb=e.target.closest('.hdm-tab');if(!tb)return;dragId=+tb.dataset.id;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain','tab')});
+ tl.addEventListener('dragover',e=>{if(dragId)e.preventDefault()});
+ tl.addEventListener('drop',e=>{if(!dragId)return;e.preventDefault();const tb=e.target.closest('.hdm-tab'),i=H.tabs.findIndex(t=>t.id===dragId);dragId=0;if(i<0)return;
+  let j=tb?H.tabs.findIndex(t=>t.id===+tb.dataset.id):H.tabs.length;if(tb){const r=tb.getBoundingClientRect();if(e.clientX>r.left+r.width/2)j++}
+  const[m]=H.tabs.splice(i,1);if(i<j)j--;H.tabs.splice(j,0,m);store();tabsUI(w)});
+ tl.addEventListener('dragend',()=>{dragId=0});
+ $('.hdm-sq',w).addEventListener('input',()=>sideList(w));
+ root.classList.toggle('nosd',!H.side||w.clientWidth<560);
  $('.hdm-sym',w).addEventListener('change',e=>setSym(w,e.target.value));
  const cv=$('.hdm-cv',w);cv.addEventListener('pointermove',e=>overlay(w,e));cv.addEventListener('pointerleave',()=>overlay(w,null));
  w._ro&&w._ro.disconnect();let lt=0;w._ro=new ResizeObserver(()=>{clearTimeout(lt);lt=setTimeout(()=>draw(w),60)});w._ro.observe(cv)}
@@ -246,15 +321,20 @@ function stop(w){clearInterval(tmr);tmr=0;LIVE.stop();MT.stop();w._ro&&w._ro.dis
 function loop(w){let n=0;tmr=setInterval(()=>{if(!w.isConnected){stop(w);return}if(document.hidden)return;n++;
   LIVE.watch(20000);MT.watch(20000);
   if(n%2===0)sample(cur);
-  if(cur&&cur.dirty&&n%2===0)draw(w);if(n%6===0){status(w);if(popOpen)pop(w)}},250)}
+  if(cur&&cur.dirty&&n%2===0)draw(w);if(n%6===0){status(w);if(popOpen)pop(w)}if(n%8===0)sidePatch(w);if(n%240===0)symbols()},250)}
 LIVE.o.onstate=MT.o.onstate=()=>{if(CW)status(CW)};
-async function symbols(w){try{const j=await jget(API.spot+'/ticker/24hr',15000);SYMS=j.filter(x=>/USDT$/.test(x.symbol)&&!/(UP|DOWN|BULL|BEAR)USDT$/.test(x.symbol)&&!/^(USDC|FDUSD|TUSD|USDP|DAI|BUSD|EUR|TRY|BRL|GBP|AUD)USDT$/.test(x.symbol)).sort((a,b)=>b.quoteVolume-a.quoteVolume).slice(0,250).map(x=>x.symbol);if(CW)dlist(CW)}catch(e){SYMS=QUICK.filter(isFut)}}
+async function symbols(){const had=SYMS.length;try{const j=await jget(API.spot+'/ticker/24hr',15000);
+ for(const x of j)if(/USDT$/.test(x.symbol))TK.set(x.symbol,{p:+x.lastPrice,c:+x.priceChangePercent});
+ SYMS=j.filter(x=>/USDT$/.test(x.symbol)&&!/(UP|DOWN|BULL|BEAR)USDT$/.test(x.symbol)&&!/^(USDC|FDUSD|TUSD|USDP|DAI|BUSD|EUR|TRY|BRL|GBP|AUD)USDT$/.test(x.symbol)).sort((a,b)=>b.quoteVolume-a.quoteVolume).slice(0,250).map(x=>x.symbol);
+ if(CW){dlist(CW);if(had)sidePatch(CW);else sideList(CW)}}
+ catch(e){if(!SYMS.length){SYMS=QUICK.filter(isFut);if(CW)sideList(CW)}}}
 
 registerApp('headmaps',{css:'apps/headmaps/headmaps.css',icon:"<rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M3 9h18M3 14h18M8 4v16M14 4v16\"/>",t:'Headmaps',w:1100,h:680,flush:1,
- notes:['Tanpa endpoint server. Kripto: REST klines/depth + WebSocket Binance (futures, cadangan spot). XAUUSD/forex: <code>mt5-bridge/mt5_bridge.py</code> (WebSocket lokal, alamat di <code>tc.headmaps</code> browser ini).','Mode Likuidasi adalah MODEL estimasi dari volume candle x leverage, bukan data bursa. Mode Order Book hanya merekam sejak app dibuka.'],
- html:()=>`<div class="hdm"><div class="hdm-t1"><input class="hdm-sym" list="hdm-dl" spellcheck="false" autocomplete="off" aria-label="Simbol" placeholder="BTCUSDT / XAUUSD"><datalist id="hdm-dl"></datalist><div class="hdm-q"></div><b class="hdm-px">–</b><button class="nb hdm-open" title="Buka di Chart">Chart ${Icon('ext')}</button><span class="hdm-sts"></span><button class="hdm-gear nb" aria-label="Pengaturan MT5" title="Pengaturan MT5">${Icon('gear')}</button></div>
-  <div class="hdm-t2"></div><div class="hdm-cv"><canvas class="hdm-c"></canvas><canvas class="hdm-o"></canvas><div class="hdm-msg"></div></div><p class="hdm-ft"></p><div class="hdm-tip" hidden></div><div class="hdm-pop" hidden></div></div>`,
+ notes:['Tanpa endpoint server. Kripto: REST klines/depth + WebSocket Binance (futures, cadangan spot). XAUUSD/forex: <code>mt5-bridge/mt5_bridge.py</code> (WebSocket lokal, alamat di <code>tc.headmaps</code> browser ini).','Mode Likuidasi adalah MODEL estimasi dari volume candle x leverage, bukan data bursa. Mode Order Book hanya merekam sejak app dibuka.','Tab ala Chart: tiap tab menyimpan simbol, timeframe, mode, jumlah bar, rentang, palet, dan toggle sendiri (<code>tc.headmaps.tabs</code>); seret untuk mengurutkan, klik tengah / x untuk menutup, Alt+T / Alt+W / Alt+panah. Hanya tab aktif yang punya stream live, jadi rekaman Order Book mulai ulang saat pindah tab.','Panel samping ala Watchlist: Favorit (bintang), Kripto (250 pasangan USDT teratas, harga dari <code>/ticker/24hr</code> Binance tiap 60 dtk), dan MT5 (simbol dari bridge). Klik = ganti simbol tab aktif, Ctrl/Shift+klik = tab baru.'],
+ html:()=>`<div class="hdm"><div class="hdm-top"><button class="hdm-rb" data-a="sd" aria-label="Panel simbol" title="Panel simbol"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M9 5v14"/></svg></button><div class="hdm-tl" role="tablist"></div><button class="hdm-rb hdm-new" data-a="new" aria-label="Tab baru" title="Tab baru (Alt+T)"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>
+  <div class="hdm-body"><aside class="hdm-sd" aria-label="Daftar simbol"><div class="hdm-sv">${SVS.map(([k,l])=>`<button data-sv="${k}" aria-pressed="false"${k==='mt5'?' title="Emas & forex (MetaTrader 5)"':''}>${l}</button>`).join('')}</div><input class="hdm-in hdm-sq" type="search" placeholder="Cari atau ketik simbol…" aria-label="Cari simbol" spellcheck="false" autocomplete="off"><div class="hdm-sl"></div><p class="hdm-sh">Klik: ganti simbol tab ini · Ctrl+klik: tab baru · Bintang: favorit</p></aside><section class="hdm-mn"><div class="hdm-t1"><input class="hdm-sym" list="hdm-dl" spellcheck="false" autocomplete="off" aria-label="Simbol" placeholder="BTCUSDT / XAUUSD"><datalist id="hdm-dl"></datalist><b class="hdm-px">–</b><button class="nb hdm-open" title="Buka di Chart">Chart ${Icon('ext')}</button><span class="hdm-sts"></span><button class="hdm-gear nb" aria-label="Pengaturan MT5" title="Pengaturan MT5">${Icon('gear')}</button></div>
+  <div class="hdm-t2"></div><div class="hdm-cv"><canvas class="hdm-c"></canvas><canvas class="hdm-o"></canvas><div class="hdm-msg"></div></div><p class="hdm-ft"></p></section></div><div class="hdm-tip" hidden></div><div class="hdm-pop" hidden></div></div>`,
  init(w){if(CW&&CW!==w)stop(CW);CW=w;popOpen=false;const cs=getComputedStyle(document.documentElement);UPC=cs.getPropertyValue('--up').trim()||UPC;DNC=cs.getPropertyValue('--dn').trim()||DNC;
-  mount(w);dlist(w);MT.start();reset(w);loop(w);if(!SYMS.length)symbols(w)}});
-window.HM={cur:()=>cur,_t:{niceStep,pctl,alignBar,tickBar,klineBar,parseKlines,liqLevels,liqGrid,obGrid,blurV,lutOf,LUT,paintGrid,Book,bubbleThr,H,TIERS,MMR}};
+  mount(w);dlist(w);MT.start();reset(w);sideList(w);loop(w);if(!SYMS.length)symbols()}});
+window.HM={cur:()=>cur,_t:{niceStep,pctl,alignBar,tickBar,klineBar,parseKlines,liqLevels,liqGrid,obGrid,blurV,lutOf,LUT,paintGrid,Book,bubbleThr,H,TIERS,MMR,fix,TABF,MAXTAB}};
 })();

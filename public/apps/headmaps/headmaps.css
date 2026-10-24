@@ -1,8 +1,7 @@
 /* Gaya app Headmaps. Semua kelas berawalan .hdm- (hm- dipakai app Home) */
-.hdm{display:flex;flex-direction:column;flex:1;min-height:0;position:relative}
+.hdm{container:hdm/inline-size;display:flex;flex-direction:column;flex:1;min-height:0;min-width:0;position:relative}
 .hdm-t1,.hdm-t2{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;padding:8px 12px 0;flex:none}
 .hdm-sym{width:140px;font:inherit;font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--ink);background:var(--win2);border:1px solid var(--line);border-radius:7px;padding:5px 9px;text-transform:uppercase}
-.hdm-q{display:flex;gap:4px;flex-wrap:wrap}.hdm-q .nb{cursor:pointer}
 .hdm-px{font-size:18px;font-variant-numeric:tabular-nums;margin-left:6px;min-width:90px}
 .hdm-sts{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
 .hdm-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border:1px solid var(--line);border-radius:999px;font-size:11px;color:var(--mute);white-space:nowrap}.hdm-chip b{color:var(--ink);font-weight:600}
@@ -15,9 +14,50 @@
 .hdm-ft{margin:8px 12px 10px;color:var(--mute);font-size:11px;flex:none;line-height:1.45}
 .hdm-tip{position:absolute;z-index:10;min-width:170px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--win);box-shadow:0 10px 26px rgba(0,0,0,.45);font-size:12px;pointer-events:none}
 .hdm-tip small{margin-left:8px;color:var(--mute)}.hdm-tg{display:grid;grid-template-columns:auto auto;gap:2px 14px;margin-top:5px}.hdm-tg span{color:var(--mute)}.hdm-tg em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums}
-.hdm-pop{position:absolute;z-index:12;right:14px;top:46px;width:min(380px,calc(100% - 28px));padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--win);box-shadow:0 18px 50px rgba(0,0,0,.5);font-size:12px}
+.hdm-pop{position:absolute;z-index:12;right:14px;top:92px;width:min(380px,calc(100% - 28px));padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--win);box-shadow:0 18px 50px rgba(0,0,0,.5);font-size:12px}
 .hdm-pop h4{margin:0 0 10px;font-size:13px}.hdm-pop label{display:flex;flex-direction:column;align-items:stretch;gap:4px;color:var(--mute);text-align:left}
 .hdm-pop input{width:100%;box-sizing:border-box;font:inherit;font-size:13px;color:var(--ink);background:var(--win2);border:1px solid var(--line);border-radius:7px;padding:6px 9px}
 .hdm-pr{display:flex;align-items:center;gap:10px;margin:10px 0}.hdm-pop ol{margin:8px 0 6px;padding-left:18px;color:var(--mute);line-height:1.55}.hdm-pop ol b{color:var(--ink)}.hdm-pop p{margin:6px 0 0;color:var(--mute);line-height:1.5}
 .hdm-pop code{font-size:11px;padding:1px 5px;border-radius:4px;background:var(--win2);color:var(--ink)}
-@media(max-width:700px){.hdm-q{display:none}.hdm-sts{margin-left:0}}
+@media(max-width:700px){.hdm-sts{margin-left:0}}
+
+/* tab strip ala Chrome (sama dengan .ct-tab di app Chart) */
+.hdm-top{display:flex;align-items:flex-end;gap:4px;padding:7px 8px 0;background:color-mix(in srgb,var(--win) 74%,#000);flex:none}
+.hdm-rb{width:28px;height:28px;margin-bottom:3px;padding:0;display:grid;place-items:center;flex:none;border:0;border-radius:50%;background:transparent;color:var(--mute);cursor:pointer}
+.hdm-rb:hover{background:color-mix(in srgb,var(--ink) 12%,transparent);color:var(--ink)}.hdm-rb:disabled{opacity:.35;cursor:default;background:transparent}
+.hdm-rb svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.hdm-tl{display:flex;min-width:0;flex:0 1 auto;gap:2px;overflow:hidden}
+.hdm-tab{position:relative;display:flex;align-items:center;gap:8px;height:34px;flex:1 1 170px;min-width:64px;max-width:200px;padding:0 6px 0 10px;border-radius:9px 9px 0 0;color:var(--mute);font-size:12px;cursor:default}
+.hdm-tab span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hdm-tab:hover{background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.hdm-tab.on{background:var(--win);color:var(--ink);z-index:1}
+.hdm-tab.on::before,.hdm-tab.on::after{content:"";position:absolute;bottom:0;width:9px;height:9px}
+.hdm-tab.on::before{left:-9px;background:radial-gradient(circle at 0 0,transparent 8.5px,var(--win) 9px)}
+.hdm-tab.on::after{right:-9px;background:radial-gradient(circle at 100% 0,transparent 8.5px,var(--win) 9px)}
+.hdm-tab[draggable=true]:active{opacity:.6}
+.hdm-ic{flex:none;display:grid;place-items:center;width:16px;height:16px;border-radius:50%;font:700 9px/1 system-ui,sans-serif;font-style:normal;color:#fff}
+.hdm-x{flex:none;width:20px;height:20px;border:0;border-radius:50%;background:transparent;color:inherit;font-size:15px;line-height:1;cursor:pointer;padding:0}
+.hdm-x:hover{background:color-mix(in srgb,var(--ink) 18%,transparent)}
+
+/* badan: panel samping + konten utama */
+.hdm-body{flex:1;min-height:0;display:flex;position:relative}
+.hdm-mn{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column}
+.hdm-sd{flex:none;width:208px;display:flex;flex-direction:column;gap:8px;overflow:hidden;box-sizing:border-box;padding:10px 8px;border-right:1px solid var(--line);background:color-mix(in srgb,var(--win) 82%,#000);transition:width .22s cubic-bezier(.32,.72,0,1),padding .22s,opacity .18s}
+.hdm.nosd .hdm-sd{width:0;padding-inline:0;border-width:0;opacity:0;pointer-events:none}
+.hdm-sv{display:flex;gap:2px;padding:2px;border-radius:8px;background:color-mix(in srgb,var(--ink) 7%,transparent);flex:none}
+.hdm-sv button{flex:1;border:0;border-radius:6px;padding:4px 0;background:transparent;color:var(--mute);font:inherit;font-size:12px;cursor:pointer;white-space:nowrap}
+.hdm-sv button:hover{color:var(--ink)}.hdm-sv button[aria-pressed=true]{background:var(--win);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.hdm-in{width:100%;min-width:0;box-sizing:border-box;padding:6px 9px;border:1px solid var(--line);border-radius:7px;background:transparent;color:var(--ink);font:inherit;font-size:12px;outline:0;flex:none}.hdm-in:focus{border-color:var(--acc)}
+.hdm-sl{flex:1;min-height:0;overflow:auto;margin:0 -2px}
+.hdm-sr{display:flex;align-items:center;gap:4px;padding:5px 6px 5px 2px;border-radius:6px;cursor:pointer;font-size:12px;outline:0}
+.hdm-sr:hover,.hdm-sr:focus-visible{background:color-mix(in srgb,var(--ink) 9%,transparent)}
+.hdm-sr.on{background:color-mix(in srgb,var(--acc) 26%,transparent)}
+.hdm-sr b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hdm-fv{flex:none;border:0;background:transparent;padding:2px 4px;font-size:14px;line-height:1;color:var(--mute);cursor:pointer}
+.hdm-fv[aria-pressed=true],.hdm-fv:hover{color:var(--acc)}
+.hdm-sv2{display:flex;flex-direction:column;align-items:flex-end;line-height:1.25;font-variant-numeric:tabular-nums}
+.hdm-sp{font-size:12px}.hdm-sc{font-size:10px;color:var(--mute);min-height:12px}.hdm-sc.up{color:var(--up)}.hdm-sc.dn{color:var(--dn)}
+.hdm-se{margin:10px 6px;color:var(--mute);font-size:11px;line-height:1.5;white-space:normal}
+.hdm-sh{margin:0 4px;flex:none;color:var(--mute);font-size:10px;line-height:1.45;white-space:normal}
+@container hdm (max-width:640px){.hdm-sd{position:absolute;inset:0 auto 0 0;z-index:5;box-shadow:8px 0 24px rgba(0,0,0,.35)}}
+@media (prefers-reduced-motion:reduce){.hdm-sd{transition:none}}
