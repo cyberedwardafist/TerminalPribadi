@@ -35,7 +35,7 @@ const Auth=(()=>{
 
  const session=()=>rd(SK)||rd(SK,true);
  const setSession=(user,remember,token)=>{rm(SK);wr(SK,{user,token:token||null,mode:'live',at:Date.now()},!remember)};
- const logout=()=>{rm(SK);try{localStorage.removeItem('tc.ui')}catch(e){}try{if(typeof CFG!=='undefined'&&CFG.api&&CFG.api.key){CFG.api.key='';cfgSave()}}catch(e){}};   // API key manual ikut dihapus (komputer bersama)
+ const logout=()=>{rm(SK);try{localStorage.removeItem('tc.ui')}catch(e){}try{if(typeof CFG!=='undefined'&&CFG.api){CFG.api.key='';CFG.api.rt={finnhub:'',tiingo:''};cfgSave()}}catch(e){}};   // key dan token realtime tidak tertinggal di perangkat
 
  // batas percobaan login: 5 gagal -> kunci 30 detik
  const lock=()=>{const f=rd(FK)||{n:0,until:0};return Math.max(0,Math.ceil((f.until-Date.now())/1000))};

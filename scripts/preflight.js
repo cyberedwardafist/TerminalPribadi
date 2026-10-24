@@ -20,10 +20,10 @@ else fail(`SUPABASE_SERVICE_ROLE_KEY tidak valid (jenis terbaca: ${kk})`, 'Pakai
 if ((E.JWT_SECRET || '').length >= 32) ok('JWT_SECRET minimal 32 karakter');
 else fail('JWT_SECRET kosong atau kurang dari 32 karakter', `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`);
 if (/^dev-(dev-)+/.test(E.JWT_SECRET || '')) warn('JWT_SECRET memakai nilai contoh dev', 'Buat yang acak untuk produksi');
-(E.CRON_SECRET || '').length >= 16 ? ok('CRON_SECRET terisi') : warn('CRON_SECRET kosong / <16 karakter', 'Tanpa ini cron harian (alert, berita, kalender) ditolak: alert harga tidak pernah dievaluasi di server');
-(E.ADMIN_TOKEN || '').length >= 16 ? ok('ADMIN_TOKEN terisi (untuk health?deep=1 dan /api/admin/*)') : warn('ADMIN_TOKEN kosong / <16 karakter', 'Aman: endpoint admin dan /api/health?deep=1 terkunci total. Isi bila ingin memakainya');
+(E.CRON_SECRET || '').length >= 32 ? ok('CRON_SECRET terisi (>=32 karakter)') : (E.CRON_SECRET || '').length >= 16 ? warn('CRON_SECRET kurang dari 32 karakter', 'Ganti dengan acak 32+ karakter: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'base64url\'))"') : warn('CRON_SECRET kosong / <16 karakter', 'Tanpa ini cron harian (alert, berita, kalender) ditolak: alert harga tidak pernah dievaluasi di server');
+(E.ADMIN_TOKEN || '').length >= 32 ? ok('ADMIN_TOKEN terisi (>=32 karakter; untuk health?deep=1 dan /api/admin/*)') : (E.ADMIN_TOKEN || '').length >= 16 ? warn('ADMIN_TOKEN kurang dari 32 karakter', 'Ganti dengan acak 32+ karakter (perintah sama dengan CRON_SECRET)') : warn('ADMIN_TOKEN kosong / <16 karakter', 'Aman: endpoint admin dan /api/health?deep=1 terkunci total. Isi bila ingin memakainya');
 E.RATE_LIMIT === 'off' ? fail('RATE_LIMIT=off', 'Hanya untuk uji lokal. Hapus dari produksi') : ok('Pembatas laju aktif');
-if (E.ALLOWED_ORIGINS) ok(`ALLOWED_ORIGINS: ${E.ALLOWED_ORIGINS}`); else warn('ALLOWED_ORIGINS kosong (semua origin diizinkan)', 'Aman bila frontend dan API satu domain; isi bila frontend di domain lain');
+if (E.ALLOWED_ORIGINS) ok(`ALLOWED_ORIGINS: ${E.ALLOWED_ORIGINS}`); else warn('ALLOWED_ORIGINS kosong (hanya same-origin dan localhost)', 'Sudah aman untuk frontend satu domain dengan API; isi hanya bila frontend di domain lain');
 
 console.log('\n== 2. Email (OTP pendaftaran dan reset password) ==');
 const mc = mailConfig();

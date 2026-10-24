@@ -4,8 +4,9 @@
 const CFG_KEY='tc.cfg';
 // Selalu Live: base kosong = server yang sama dengan halaman (origin). Dibuka lewat file:// wajib mengisi Setting > API > Base URL.
 const CFG_DEF={theme:'auto',sym:'BTCUSDT',tf:'1h',still:null,api:{base:'',ws:'',key:'',timeout:8000,rt:{finnhub:'',tiingo:''}}};
-const CFG=(()=>{let s={};try{s=JSON.parse(localStorage.getItem(CFG_KEY)||'{}')||{}}catch(e){}const c={...CFG_DEF,...s,api:{...CFG_DEF.api,...(s.api||{})}};c.api.rt={...CFG_DEF.api.rt,...(c.api.rt||{})};delete c.api.mode;return c})();
-const cfgSave=()=>{try{localStorage.setItem(CFG_KEY,JSON.stringify(CFG))}catch(e){}};
+// Token realtime (api.rt) hidup di memori saja: sumbernya akun di server (Live.hydrate), tidak pernah ditulis ke localStorage.
+const CFG=(()=>{let s={};try{s=JSON.parse(localStorage.getItem(CFG_KEY)||'{}')||{}}catch(e){}const c={...CFG_DEF,...s,api:{...CFG_DEF.api,...(s.api||{})}};c.api.rt={...CFG_DEF.api.rt};delete c.api.mode;return c})();
+const cfgSave=()=>{try{const{rt,...api}=CFG.api;localStorage.setItem(CFG_KEY,JSON.stringify({...CFG,api}))}catch(e){}};
 const applyTheme=()=>{const r=document.documentElement;CFG.theme==='auto'?r.removeAttribute('data-theme'):r.setAttribute('data-theme',CFG.theme)};
 applyTheme();
 

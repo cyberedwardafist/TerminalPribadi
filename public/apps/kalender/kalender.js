@@ -45,7 +45,7 @@ const arrow=d=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+d+'"/></s
 registerApp('kalender',{css:'apps/kalender/kalender.css',icon:()=>"<rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"3\"/><path d=\"M3 10h18M8 3v4M16 3v4\"/><text x=\"12\" y=\"18.2\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\" stroke=\"none\" font-weight=\"700\">"+new Date().getDate()+"</text>",t:'Kalender',w:980,h:620,flush:true,
 html:()=>`<div class="kl-w"><div class="kl">
  <section class="kl-c" aria-label="Kalender">
-  <div class="kl-h"><h2 class="kl-mon" aria-live="polite"></h2><span class="tag">${window.Live&&Live.on?'Live':'Tidak live'}</span>
+  <div class="kl-h"><h2 class="kl-mon" aria-live="polite"></h2><span class="tag">${window.Live&&Live.on?'Online':'Offline'}</span>
    <div class="kl-nav"><button type="button" class="kl-ib" data-mv="-1" aria-label="Bulan sebelumnya" title="Bulan sebelumnya">${arrow('M15 6l-6 6 6 6')}</button><button type="button" class="btn kl-td" data-today>Hari ini</button><button type="button" class="kl-ib" data-mv="1" aria-label="Bulan berikutnya" title="Bulan berikutnya">${arrow('M9 6l6 6-6 6')}</button></div></div>
   <div class="kl-wd" aria-hidden="true">${WD.map(x=>`<span>${x}</span>`).join('')}</div>
   <div class="kl-cal" role="group" aria-label="Pilih tanggal"></div>

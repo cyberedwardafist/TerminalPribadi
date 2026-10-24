@@ -127,19 +127,18 @@ Wajib: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (secret/service_role, bukan a
 - Tabel Supabase tertutup untuk `anon/authenticated` (RLS aktif, hak dicabut); hanya service role dari server. **Jangan taruh service role key di frontend.** Setiap query rute pengguna menyertakan `user_id`.
 - Password scrypt; OTP 6 digit HMAC 10 mnt, maks 5 salah (jatah diambil atomik), cooldown kirim ulang 30 dtk; login 8 percobaan/menit per IP+akun; rahasia cron hanya via header `Authorization`; JWT diperiksa algoritma + `timingSafeEqual`, `token_version` mencabut sesi.
 - HTML catatan disaring ulang di server (whitelist tag, hanya `class` `cl`/`done`); frontend memakai `esc()` sebelum `innerHTML`; tautan berita hanya `http(s)`.
-- `Content-Security-Policy-Report-Only` aktif di `vercel.json` (belum memblokir). Buka semua app sekali, pastikan Console bersih, lalu ganti nama header menjadi `Content-Security-Policy`.
+- `Content-Security-Policy` AKTIF (enforce) di `vercel.json`: koneksi/gambar hanya ke host yang terdaftar, `object-src 'none'`, `base-uri/form-action/frame-ancestors 'self'`. `'unsafe-inline'` masih dipakai karena halaman memakai skrip/gaya inline. Diuji di Chromium: semua halaman auth + 10 app terbuka tanpa pelanggaran. Menambah sumber data baru di frontend = tambahkan hostnya ke `connect-src`. Catatan: alamat MT5 bridge selain `127.0.0.1`/`localhost` (mis. IP LAN) akan diblokir CSP; tambahkan ke `connect-src` bila dipakai.
 - Skema ↔ kode sudah dicocokkan (131 query) dan migrasi diuji di Postgres 16 sungguhan. `tests/fakes.js` tidak menegakkan constraint DB → disarankan 1 tes integrasi Postgres asli di CI.
 
-**Belum dikerjakan (keputusan Anda):**
-1. Aktifkan CSP enforce (lihat atas).
-2. Isi `ALLOWED_ORIGINS` di produksi (default CORS `*`).
-3. `GET /api/stream?token=` menaruh JWT di URL → hapus `allowQueryToken` (frontend tidak memakainya).
-4. Brute force lintas IP: batas per akun (trade-off: akun korban bisa dikunci).
-5. Pembatas laju gagal-buka ke memori saat DB error → pertimbangkan gagal-tutup untuk login/OTP.
-6. Cache pengguna 20 dtk per instance: token yang dicabut bisa diterima instance lain ≤20 dtk.
-7. `/api/auth/register` membocorkan email/username terdaftar (`409`).
-8. `evaluateAlerts` maks 2000 alert aktif tanpa urutan → halaman/urutkan bila banyak.
-9. `x-forwarded-for` dipercaya (aman di Vercel, tidak di proxy lain). `/api/admin/*` tanpa pembatas: pakai `ADMIN_TOKEN` ≥32 char. `tests/fixtures/test-key.pem` hanya kunci uji (bisa ditandai pemindai rahasia). Password min 8 tanpa cek kebocoran.
+**Sudah diperbaiki (2026-10-24):** CSP enforce · CORS bawaan tanpa wildcard (hanya same-origin + localhost; isi `ALLOWED_ORIGINS` bila frontend di domain lain) · `/api/stream` tidak lagi menerima token lewat URL · batas login per akun lintas IP (60 / 10 menit) · kunci pembatas laju memakai hash (tidak menyimpan username/email) · MT5 bridge membaca `origins.txt` / `HEADMAPS_ORIGINS` dan memperingatkan bila kosong · `preflight` memperingatkan `ADMIN_TOKEN`/`CRON_SECRET` < 32 karakter.
+
+**Sengaja tidak diubah (trade-off):**
+1. Pembatas laju saat DB error jatuh ke memori per instance; login/OTP butuh DB yang sama, jadi praktis ikut gagal.
+2. `/api/auth/register` membalas 409 untuk username/email terpakai (diperlukan agar pengguna tahu harus ganti username; pesannya sudah digabung).
+3. Cache pengguna 20 dtk per instance: token yang dicabut bisa diterima instance lain <=20 dtk.
+4. `evaluateAlerts` maks 2000 alert aktif tanpa urutan: halaman/urutkan bila banyak.
+5. `/api/admin/*` dibatasi laju per IP (20 / 10 menit) + `ADMIN_TOKEN`: pakai >=32 karakter. `tests/fixtures/test-key.pem` hanya kunci uji (CN=localhost), bisa ditandai pemindai rahasia.
+6. Sesi login (JWT) tersimpan di localStorage; mitigasinya CSP + penyaringan HTML. Password min 8 tanpa cek kebocoran.
 
 ## Realtime (chart)
 `public/shared/rt.js` menggerakkan candle terakhir dari tick, bukan dari polling `/api/candles`. Semua sumber untuk satu simbol berjalan **paralel**; satu **pemimpin** (prioritas tertinggi yang masih segar, batas `STALE` per pasar) yang dipakai, sisanya cadangan. Pemimpin macet → sumber berikutnya mengambil alih otomatis, pulih → kembali ke yang utama. Lencana di legenda chart menampilkan sumber aktif.

@@ -84,7 +84,8 @@ Live.resetSettings=async()=>{if(!Live.on)return;try{await api('/api/settings/pre
 
 // ---------- hydrate dari server ----------
 async function hydrate(){
- const [st,notes,trades,sv]=await Promise.all([api('/api/state'),api('/api/notes?limit=1000'),api('/api/journal/trades?limit=2000'),api('/api/settings/preferences')]);
+ const [st,notes,trades,sv,rtk]=await Promise.all([api('/api/state'),api('/api/notes?limit=1000'),api('/api/journal/trades?limit=2000'),api('/api/settings/preferences'),api('/api/settings/rt-tokens').catch(()=>null)]);
+ if(rtk&&typeof rtk==='object'){CFG.api.rt={finnhub:rtk.finnhub||'',tiingo:rtk.tiingo||''};if(window.RT&&RT.refresh)RT.refresh()}   // token realtime milik akun ini
  const up=[];
  const {bgImage,...sp}=sv||{};srvBg=bgImage||null;prefsLoaded=true;
  if(Object.keys(sp).length)applyPrefs(sp);                                   // server menang

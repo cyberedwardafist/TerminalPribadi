@@ -8,17 +8,19 @@ Setting.page({id:'api',title:'API',color:'#30b158',icon:"<rect x=\"3\" y=\"4\" w
    ${row('Finnhub','Token realtime forex, komoditas, saham AS (<code>finnhub.io</code>)','<input class="in w k" data-rt="finnhub" type="password" autocomplete="off" spellcheck="false" aria-label="Token Finnhub">')}
    ${row('Tiingo','Token realtime forex, emas, saham AS (<code>tiingo.com</code>)','<input class="in w k" data-rt="tiingo" type="password" autocomplete="off" spellcheck="false" aria-label="Token Tiingo">')}
   </div>
-  <div class="sact"><button type="button" class="btn" data-rtt>Tes realtime (6 dtk)</button><button type="button" class="btn" data-apireset>Kosongkan token</button><span class="tst" data-rtres role="status" aria-live="polite"></span></div>
-  <p class="shint">Token hanya tersimpan di browser ini. Di komputer bersama, kosongkan token sebelum keluar.</p>
+  <div class="sact"><button type="button" class="btn" data-rtt>Cek token</button><button type="button" class="btn" data-apireset>Kosongkan token</button><span class="tst" data-rtres role="status" aria-live="polite"></span></div>
+  <p class="shint">Token disimpan di akunmu secara terenkripsi, jadi otomatis ikut saat kamu masuk dari perangkat mana pun.</p>
 `,
  init:({q,qa})=>{
   const rtv=()=>CFG.api.rt||(CFG.api.rt={finnhub:'',tiingo:''});
-  qa('[data-rt]').forEach(i=>{i.value=rtv()[i.dataset.rt]||'';i.oninput=()=>{rtv()[i.dataset.rt]=i.value.trim();cfgSave();clearTimeout(i._t);i._t=setTimeout(()=>window.RT&&RT.refresh(),600)}});
-  q('[data-rtt]').onclick=async e=>{const b=e.currentTarget,o=q('[data-rtres]');if(!window.RT){o.textContent='Fitur realtime belum siap';return}
-   b.disabled=true;o.textContent='Mendengarkan sumber…';o.className='tst';
+  const o0=()=>q('[data-rtres]'),say=(m,c)=>{const o=o0();o.textContent=m;o.className='tst '+(c||'')};
+  const saveSrv=async body=>{try{const r=await apiFetch('/api/settings/rt-tokens',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body)});if(!r.ok){let m='';try{m=(await r.json()).message}catch(e){}throw new Error(m||'Gagal menyimpan')}say('Tersimpan','up')}catch(e){say(e.message||'Gagal menyimpan','dn')}};
+  qa('[data-rt]').forEach(i=>{i.value=rtv()[i.dataset.rt]||'';i.oninput=()=>{rtv()[i.dataset.rt]=i.value.trim();clearTimeout(i._t);i._t=setTimeout(async()=>{await saveSrv({[i.dataset.rt]:rtv()[i.dataset.rt]});if(window.RT)RT.refresh()},700)}});
+  q('[data-rtt]').onclick=async e=>{const b=e.currentTarget,o=q('[data-rtres]');if(!window.RT){o.textContent='Belum siap, coba lagi sebentar';return}
+   b.disabled=true;o.textContent='Memeriksa…';o.className='tst';
    const NM={binance:'Binance',finnhub:'Finnhub',tiingo:'Tiingo',yahoo:'Yahoo',goapi:'Saham IDX',ohlcdev:'Saham IDX'};
    try{const g=await RT.probe(6000),k=Object.keys(g);o.textContent=k.length?k.map(x=>(NM[x]||x)+' '+g[x]+' tick').join(' · '):'Tidak ada data masuk (pasar tutup, token salah, atau sumber sedang sibuk)';o.className='tst '+(k.length?'up':'dn')}
-   catch(x){o.textContent='Tes belum berhasil, coba lagi';o.className='tst dn'}b.disabled=false};
-  q('[data-apireset]').onclick=()=>{CFG.api={...CFG.api,key:'',rt:{finnhub:'',tiingo:''}};cfgSave();qa('[data-rt]').forEach(i=>i.value='');if(window.RT)RT.refresh();const o=q('[data-rtres]');o.className='tst';o.textContent='Token dikosongkan'};
+   catch(x){o.textContent='Belum berhasil, coba lagi';o.className='tst dn'}b.disabled=false};
+  q('[data-apireset]').onclick=async()=>{CFG.api.rt={finnhub:'',tiingo:''};qa('[data-rt]').forEach(i=>i.value='');try{await apiFetch('/api/settings/rt-tokens',{method:'DELETE'});say('Token dikosongkan','up')}catch(e){say('Gagal mengosongkan','dn')}if(window.RT)RT.refresh()};
  }});
 })();

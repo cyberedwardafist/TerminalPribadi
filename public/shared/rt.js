@@ -5,7 +5,7 @@
 //   Saham IDX         : GoAPI + OHLC.dev lewat server (/api/rt/quote, polling 1 dtk; keduanya REST, bukan WS)
 // Pemimpin = sumber berprioritas tertinggi yang masih "segar" (ada data dalam STALE ms). Bila mati/macet, sumber berikutnya otomatis mengambil alih
 // dan kembali ke yang utama saat pulih. Selama pemimpin tetap sama harga tidak bercampur antar sumber, jadi candle tidak goyang.
-// Kunci Finnhub/Tiingo disimpan di localStorage browser ini (CFG.api.rt), TIDAK pernah dikirim ke server aplikasi.
+// Token Finnhub/Tiingo milik akun (terenkripsi di server, /api/settings/rt-tokens), dimuat ke memori (CFG.api.rt) saat masuk; WebSocket-nya langsung dari browser ke penyedia.
 // Kontrak: RT.sub(sym,tf,onTick,onStatus)->off. Tick: {id,src,p,q,ts,k?}; k = kline Binance {t,o,h,l,c,v,x}. RT.bars.apply/merge = logika candle murni (diuji).
 (()=>{
 const gl=typeof globalThis!=='undefined'?globalThis:window;

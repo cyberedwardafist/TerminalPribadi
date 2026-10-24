@@ -227,7 +227,7 @@ test('pengaturan + CORS + 404/405', async () => {
   assert.equal((await call('PUT', '/api/settings/preferences', { theme: 'pelangi' })).status, 400);
   assert.equal((await call('GET', '/api/settings/preferences')).body.theme, 'dark');
   assert.equal((await call('PUT', '/api/settings/layout', { win: { chart: { x: 1 } } })).status, 200);
-  const o = await call('OPTIONS', '/api/candles'); assert.equal(o.status, 204); assert.equal(o.headers.get('access-control-allow-origin'), '*');
+  const o = await call('OPTIONS', '/api/candles'); assert.equal(o.status, 204); assert.equal(o.headers.get('access-control-allow-origin'), null);   // bawaan: tanpa wildcard CORS
   assert.equal((await call('PATCH', '/api/health')).status, 405);
   assert.equal((await call('GET', '/api/tidak-ada')).status, 404);
   assert.equal((await call('GET', '/api/health?deep=1', undefined, ADM)).body.db, 'ok');
@@ -432,4 +432,38 @@ test('berita: Finnhub dan Alpha Vantage aktif hanya bila kunci diisi; Alpha Vant
     await refreshNews(); assert.equal(state.avCalls, 1, 'panggilan kedua dalam 6 jam dilewati');
     assert.ok(!JSON.stringify(rep).includes('secret'), 'laporan cron tidak memuat kunci');
   } finally { delete process.env.FINNHUB_API_KEY; delete process.env.ALPHAVANTAGE_API_KEY; }
+});
+
+test('token realtime pribadi: tersimpan terenkripsi per akun, bisa dibaca lagi, tidak bocor lewat /api/state', async () => {
+  // memakai sesi login dari test sebelumnya (token terisi)
+  assert.ok(token, 'butuh sesi login');
+  let r = await call('GET', '/api/settings/rt-tokens');
+  assert.equal(r.status, 200); assert.deepEqual(r.body, { finnhub: '', tiingo: '' });
+  r = await call('PUT', '/api/settings/rt-tokens', { finnhub: 'abcDEF123_token-xyz' });
+  assert.equal(r.status, 200); assert.equal(r.body.finnhub, 'abcDEF123_token-xyz');
+  r = await call('PUT', '/api/settings/rt-tokens', { tiingo: 'tiingoKEY987' });   // mengubah satu tidak menghapus yang lain
+  assert.deepEqual(r.body, { finnhub: 'abcDEF123_token-xyz', tiingo: 'tiingoKEY987' });
+  assert.deepEqual((await call('GET', '/api/settings/rt-tokens')).body, { finnhub: 'abcDEF123_token-xyz', tiingo: 'tiingoKEY987' });
+  // di database hanya ciphertext
+  const rows = JSON.stringify(fdb.tbl('user_state'));
+  assert.ok(!rows.includes('abcDEF123_token-xyz') && !rows.includes('tiingoKEY987') && rows.includes('v1.'));
+  // tidak ikut /api/state
+  assert.ok(!('rt.tokens' in (await call('GET', '/api/state')).body));
+  assert.equal((await call('PUT', '/api/settings/rt-tokens', { finnhub: 'a b<script>' })).status, 400);
+  assert.equal((await call('DELETE', '/api/settings/rt-tokens')).status, 200);
+  assert.deepEqual((await call('GET', '/api/settings/rt-tokens')).body, { finnhub: '', tiingo: '' });
+});
+
+test('keamanan: CORS tanpa wildcard, token query ditolak, stream butuh header', async () => {
+  const acao = async origin => (await call('OPTIONS', '/api/candles', undefined, { origin })).headers.get('access-control-allow-origin');
+  assert.equal(await acao('https://situs-jahat.example'), null, 'origin asing tidak diizinkan');
+  assert.equal(await acao('http://localhost:3000'), 'http://localhost:3000', 'localhost (dev) tetap boleh');
+  process.env.ALLOWED_ORIGINS = 'https://app.example';
+  assert.equal(await acao('https://app.example'), 'https://app.example');
+  assert.equal(await acao('https://situs-jahat.example'), null);
+  delete process.env.ALLOWED_ORIGINS;
+  process.env.ENABLE_STREAM = '1';
+  const saved = token, jwt = token; token = '';
+  assert.equal((await call('GET', '/api/stream?symbols=BTCUSDT&token=' + jwt)).status, 401, 'token lewat URL tidak diterima lagi');
+  token = saved; delete process.env.ENABLE_STREAM;
 });

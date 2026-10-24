@@ -3,3 +3,5 @@ node_modules
 .env
 .env.*
 !.env.example
+mt5-bridge/origins.txt
+mt5-bridge/.venv

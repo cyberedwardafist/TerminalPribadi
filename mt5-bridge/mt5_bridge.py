@@ -14,6 +14,7 @@ Pengaturan lewat environment variable (semua opsional):
   HEADMAPS_HOST      alamat bind, bawaan 127.0.0.1 (hanya komputer ini). Isi 0.0.0.0 agar perangkat lain di LAN bisa memakai.
   HEADMAPS_PORT      bawaan 8765
   HEADMAPS_ORIGINS   daftar Origin halaman yang boleh tersambung, dipisah koma (mis. https://appku.vercel.app,http://localhost:3000). Kosong = semua.
+                     Alternatif tanpa env: buat berkas origins.txt di folder ini berisi alamat yang sama (satu baris, dipisah koma). SANGAT DISARANKAN diisi.
   HEADMAPS_POLL_MS   jeda baca tick, bawaan 200
   MT5_PATH           lokasi terminal64.exe bila MT5 tidak terdeteksi otomatis
 
@@ -41,7 +42,21 @@ DEFAULT = "XAUUSD,XAGUSD,EURUSD,GBPUSD,USDJPY,AUDUSD,USDCAD,USDCHF,NZDUSD,EURJPY
 HOST = os.environ.get("HEADMAPS_HOST", "127.0.0.1")
 PORT = int(os.environ.get("HEADMAPS_PORT", "8765"))
 WANT = [s.strip().upper() for s in os.environ.get("HEADMAPS_SYMBOLS", DEFAULT).split(",") if s.strip()]
-ORIGINS = [o.strip() for o in os.environ.get("HEADMAPS_ORIGINS", "").split(",") if o.strip()] or None
+def _origins():
+    """Daftar Origin yang boleh tersambung: env HEADMAPS_ORIGINS, atau berkas origins.txt di folder ini (satu baris, dipisah koma).
+    Kosong = semua halaman web di peramban ini bisa membaca harga dari bridge (tetap hanya harga, tapi sebaiknya dibatasi)."""
+    raw = os.environ.get("HEADMAPS_ORIGINS", "")
+    if not raw.strip():
+        try:
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "origins.txt"), encoding="utf-8") as f:
+                raw = " ".join(l.split("#", 1)[0] for l in f)
+        except OSError:
+            raw = ""
+    out = [o.strip().rstrip("/") for o in raw.replace(" ", ",").split(",") if o.strip()]
+    return out or None
+
+
+ORIGINS = _origins()
 POLL = max(0.05, int(os.environ.get("HEADMAPS_POLL_MS", "200")) / 1000)
 REF_EVERY = 20  # detik
 TF = {"1m": "TIMEFRAME_M1", "5m": "TIMEFRAME_M5", "15m": "TIMEFRAME_M15", "1h": "TIMEFRAME_H1", "4h": "TIMEFRAME_H4"}
@@ -214,6 +229,9 @@ async def main():
     if not MAP:
         log("Tidak ada simbol yang cocok. Tambahkan simbol ke Market Watch MT5 atau atur HEADMAPS_SYMBOLS.")
         sys.exit(1)
+    if ORIGINS is None:
+        log("PERINGATAN: HEADMAPS_ORIGINS / origins.txt belum diisi, halaman web MANA PUN di peramban ini bisa membaca harga dari bridge.")
+        log("             Isi origins.txt dengan alamat app kamu, mis. https://appku.vercel.app,http://localhost:3000")
     log("Simbol:", ", ".join("%s%s" % (c, "" if c == b else " (%s)" % b) for c, b in MAP.items()))
     async with serve(handler, HOST, PORT, origins=ORIGINS):
         log("Headmaps bridge aktif di ws://%s:%d" % (HOST, PORT))
