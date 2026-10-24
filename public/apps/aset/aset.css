@@ -280,3 +280,18 @@
 @container as (max-width:520px){.as-kp6{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
 
 .as-ic{flex:none!important}
+
+/* form jual: pilih aset lewat kartu (seperti pilih jenis di form tambah) */
+.as-hold{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:196px;overflow:auto;padding:1px}
+.as-hcd{display:flex;align-items:center;gap:10px;margin:0;padding:9px 11px;border:1px solid var(--line);border-radius:12px;background:var(--win2);text-align:left;min-width:0}
+.as-hcd:hover:not(:disabled){border-color:color-mix(in srgb,var(--ink) 35%,var(--line))}
+.as-hcd[aria-checked=true]{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 13%,var(--win2));box-shadow:0 0 0 1px var(--acc) inset}
+.as-hcd:disabled{cursor:default}
+.as-hcd .as-ic{width:28px;height:28px;font-size:12px}
+.as-hct{display:flex;flex-direction:column;flex:1;min-width:0}.as-hct b{font-weight:600;font-size:13px}
+.as-hct small,.as-hcv small{font-size:11px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.as-hcv{display:flex;flex-direction:column;align-items:flex-end;flex:none;font-variant-numeric:tabular-nums}.as-hcv b{font-size:12px;font-weight:600}
+.as-hcv small.up{color:var(--up)}.as-hcv small.dn{color:var(--dn)}
+.as-hold:has(.as-hcd:only-child){grid-template-columns:minmax(0,1fr)}
+.as-hvb{padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--ink) 4%,var(--win2));color:var(--ink)}
+@container as (max-width:720px){.as-hold{grid-template-columns:minmax(0,1fr)}}

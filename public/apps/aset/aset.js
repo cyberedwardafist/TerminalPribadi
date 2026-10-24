@@ -459,7 +459,7 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:1020,h:720,flush:1,
    const title=sell?(e?'Ubah penjualan':'Jual aset'):(e?'Ubah pembelian':'Tambah aset');
    const fm=openForm(`<form class="as-fm" novalidate aria-label="${title}">
     <header class="as-fh"><h3>${title}</h3><button type="button" class="as-ib" data-a="x" aria-label="Tutup">${Icon('x')}</button></header>
-    ${sell?`<div class="as-f"><label class="as-fl" for="as-key">Aset yang dijual</label>${e?`<input class="as-in" id="as-key" value="${esc(h0.sym)}" disabled><input type="hidden" name="key" value="${esc(h0.key)}">`:`<select class="as-in" id="as-key" name="key">${hsel.map(h=>`<option value="${esc(h.key)}"${h.key===h0.key?' selected':''}>${esc(h.sym)} · ${TY[h.ty].n} · ${qt(h.ty,h.u)}</option>`).join('')}</select>`}</div><div class="as-hvb" data-hv></div>`
+    ${sell?`<div class="as-f"><span class="as-fl" id="as-hl">Aset yang dijual</span><input type="hidden" name="key" value="${esc(h0.key)}"><div class="as-hold" role="radiogroup" aria-labelledby="as-hl">${(e?[h0]:hsel).map(h=>{const c=cur(h),val=h.u*c.p,pl=val-h.cost;return`<button type="button" role="radio" class="as-hcd" data-key="${esc(h.key)}" aria-checked="${h.key===h0.key}"${e?' disabled':''}>${nm(h)}<span class="as-hct"><b>${esc(h.sym)}</b><small>${TY[h.ty].n} · ${qt(h.ty,h.u)}</small></span><span class="as-hcv"><b>${rp(val)}</b><small class="${cl(Math.round(pl))}">${rp(pl,1)}</small></span></button>`}).join('')}</div></div><div class="as-hvb" data-hv></div>`
      :`<div class="as-f"><span class="as-fl" id="as-tyl">Jenis aset</span><div class="as-ty" role="radiogroup" aria-labelledby="as-tyl">${TK.map(k=>`<button type="button" role="radio" class="as-tc" data-ty="${k}" aria-checked="${k===ty}"><span>${dotOf(k)}${TY[k].n}</span><small>${TY[k].hint}</small></button>`).join('')}</div></div>
       <div class="as-f"><label class="as-fl" for="as-sym">Kode / nama aset</label><input class="as-in" id="as-sym" name="sym" value="${esc(e?e.sym:o.sym||'')}" autocomplete="off" maxlength="40"><div class="as-sg" data-sg></div></div>`}
     <div class="as-row2">
@@ -514,7 +514,7 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:1020,h:720,flush:1,
      pos.innerHTML=`<h4>Sisa posisi</h4><div class="as-pg3"><div><span>Jumlah</span><b>${ru>EPS?qt(ty,ru,1):'habis terjual'}</b></div><div><span>Harga rata-rata</span><b>${rp(h.avg*pm)}</b><small>tetap, per ${pm===1?T.b:u[1].toLowerCase()}</small></div><div><span>Modal tersisa</span><b>${rp(ru>EPS?h.cost*ru/h.u:0)}</b></div></div>`}
     else pos.innerHTML='';
     if(sell){const h=curH();
-     $('[data-hv]',fm).innerHTML=`Dimiliki <b>${qt(h.ty,h.u,1)}</b> · harga rata-rata <b>${rp(h.avg)}</b> · modal <b>${rp(h.cost)}</b>`;
+     $('[data-hv]',fm).innerHTML=`<div class="as-pg3"><div><span>Dimiliki</span><b>${qt(h.ty,h.u,1)}</b></div><div><span>Harga rata-rata</span><b>${rp(h.avg*u[3])}</b><small>per ${u[3]===1?T.b:u[1].toLowerCase()}</small></div><div><span>Modal</span><b>${rp(h.cost)}</b></div></div>`;
      if(base>0&&base>h.u+EPS){pv.innerHTML=`<span class="dn">Melebihi yang dimiliki (${qt(h.ty,h.u)})</span>`;return}
      if(base>0&&pIdr>0){const val=base*pIdr,cost=h.cost*base/h.u,pl=val-cost;
       pv.innerHTML=`<span>Hasil jual</span><b>${rp(val)}</b><small>${usdc?`${usd(pvv/u[3]*base)} · kurs ${nfp.format(fxv)} · `:''}modal ${rp(cost)} · <em class="${cl(Math.round(pl))}">${pl>=0?'untung':'rugi'} ${rp(pl,1)}${cost?' ('+pct(pl/cost*100)+')':''}</em></small>`;return}
@@ -553,6 +553,7 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:1020,h:720,flush:1,
    fm.onclick=ev=>{
     const b=ev.target.closest('button');if(!b)return;
     if(b.dataset.ty){setType(b.dataset.ty);f.sym.focus();return}
+    if(b.dataset.key){if(b.disabled)return;f.key.value=b.dataset.key;$$('[data-key]',fm).forEach(x=>x.setAttribute('aria-checked',String(x===b)));const h=curH();ty=h.ty;uk=defUnit(h);cu=TY[ty].cur[0];f.q.value='';f.p.value='';fillUnits();initPrice();calc();f.q.focus();return}
     if(b.dataset.u){setUnit(b.dataset.u);return}
     if(b.dataset.c){setCur(b.dataset.c);return}
     if(b.dataset.sym){f.sym.value=b.dataset.sym;fillSg();calc();f.q.focus();return}
