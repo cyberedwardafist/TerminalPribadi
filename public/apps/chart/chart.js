@@ -161,10 +161,15 @@ function symPicker(w,anchor,mode){
  const row=(s,n,r)=>`<button class="ct-r" data-s="${esc(s)}"><b>${esc(s)}</b><span>${esc(n)}</span><em>${r||''}</em></button>`;
  pop(w,anchor,`<input class="ct-in" placeholder="Cari simbol…" aria-label="Cari simbol"><div class="ct-ls"></div>`,p=>{
   const inp=$('input',p),ls=$('.ct-ls',p);
-  const fill=()=>{const q=inp.value.trim().toUpperCase(),m=WATCH.filter(r=>!q||r[0].includes(q)||r[1].toUpperCase().includes(q));
-   ls.innerHTML=m.map(r=>row(r[0],r[1],pc(r[3]))).join('')+(q&&!WATCH.some(r=>r[0]===q)&&/^[A-Z0-9.:_-]{2,16}$/.test(q)?row(q,'Buka simbol ini',''):'')||'<p class="ct-em">Tidak ada hasil</p>'};
-  fill();inp.oninput=fill;inp.onkeydown=e=>{if(e.key==='Enter'){const b=$('.ct-r',ls);if(b)b.click()}};
-  ls.onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;closePop(w);mode==='new'?addTab(w,b.dataset.s):setSym(w,b.dataset.s);save(w)};
+  let rr=[],rt=0;
+  const fill=()=>{const q=inp.value.trim().toUpperCase(),m=WATCH.filter(r=>!q||r[0].includes(q)||r[1].toUpperCase().includes(q)),
+    rx=rr.filter(o=>!WATCH.some(r=>r[0]===o.sym));
+   ls.innerHTML=m.map(r=>row(r[0],r[1],pc(r[3]))).join('')+rx.map(o=>row(o.sym,o.name+(o.exchange?' · '+o.exchange:''),'')).join('')+(q&&!rx.length&&!WATCH.some(r=>r[0]===q)&&/^[A-Z0-9.:_-]{2,16}$/.test(q)?row(q,'Buka simbol ini',''):'')||'<p class="ct-em">Tidak ada hasil</p>'};
+  fill();
+  inp.oninput=()=>{fill();clearTimeout(rt);const q=inp.value.trim();if(q.length<2||typeof apiOn!=='function'||!apiOn())return;
+   rt=setTimeout(async()=>{try{const r=await apiFetch('/api/symbols?remote=1&limit=20&q='+encodeURIComponent(q));if(!r.ok)return;const j=await r.json();if(inp.value.trim()===q&&p.isConnected&&Array.isArray(j)){rr=j.filter(o=>o&&o.sym);fill()}}catch(e){}},300)};
+  inp.onkeydown=e=>{if(e.key==='Enter'){const b=$('.ct-r',ls);if(b)b.click()}};
+  ls.onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;const o=rr.find(x=>x.sym===b.dataset.s);if(o&&typeof SymReg!=='undefined')SymReg.add(o.sym,o.name,o.market);closePop(w);mode==='new'?addTab(w,b.dataset.s):setSym(w,b.dataset.s);save(w)};
   inp.focus()})}
 function tabSearch(w,anchor){const R=w._r;
  pop(w,anchor,`<div class="ct-ls">${R.tabs.map(t=>`<div class="ct-r${t.id===R.act?' on':''}" data-id="${t.id}">${typeof SymIcon!=='undefined'?SymIcon.html(t.sym,16):''}<b>${esc(t.sym)}</b><span>${t.tf} · ${TYPES[t.type]}</span><button class="ct-x" aria-label="Tutup tab">×</button></div>`).join('')}</div>`,p=>{

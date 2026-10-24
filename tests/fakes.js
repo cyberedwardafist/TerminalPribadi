@@ -102,6 +102,7 @@ export function installFetch(db, state = {}) {
       const ps = decodeURIComponent(new URL(url).pathname.split('/').pop()), b = series(ps, 260, 86400, PRICE[ps] ?? 50);
       return j({ chart: { result: [{ meta: { regularMarketPrice: b.at(-1).c, longName: ps, currency: 'USD', exchangeName: 'X', regularMarketTime: b.at(-1).t }, timestamp: b.map(x => x.t), indicators: { quote: [{ open: b.map(x => x.o), high: b.map(x => x.h), low: b.map(x => x.l), close: b.map(x => x.c), volume: b.map(x => x.v) }] } }] } });
     }
+    if (url.includes('/v1/finance/search')) return j({ quotes: [{ symbol: 'DSSA.JK', longname: 'PT Dian Swastatika Sentosa Tbk', exchDisp: 'Jakarta', quoteType: 'EQUITY' }, { symbol: 'BBCA.JK', shortname: 'Bank Central Asia', exchDisp: 'Jakarta', quoteType: 'EQUITY' }, { symbol: 'DSSA-USD', shortname: 'Opsi', quoteType: 'OPTION' }] });
     if (url.startsWith('https://fc.yahoo.com')) return new Response('', { status: 404, headers: { 'set-cookie': 'A3=abc; Path=/; Domain=.yahoo.com' } });
     if (url.includes('/v1/test/getcrumb')) return new Response('crumb123', { status: 200 });
     if (url.includes('/v7/finance/quote')) { if (state.ycapFail) return new Response('{}', { status: 429 }); const u = new URL(url); state.ycapCrumb = u.searchParams.get('crumb'); const caps = { 'BBCA.JK': [1.2e15, 'IDR'], 'BBRI.JK': [8e11, 'USD'], AAPL: [3.9e12, 'USD'] }; return j({ quoteResponse: { result: u.searchParams.get('symbols').split(',').filter(x => caps[x]).map(x => ({ symbol: x, marketCap: caps[x][0], currency: caps[x][1] })) } }); }

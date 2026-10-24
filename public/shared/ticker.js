@@ -11,14 +11,14 @@ const live=()=>!!(window.Live&&Live.on);
 const src={},rf={};let run=null,again=false,last=null,busy=false;
 const listSyms=()=>{try{const j=JSON.parse(localStorage.getItem('tc.watchlist')||'null');if(j&&Array.isArray(j.lists))return j.lists.flatMap(l=>Array.isArray(l.syms)?l.syms:[])}catch(e){}return[]};
 // kuote nyata saja: simbol harus sudah punya data dari server (Live.extra), bukan angka bawaan data.js
-const quote=s=>{if(!live()||typeof WATCH==='undefined')return null;const r=WATCH.find(x=>x[0]===s)||WATCH.find(x=>x[0]===s+'USDT');return r&&Live.extra[r[0]]?{p:r[2],c:r[3],k:r[0]}:null};
+const quote=s=>{if(!live()||typeof WATCH==='undefined')return null;const r=WATCH.find(x=>x[0]===s)||WATCH.find(x=>x[0]===s+'USDT')||WATCH.find(x=>x[0]===s+'USD');return r&&Live.extra[r[0]]?{p:r[2],c:r[3],k:r[0]}:null};
 const fmt=(s,c,p)=>{const u=c>=0?'tk-u':'tk-d';
- return`<span class="tk-i"><b>${esc(s)}</b><span class="${u} tk-a">${c>=0?Icon('triup'):Icon('tridn')}</span>${p>0?`<span>${esc(f(p))}</span>`:''}<span class="${u}">${(c>=0?'+':'\u2212')+Math.abs(c).toFixed(2).replace('.',',')}%</span></span>`};
+ return`<span class="tk-i"><b>${esc(s)}</b><span class="${u} tk-a">${c>=0?Icon('triup'):Icon('tridn')}</span>${p>0?`<span>${esc(p<1?p.toLocaleString('id-ID',{maximumSignificantDigits:4}):f(p))}</span>`:''}<span class="${u}">${(c>=0?'+':'\u2212')+Math.abs(c).toFixed(2).replace('.',',')}%</span></span>`};
 async function build(){
  const seen=new Set(),out=[];
  for(const s of listSyms()){if(seen.has(s))continue;const q=quote(s);if(!q)continue;seen.add(s);seen.add(q.k);out.push(fmt(s,q.c,q.p))}
  for(const k in src){let rows=[];try{rows=await src[k]()}catch(e){}
-  for(const r of rows){if(seen.has(r.s)||!(typeof r.c==='number'))continue;seen.add(r.s);const q=quote(r.s);if(q){if(seen.has(q.k))continue;seen.add(q.k);out.push(fmt(r.s,q.c,q.p))}else out.push(fmt(r.s,r.c,0))}}
+  for(const r of rows){if(seen.has(r.s)||!(typeof r.c==='number'))continue;seen.add(r.s);const q=quote(r.s);if(q){if(seen.has(q.k))continue;seen.add(q.k);out.push(fmt(r.s,q.c,q.p))}else out.push(fmt(r.s,r.c,r.p>0?r.p:0))}}
  return out}
 async function start(){
  if(run||busy||document.hidden||!live())return;busy=true;again=false;

@@ -16,6 +16,7 @@ let W={lists:[{id:1,name:'Favorit',syms:['BTCUSDT','ETHUSDT','XAUUSD','EURUSD','
 try{const j=JSON.parse(localStorage.getItem(KEY)||'null');if(j&&Array.isArray(j.lists)&&j.lists.length)W={...W,...j}}catch(e){}
 W.lists.forEach(l=>l.syms=l.syms.filter(s=>X[s]));if(!W.lists.some(l=>l.id===W.act))W.act=W.lists[0].id;
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(W))}catch(e){}},L=()=>W.lists.find(l=>l.id===W.act);
+let RX={},RXQ='',RT=0;   // hasil pencarian server (simbol di luar daftar bawaan), berlaku untuk kueri RXQ
 let V={t:'list'},Q='',SEL=null,TS=0,FAULT=null,STALE=null,BUSY=false,LG=0;const HAVE=()=>ALL.some(x=>x.p!=null);
 const sig=x=>x.p==null?['Tanpa data','']:x.rsi!=null&&x.rsi>70?['Jenuh beli','w']:x.rsi!=null&&x.rsi<30?['Jenuh jual','w']:x.rsi!=null&&x.c>1&&x.rsi>=55?['Momentum','up']:x.rsi!=null&&x.c<-1&&x.rsi<=45?['Melemah','dn']:['Netral',''];
 const spark=x=>{const a=x.ser;if(!a||a.length<2)return'<span class="wl-na">\u2013</span>';const mn=Math.min(...a),d=Math.max(...a)-mn||1;return`<svg class="wl-sp ${cls(x.c)}" viewBox="0 0 64 20" aria-hidden="true"><polyline points="${a.map((v,i)=>(i*64/(a.length-1)).toFixed(1)+','+(18-(v-mn)/d*16).toFixed(1)).join(' ')}"/></svg>`};
@@ -25,6 +26,7 @@ function rows(){const q=Q.trim().toUpperCase(),mt=x=>!q||x.s.includes(q)||x.n.to
  if(V.t==='list'){const ss=L().syms;r=ss.map(s=>X[s]).filter(mt);if(q)ex=ALL.filter(x=>!ss.includes(x.s)&&mt(x)).slice(0,12)}
  else if(V.t==='mk')r=ALL.filter(x=>(V.k==='all'||x.m===V.k)&&mt(x));
  else r=ALL.filter(x=>x.p!=null&&SCF[V.k](x)).filter(mt).sort((a,b)=>SCO[V.k](a)-SCO[V.k](b));
+ if(q&&RXQ===q&&V.t!=='scr')ex=ex.concat(Object.values(RX).filter(x=>!X[x.s]&&(V.t!=='mk'||V.k==='all'||x.m===V.k)));
  if(W.sort){const k=W.sort.k,d=W.sort.d;r=[...r].sort((a,b)=>{const A=a[k],B=b[k];if(A==null||B==null)return A==null&&B==null?0:A==null?1:-1;return(A>B?1:A<B?-1:0)*d})}
  return{r,ex}}
 const row=x=>{const on=L().syms.includes(x.s),al=W.al[x.s],sg=sig(x),fl=x.f&&!S.still?(x.f>0?' flu':' fld'):'';
@@ -63,10 +65,16 @@ registerApp('watchlist',{css:'apps/watchlist/watchlist.css',icon:"<path d=\"M9 6
   const onQ=()=>{if(!w.isConnected){off();return}applyLive();LG=Date.now();const was=FAULT||STALE;FAULT=null;STALE=null;if(checkAlerts())return;if(was)paint();else patch()};
   const onF=async()=>{if(!w.isConnected){off();return}if(BUSY)return;const i=await Fault.explain(Live.q.err,{what:'quotes'}),cur=HAVE()?STALE:FAULT;if(cur&&cur.kind===i.kind&&cur.tech===i.tech)return;if(HAVE()){STALE=i;FAULT=null}else FAULT=i;paint()};
   const off=()=>{window.removeEventListener('tc:quotes',onQ);window.removeEventListener('tc:qfail',onF)};
-  const toggle=s=>{const l=L(),i=l.syms.indexOf(s);i<0?l.syms.push(s):l.syms.splice(i,1);save();paint()};
+  const adopt=s=>{const x=RX[s];if(X[s]||!x)return !!X[s];if(!SymReg.add(x.s,x.n,x.m))return false;X[x.s]=x;ALL.push(x);delete RX[s];(W.custom=W.custom||[]).push([x.s,x.n,x.m]);return true};
+  const toggle=s=>{if(!X[s]&&!adopt(s)){toast('Batas simbol tambahan tercapai');return}const l=L(),i=l.syms.indexOf(s);const added=i<0;added?l.syms.push(s):l.syms.splice(i,1);save();paint();if(added&&X[s].p==null)sync(true)};
+  // cari ke server (katalog + Yahoo) untuk simbol di luar daftar bawaan, mis. saham IDX lain
+  const remote=q=>{clearTimeout(RT);const t=q.trim().toUpperCase();if(t.length<2||typeof apiOn!=='function'||!apiOn())return;
+   RT=setTimeout(async()=>{try{const r=await apiFetch('/api/symbols?remote=1&limit=20&q='+encodeURIComponent(t));if(!r.ok)return;const j=await r.json();if(!Array.isArray(j)||Q.trim().toUpperCase()!==t||!w.isConnected)return;
+     RX={};for(const o of j){const s=String(o.sym||'').toUpperCase();if(!s||X[s])continue;RX[s]={s,n:SymReg.clean(o.name)||s,m:['idx','cry','com','fx','us','ind'].includes(o.market)?o.market:'us',p:null,c:null,op:null,ser:[],vr:null,rsi:null,pos:null,f:0}}
+     RXQ=t;paint()}catch(e){}},350)};
   const go=s=>{S.sym=s;S.go=s;open('chart')};
   // ----- event -----
-  q('.wl-q').oninput=e=>{Q=e.target.value;paint()};
+  q('.wl-q').oninput=e=>{Q=e.target.value;paint();remote(Q)};
   q('.wl-q').onkeydown=e=>{if(e.key==='Escape'&&Q){Q='';e.target.value='';paint();e.stopPropagation()}};
   w.addEventListener('click',e=>{const b=e.target.closest('button,.wl-tab,tr[data-s]');if(!b)return;
    if(b.dataset.ft==='retry'){sync(true);return}

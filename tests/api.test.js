@@ -66,6 +66,14 @@ test('login dibatasi setelah terlalu banyak percobaan', async () => {
   assert.equal(last.status, 429); assert.ok(last.headers.get('retry-after')); token = saved;
 });
 
+test('pencarian simbol: saham di luar katalog (DSSA) ditemukan lewat Yahoo, duplikat katalog dan tipe asing dibuang', async () => {
+  let r = await call('GET', '/api/symbols?q=dssa'); assert.equal(r.body.length, 0, 'tanpa remote hanya katalog');
+  r = await call('GET', '/api/symbols?q=dssa&remote=1'); assert.equal(r.status, 200);
+  assert.deepEqual(r.body.map(x => x.sym), ['DSSA.JK']);
+  assert.equal(r.body[0].market, 'idx'); assert.equal(r.body[0].remote, true);
+  r = await call('GET', '/api/quotes?symbols=DSSA.JK'); assert.equal(r.status, 200); assert.equal(r.body[0].sym, 'DSSA.JK'); assert.ok(r.body[0].price > 0);
+});
+
 test('data pasar: candles, quotes, simbol, heatmap, screener, UDF', async () => {
   let r = await call('GET', '/api/candles?symbol=BTCUSDT&tf=1h&limit=50');
   assert.equal(r.status, 200); assert.equal(r.body.length, 50); assert.ok(r.body[0].t < r.body[49].t); assert.ok('o' in r.body[0] && 'v' in r.body[0]);
@@ -79,6 +87,7 @@ test('data pasar: candles, quotes, simbol, heatmap, screener, UDF', async () => 
   assert.equal(r.body[0].changePct, 1.5);
   assert.equal((await call('GET', '/api/symbols?q=bank')).body[0].market.length > 0, true);
   r = await call('GET', '/api/heatmap?market=kripto&range=1d'); assert.ok(r.body.length > 10); assert.ok(r.body.every(x => x.group && x.sym && typeof x.cap === 'number' && typeof x.changePct === 'number'));
+  assert.ok(r.body.filter(x => x.price != null).every(x => x.price > 0) && r.body.some(x => x.price > 0), 'heatmap ikut membawa harga untuk ticker');
   assert.equal((await call('GET', '/api/heatmap?market=salah')).status, 400);
   r = await call('GET', '/api/screener?type=up'); assert.equal(r.status, 200); assert.ok(r.body.every(q => q.changePct > 0));
   r = await call('GET', '/api/summary'); assert.ok(r.body.indices.length && r.body.status.kripto === 'open');

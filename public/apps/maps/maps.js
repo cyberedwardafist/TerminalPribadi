@@ -17,12 +17,12 @@ const CACHE={};
 async function load0(mk=M.mk,rg=M.rg,force=false){const k=mk+'|'+rg;if(CACHE[k]&&!force)return CACHE[k];
  const j=await apiJson(`/api/heatmap?market=${mk}&range=${rg.toLowerCase()}`);
  if(!Array.isArray(j)||!j.length)throw new ApiError('empty',{what:'heatmap',path:'/api/heatmap'});
- const m={};j.forEach(x=>(m[x.group]=m[x.group]||[]).push({s:x.sym,v:x.cap,c:x.changePct}));
+ const m={};j.forEach(x=>(m[x.group]=m[x.group]||[]).push({s:x.sym,v:x.cap,c:x.changePct,p:x.price}));
  return CACHE[k]=Object.entries(m).map(([n,it])=>({n,it}))}
 const load=()=>load0();
 // Running text menubar: semua simbol dari kelima pasar Maps (ubah% 1D). Hanya data nyata; tanpa mode Live kosong. Stablecoin dilewati (server memberi ubah% 0 sebagai penanda statis, bukan harga nyata)
 if(window.Ticker){
- const all=async()=>{if(!apiOn())return[];const o=[];for(const m of MKT){let g=null;try{g=await load0(m[0],'1D')}catch(e){}if(g)g.forEach(x=>x.it.forEach(t=>{if(!STABLE.includes(t.s))o.push({s:t.s,c:t.c})}))}return o};
+ const all=async()=>{if(!apiOn())return[];const o=[];for(const m of MKT){let g=null;try{g=await load0(m[0],'1D')}catch(e){}if(g)g.forEach(x=>x.it.forEach(t=>{if(!STABLE.includes(t.s))o.push({s:t.s,c:t.c,p:t.p})}))}return o};
  const snap=()=>{const o={};for(const k in CACHE)if(k.endsWith('|1D'))CACHE[k].forEach(x=>x.it.forEach(t=>o[k+t.s]=t.c));return o};
  // true bila ada ubah% simbol Maps yang berbeda dari sebelumnya: ambil ulang /api/heatmap semua pasar (1D)
  const refresh=async()=>{if(!apiOn())return false;await all();const before=snap();

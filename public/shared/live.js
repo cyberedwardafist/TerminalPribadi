@@ -174,5 +174,6 @@ Live.ready=(async()=>{
   await Promise.race([Promise.all([Live.pull().catch(()=>0),hydrate()]),new Promise((_,no)=>setTimeout(()=>no(new Error('timeout')),7000))]);
   Live.status='live'}
  catch(e){Live.status='sebagian: '+e.message;console.warn('[live]',e.message)}
+ if(window.SymReg)SymReg.load();
  install();setInterval(quotesTick,10000);bgSync()})();
 })();
