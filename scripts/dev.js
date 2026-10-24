@@ -59,9 +59,6 @@ function stat(req, res) {
   if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
   if (!fs.existsSync(file)) { res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }); return res.end('Tidak ditemukan'); }
   const type = MIME[path.extname(file)] || 'application/octet-stream';
-  // Halaman ini dilayani oleh server yang SAMA dengan /api, jadi frontend harus langsung mode Live (bukan Dummy). Dengan mode Dummy,
-  // akun dan OTP hanya ada di browser: backend tidak pernah dipanggil dan email tidak pernah dikirim.
-  if (p.endsWith('/shared/config.js')) { res.writeHead(200, { 'content-type': type, 'cache-control': 'no-cache' }); return res.end('window.TC_LIVE=true;\n' + fs.readFileSync(file, 'utf8')); }
   res.writeHead(200, { 'content-type': type, 'cache-control': 'no-cache' });
   fs.createReadStream(file).pipe(res);
 }

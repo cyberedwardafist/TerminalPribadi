@@ -28,7 +28,7 @@ const KIND={
  auth:{t:'Sesi login berakhir',c:'Server menolak permintaan karena sesi loginmu sudah tidak berlaku.',s:['Masuk lagi untuk melanjutkan']},
  limit:{t:'Terlalu banyak permintaan',c:'Server membatasi jumlah permintaan sementara waktu.',s:['Tunggu sekitar satu menit lalu coba lagi']},
  notfound:{t:'Backend tidak ditemukan',c:'Alamat ini tidak menjalankan backend aplikasi (HTTP 404).',s:['Jalankan lewat "npm run dev" atau deploy yang menyertakan folder api','Periksa Setting > API']},
- nolive:{t:'Mode Live belum aktif',c:'Aplikasi ini hanya menampilkan data nyata. Mode API sedang Dummy atau alamat server belum diisi, jadi tidak ada data yang bisa ditampilkan.',s:['Buka Setting > API lalu pilih mode Live','Isi alamat server bila dijalankan lokal']},
+ nolive:{t:'Alamat server belum diatur',c:'Aplikasi ini hanya menampilkan data nyata dari server. Halaman dibuka tanpa alamat server (mis. lewat file://), jadi tidak ada data yang bisa ditampilkan.',s:['Jalankan lewat npm run dev atau buka dari alamat deploy','Atau isi Base URL di Setting > API']},
  nologin:{t:'Belum masuk ke akun',c:'Data nyata diambil dengan akunmu. Tidak ada sesi login yang aktif.',s:['Masuk dulu, lalu data akan dimuat']},
  empty:{t:'Tidak ada data',c:'Server menjawab dengan normal, tetapi belum ada data untuk bagian ini.',s:['Coba lagi nanti atau ubah filter']},
  unknown:{t:'Data gagal dimuat',c:'Terjadi masalah yang tidak dikenali saat mengambil data.',s:['Coba lagi','Jika berulang, buka Setting > API dan uji koneksi']}};

@@ -1,4 +1,4 @@
-// Mode Live: harga nyata ke WATCH, sinkron state app, catatan/jurnal (termasuk gambar bukti), pengaturan Umum/Background, dan alert ke server. Tidak aktif (tidak melakukan apa pun) saat mode Dummy.
+// Mode Live: harga nyata ke WATCH, sinkron state app, catatan/jurnal (termasuk gambar bukti), pengaturan Umum/Background, dan alert ke server. Tidak aktif (tidak melakukan apa pun) bila belum ada token sesi server.
 // Cara kerja: sebelum app dimuat, Live.ready mengambil data server dan menulisnya ke localStorage (format yang sudah dipakai tiap app).
 // Sesudah itu setiap localStorage.setItem pada key yang disinkronkan dikirim ke server (ditunda 1,5 dtk).
 (()=>{
@@ -6,7 +6,7 @@ const on=()=>typeof apiOn==='function'&&apiOn()&&!!sessToken();
 const BLOB={'tc.watchlist':'watchlist','tc.news':'news','tc.maps':'maps','tc.chart.tabs':'chart.tabs','tc.aset':'aset'};
 const KN='tc.notes',KJ='tc.journal';
 const KCFG='tc.cfg',KBG='bg',KBGI='bg.img',KBGV='bg.img.v';   // pengaturan: tc.cfg (hanya tema/simbol/tf/gerakan; blok api TIDAK pernah dikirim), bg, gambar background
-const Live={on:false,extra:{},ready:Promise.resolve(),status:'dummy',q:{state:'idle',err:null,at:0,n:0}};window.Live=Live;
+const Live={on:false,extra:{},ready:Promise.resolve(),status:'idle',q:{state:'idle',err:null,at:0,n:0}};window.Live=Live;
 const api=async(path,opt={})=>{const r=await apiFetch(path,{...opt,headers:{'content-type':'application/json',...(opt.headers||{})}});if(!r.ok){const e=new Error('HTTP '+r.status);e.status=r.status;throw e}return r.status===204?null:r.json()};
 const put=(path,body)=>api(path,{method:'PUT',body:JSON.stringify(body)});
 let hydrating=false;

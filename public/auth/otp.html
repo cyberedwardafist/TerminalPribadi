@@ -8,7 +8,6 @@
 <section class="panel">
  <a class="back" id="bk" href="login.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Kembali</a>
  <h1 id="ttl">Verifikasi</h1><p class="sub" id="info"></p>
- <div class="dev" id="dev" hidden><span id="dvt"></span><b id="code"></b></div>
  <form id="f" novalidate>
   <div class="otp" role="group" aria-label="Kode OTP 6 digit"></div>
   <button class="go" type="submit">Verifikasi</button>
@@ -48,16 +47,7 @@ ds[0].focus();
 const mmss=n=>String(n/60|0).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
 const tick=()=>{const st=Auth.otpState(purpose,mail);
  tm.textContent=st.left?'Kode berlaku '+mmss(st.left):'Kode kedaluwarsa atau belum dikirim. Klik "Kirim ulang kode" untuk mendapat kode baru.';
- rs.disabled=st.cool>0;rs.textContent=st.cool?'Kirim ulang kode ('+st.cool+')':'Kirim ulang kode';
- const dv=q('#dev'),cd=q('#code');
- if(Auth.live()){dv.hidden=true;return}
- // mode dummy: tampilkan kode, atau alasan kenapa kode tidak ada
- let t='',c='';
- if(isReg&&!Auth.pending(mail))t='Mode dummy: di browser ini tidak ada pendaftaran yang menunggu verifikasi untuk email ini. Akun mungkin sudah aktif, coba login. Atau daftar ulang.';
- else if(st.left&&st.code){t='Mode dummy: tidak ada email sungguhan, jadi kode ditampilkan di sini.';c=st.code}
- else if(st.left)t='Mode dummy: email ini belum terdaftar di browser ini, jadi tidak ada kode. Daftar akun dulu.';
- else t='Mode dummy: belum ada kode aktif. Klik "Kirim ulang kode", kodenya muncul di sini.';
- q('#dvt').textContent=t;cd.textContent=c;cd.hidden=!c;dv.hidden=false};
+ rs.disabled=st.cool>0;rs.textContent=st.cool?'Kirim ulang kode ('+st.cool+')':'Kirim ulang kode';};
 tick();const iv=setInterval(tick,1000);
 rs.onclick=async()=>{err.textContent='';try{await Auth.sendOtp(purpose,mail);ds.forEach(d=>d.value='');ds[0].focus();tick()}catch(x){err.textContent=x.message}};
 f.onsubmit=async e=>{e.preventDefault();err.textContent='';const c=val();
@@ -65,7 +55,7 @@ f.onsubmit=async e=>{e.preventDefault();err.textContent='';const c=val();
  go.disabled=true;go.textContent='Memeriksa…';
  try{const r=await Auth.verifyOtp(purpose,mail,c);
   const to=isReg?'login.html?verified=1&u='+encodeURIComponent(r.user.username):'reset.html?e='+encodeURIComponent(mail);
-  clearInterval(iv);f.hidden=true;q('#bk').hidden=true;q('#dev').hidden=true;q('#info').hidden=true;
+  clearInterval(iv);f.hidden=true;q('#bk').hidden=true;q('#info').hidden=true;
   q('#dn2').textContent=isReg?'Akun aktif, mengarahkan ke login…':'Lanjut membuat password baru…';
   q('#done').hidden=false;setTimeout(()=>location.replace(to),1500)}
  catch(x){err.textContent=x.message;go.textContent='Verifikasi';

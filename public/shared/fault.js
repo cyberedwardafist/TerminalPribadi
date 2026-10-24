@@ -37,8 +37,8 @@ async function probes(fresh){
  const[net,srv]=await Promise.all([probeNet(),probeSrv()]);return PC={at:Date.now(),net,srv}}
 
 // ---------- kamus penyebab ----------
-const SRC={quotes:['Yahoo Finance atau Binance','Sumber data','src'],heatmap:['Yahoo Finance, Binance, atau CoinGecko','Sumber data','src'],summary:['Yahoo Finance atau Binance','Sumber data','src'],news:['sumber berita (RSS atau API berita)','Sumber berita','rss'],'news-detail':['sumber berita','Sumber berita','rss']};
-const NAME={quotes:'harga',heatmap:'data peta pasar',summary:'data ringkasan',news:'berita','news-detail':'isi berita'};
+const SRC={quotes:['Yahoo Finance atau Binance','Sumber data','src'],heatmap:['Yahoo Finance, Binance, atau CoinGecko','Sumber data','src'],summary:['Yahoo Finance atau Binance','Sumber data','src'],candles:['Yahoo Finance atau Binance','Sumber data','src'],news:['sumber berita (RSS atau API berita)','Sumber berita','rss'],'news-detail':['sumber berita','Sumber berita','rss']};
+const NAME={quotes:'harga',heatmap:'data peta pasar',summary:'data ringkasan',candles:'data candle',news:'berita','news-detail':'isi berita'};
 const isLocal=()=>location.protocol==='file:'||/^(localhost|127\.|\[::1\]|192\.168\.|10\.)/.test(location.hostname);
 const A={setting:{label:'Buka Setting > API',run:'setting'},login:{label:'Masuk lagi',run:'login'}};
 const make=(kind,st,title,o)=>({kind,st,title,cause:o.cause||'',hint:o.hint||'',tech:o.tech||'',lab4:o.lab4||'Sumber data',ic4:o.ic4||'src',act:o.act||null,at:Date.now()});
@@ -48,7 +48,7 @@ const techOf=e=>{const p=(e.path||'').replace(/symbols=[^&]+/,'symbols=\u2026').
  if(e.kind==='http')return`GET ${p} \u2192 HTTP ${e.status}${e.srv?' \u00b7 "'+e.srv+'"':''}`;
  if(e.kind==='parse')return`GET ${p} \u2192 respons bukan JSON`;
  if(e.kind==='empty')return`GET ${p} \u2192 HTTP 200, isi kosong`;
- if(e.kind==='mode')return'Setting > API: mode Dummy (atau tanpa alamat server)';
+ if(e.kind==='mode')return'Setting > API: Base URL belum diisi (halaman dibuka tanpa server)';
  if(e.kind==='noauth')return'Tidak ada token sesi server di browser ini';
  return e.message||String(e)};
 
@@ -68,8 +68,8 @@ function httpInfo(e,S,N,lab){
 function info(e,o,pr){
  const what=o.what||e.what||'quotes',S=SRC[what]||SRC.quotes,N=NAME[what]||'data',lab={lab4:S[1],ic4:S[2],tech:techOf(e)};
  switch(e.kind){
- case'mode':return make('mode',['warn','idle','idle','idle'],'Mode Live belum aktif',{...lab,cause:'Aplikasi sedang di mode Dummy (atau dibuka tanpa alamat server), jadi tidak ada permintaan yang dikirim. Tidak ada data cadangan: '+N+' hanya datang dari server.',hint:'Pilih Live di Setting > API, atau jalankan lewat npm run dev.',act:A.setting});
- case'noauth':return make('noauth',['ok','ok','warn','idle'],'Belum masuk dengan akun server',{...lab,cause:'Sesi ini tidak punya token server (mis. masuk dengan akun dummy di browser). Server menolak data pasar tanpa token.',hint:'Keluar lalu masuk lagi memakai sumber akun Live (backend).',act:A.login});
+ case'mode':return make('mode',['warn','idle','idle','idle'],'Alamat server belum diatur',{...lab,cause:'Aplikasi dibuka tanpa alamat server (mis. lewat file://), jadi tidak ada permintaan yang dikirim. Tidak ada data cadangan: '+N+' hanya datang dari server.',hint:'Jalankan lewat npm run dev atau buka dari alamat deploy; atau isi Base URL di Setting > API.',act:A.setting});
+ case'noauth':return make('noauth',['ok','ok','warn','idle'],'Belum masuk dengan akun server',{...lab,cause:'Sesi ini tidak punya token server (mis. sesi lama dari versi sebelumnya). Server menolak data pasar tanpa token.',hint:'Keluar lalu masuk lagi memakai akun server.',act:A.login});
  case'net':case'timeout':{
   const off=navigator.onLine===false;
   if(!pr.net)return make('offline',['ok','fail','idle','idle'],off?'Tidak ada koneksi internet':'Internet bermasalah',{...lab,cause:off?'Perangkat ini sedang offline, jadi permintaan ke server tidak pernah keluar.':'Perangkat terhubung ke jaringan, tetapi situs lain pun tidak bisa dijangkau. Biasanya Wi-Fi tanpa internet, DNS, atau VPN.',hint:'Periksa Wi-Fi atau data seluler. Data muncul sendiri begitu internet kembali.'});
@@ -86,7 +86,7 @@ async function explain(err,o={}){
  if(!(err instanceof ApiError))err=new ApiError('unknown',{message:err&&err.message});
  const pr=err.kind==='net'||err.kind==='timeout'?await probes(!!o.fresh):null;
  return info(err,o,pr)}
-// Pemeriksaan sinkron sebelum meminta apa pun: null kalau siap, selain itu info (mode Dummy / belum punya token server)
+// Pemeriksaan sinkron sebelum meminta apa pun: null kalau siap, selain itu info (tanpa alamat server / belum punya token server)
 function pre(o={}){
  if(!apiOn())return info(new ApiError('mode'),o);
  if(!sessToken()&&!(CFG.api&&CFG.api.key))return info(new ApiError('noauth'),o);

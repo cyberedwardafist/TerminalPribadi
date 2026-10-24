@@ -4,7 +4,6 @@
 const TFS=ChartRender.TFS,N=1000,KEY='tc.chart.tabs',DKEY='tc.chart.drw',LKEY='tc.chart.layouts',TKEY='tc.chart.tpl';
 const TYPES={candle:'Candle',hollow:'Candle kosong',bar:'Bar OHLC',line:'Garis',area:'Area',base:'Baseline',ha:'Heikin Ashi'};
 const ID=ChartInd.defs;
-const rng=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
 const hue=s=>Math.abs([...s].reduce((a,c)=>a*31+c.charCodeAt(0)|0,7))%360;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const jl=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||'null')||d}catch(e){return d}};
@@ -15,14 +14,13 @@ const rid=()=>'i'+Math.random().toString(36).slice(2,8);
 let INST=0,PEND=null,DRAG=null;const WINS=new Set();
 
 // ---------- data ----------
-function gen(sym,tf){const st=TFS[tf],r=rng([...sym+tf].reduce((a,c)=>a*31+c.charCodeAt(0)|0,7)),base=((WATCH.find(x=>x[0]===sym)||[])[2])||100,vol=Math.min(.03,.004*Math.sqrt(st/3600)),end=Math.floor(Date.now()/1000/st)*st,n=1500;
- let p=base,dr=0,o=[];for(let i=0;i<n;i++){if(i%40===0)dr=(r()-.5)*vol*.5;const op=p,c=op*(1+(r()-.5)*2*vol+dr);o.push({t:end-(n-1-i)*st,o:op,h:Math.max(op,c)*(1+r()*vol*.6),l:Math.min(op,c)*(1-r()*vol*.6),c,v:Math.round((500+r()*1500)*(1+Math.abs(c-op)/op/vol))});p=c}
- const k=base/o[n-1].c;o.forEach(b=>{b.o*=k;b.h*=k;b.l*=k;b.c*=k});return o}
 const norm=j=>j.map(x=>({t:x.t>1e12?Math.floor(x.t/1000):x.t,o:x.o,h:x.h,l:x.l,c:x.c,v:x.v||0}));
 const CACHE=new Map();
-async function data(sym,tf){const k=sym+'|'+tf;if(CACHE.has(k))return CACHE.get(k);let d,live=false;
- if(apiOn()){try{d=norm(await(await apiFetch(`/api/candles?symbol=${encodeURIComponent(sym)}&tf=${tf}&limit=${N}`)).json());live=true}catch(e){}}
- d=d&&d.length?d:(live=false,gen(sym,tf));d.live=live;CACHE.set(k,d);return d}
+async function data(sym,tf){const k=sym+'|'+tf;if(CACHE.has(k))return CACHE.get(k);
+ // hanya data nyata dari server; gagal = ApiError (tidak ada candle karangan), jadi tidak masuk cache dan bisa dicoba lagi
+ const path=`/api/candles?symbol=${encodeURIComponent(sym)}&tf=${tf}&limit=${N}`,j=await apiJson(path);
+ if(!Array.isArray(j)||!j.length)throw new ApiError('empty',{what:'candles',path});
+ const d=norm(j);d.live=true;CACHE.set(k,d);return d}
 if(typeof ChartCustom!=='undefined')ChartCustom.hook.fetch=async(sym,sec)=>{const tf=Object.keys(TFS).find(k=>TFS[k]===sec);if(!tf)throw new Error('timeframe '+sec+'s tidak tersedia (pakai 1m,5m,15m,30m,1h,4h,1D,1W,1M)');return data(sym,tf)};
 async function older(w,T){const D=T.D;if(!D||!D.live||T.busy||T.noMore||!apiOn())return;T.busy=true;
  try{const j=norm(await(await apiFetch(`/api/candles?symbol=${encodeURIComponent(T.sym)}&tf=${T.tf}&limit=${N}&to=${D[0].t-1}`)).json()).filter(x=>x.t<D[0].t);
@@ -66,7 +64,7 @@ function rtBadge(w,T){
   if(i.live){txt=(RTN[i.leader]||i.leader)+(i.lag!=null&&i.lag<60000?' · '+(i.lag<1000?i.lag+' ms':(i.lag/1000).toFixed(1)+' dtk'):'');c='on'}
   else if(i.has){txt='menunggu tick\u2026';c='wait'}else txt='REST'}
  if(el.textContent!==txt)el.textContent=txt;if(el.dataset.c!==c)el.dataset.c=c;
- const ds=$('.ct-ds',w);if(ds&&T){const demo=!(T.D&&T.D.live),late=!demo&&c!=='on',v=demo?'DEMO':late?'D':'';if(ds.textContent!==v)ds.textContent=v;ds.hidden=!v;ds.dataset.k=demo?'demo':'late';ds.title=demo?'Data contoh (acak), bukan harga pasar. Aktifkan mode Live di Setting > API.':'Data tertunda / belum ada tick realtime dari sumber ini.'}}
+ const ds=$('.ct-ds',w);if(ds&&T){const v=c!=='on'?'D':'';if(ds.textContent!==v)ds.textContent=v;ds.hidden=!v;ds.dataset.k='late';ds.title='Data tertunda / belum ada tick realtime dari sumber ini.'}}
 async function poll(w){      // dipanggil tiap 1 dtk
  const R=w._r;if(!w.isConnected){clearInterval(R.pt);if(R.roff)R.roff();R.roff=null;return}
  if(typeof RT!=='undefined')rtSync(w);const T=cur(w);rtBadge(w,T);
@@ -116,7 +114,10 @@ const tabJson=t=>({id:t.id,sym:t.sym,tf:t.tf,type:t.type,scale:t.scale,ind:t.ind
 function save(w){const R=w._r;if(!R.main)return;js(KEY,{v:2,act:R.act,uid:R.uid,tabs:R.tabs.map(tabJson)})}
 function addTab(w,sym,tf){const t=mk(w,sym,tf);w._r.tabs.push(t);act(w,t.id)}
 function act(w,id){const R=w._r;R.act=id;const T=cur(w);if(!T)return;S.sym=T.sym;S.tf=T.tf;closePop(w);sync(w);load(w,T);pullDrw(T.sym)}
-function load(w,T){if(T.D){rtSync(w);sch(w);return}const k=T.sym+T.tf;data(T.sym,T.tf).then(d=>{if(T.sym+T.tf!==k)return;T.D=d;T.rb=d.length+7;T.noMore=false;rtSync(w);sch(w)})}
+function load(w,T){if(T.D){rtSync(w);sch(w);return}const k=T.sym+T.tf,cv=$('.ct-cv',w),er=()=>{const e=cv&&cv.querySelector('.ct-er');if(e)e.remove()};er();
+ data(T.sym,T.tf).then(d=>{if(T.sym+T.tf!==k)return;er();T.D=d;T.rb=d.length+7;T.noMore=false;rtSync(w);sch(w)},async e=>{
+  if(T.sym+T.tf!==k||!w.isConnected||!cv)return;const i=await Fault.explain(e,{what:'candles',fresh:true});if(T.sym+T.tf!==k||!w.isConnected)return;
+  er();const el=document.createElement('div');el.className='ct-er';cv.append(el);Fault.mount(el,i,()=>{er();load(w,T)})})}
 function removeTab(w,id){const R=w._r,i=R.tabs.findIndex(t=>t.id===id);if(i<0)return null;const[T]=R.tabs.splice(i,1);
  if(!R.tabs.length){save(w);close(R.inst);return T}
  if(R.act===id)act(w,R.tabs[Math.min(i,R.tabs.length-1)].id);else sync(w);save(w);return T}

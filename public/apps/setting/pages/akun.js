@@ -15,7 +15,7 @@ const akunHtml=()=>{
   ${row('Username','',Auth.esc(u.username))}
   ${row('Terdaftar sejak','',dt(u.created))}
   ${row('Masuk sejak','Sesi di perangkat ini',dt(ss.at))}
-  ${row('Sumber akun','',ss.mode==='live'?'Server (live)':'Browser ini (dummy)')}
+  ${row('Sumber akun','','Server (live)')}
  </div>
  <div class="grp">${row('Keluar','Kembali ke layar login','<button type="button" class="btn dng" data-logout>Keluar</button>')}</div>`}
 

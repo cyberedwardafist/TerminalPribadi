@@ -14,6 +14,7 @@
     "dev:fake": "node scripts/dev.js --fake",
     "dev:vercel": "vercel dev",
     "check": "npm test",
+    "preflight": "node scripts/preflight.js",
     "migrate:sql": "node scripts/setup-sql.js",
     "mail:test": "node scripts/mail-test.js",
     "rt:test": "node scripts/rt-test.js"

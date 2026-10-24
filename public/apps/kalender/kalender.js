@@ -15,76 +15,6 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const fdl=(y,m,d)=>new Date(y,m,d).toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 const tyl=e=>TL[e.cat+':'+e.type]||e.type;
 
-// ---------- data dummy ----------
-// Bentuk sama dengan respons API, jadi tampilan tidak berubah saat backend menggantikannya.
-// Entri: [hari/tanggal, kelompok, jenis, judul, kode, jam, dampak 1-3, keterangan, [sebelumnya, perkiraan, aktual]?, berpengaruh ke?]
-const FIX=[
- [2,'idx','div','Cum dividen BBCA','BBCA',null,2,'Dividen contoh Rp 120 per saham. Pembeli sampai akhir hari ini masih berhak menerima.'],
- [5,'idx','div','Ex dividen BBCA','BBCA',null,2,'Saham mulai diperdagangkan tanpa hak dividen.'],
- [6,'idx','rups','RUPS Tahunan BBRI','BBRI','10:00',3,'Agenda: laporan tahunan, penetapan dividen, pengangkatan komisaris.'],
- [7,'idx','div','Cum dividen BBRI','BBRI',null,2,'Dividen contoh Rp 90 per saham. Pembeli sampai akhir hari ini masih berhak menerima.'],
- [8,'idx','div','Ex dividen BBRI','BBRI',null,2,'Saham mulai diperdagangkan tanpa hak dividen.'],
- [9,'idx','rups','RUPSLB TLKM','TLKM','14:00',2,'Agenda: perubahan susunan direksi dan komisaris.'],
- [13,'idx','lap','Laporan keuangan kuartal III BBCA','BBCA','16:00',3,'Laba bersih, pertumbuhan kredit, dan rasio kredit bermasalah jadi sorotan.'],
- [14,'idx','div','Cum dividen ICBP','ICBP',null,1,'Dividen contoh Rp 60 per saham.'],
- [15,'idx','rups','RUPS Tahunan ASII','ASII','09:30',3,'Agenda: laporan tahunan dan penggunaan laba bersih.'],
- [16,'idx','aksi','Buyback saham ANTM','ANTM',null,1,'Pembelian kembali saham sesuai persetujuan RUPS.'],
- [19,'idx','div','Pembayaran dividen BBCA','BBCA',null,1,'Dividen dibayarkan ke pemegang saham yang tercatat.'],
- [20,'idx','lap','Laporan keuangan kuartal III ASII','ASII','16:00',2,'Kinerja segmen otomotif dan alat berat jadi sorotan.'],
- [22,'idx','rups','RUPS Tahunan BMRI','BMRI','10:00',3,'Agenda: laporan tahunan, dividen, dan susunan pengurus.'],
- [23,'idx','div','Pembayaran dividen TLKM','TLKM',null,1,'Dividen dibayarkan ke pemegang saham yang tercatat.'],
- [24,'idx','aksi','Right issue ADRO','ADRO',null,2,'Periode perdagangan hak memesan efek terlebih dahulu.'],
- [26,'idx','div','Cum dividen UNVR','UNVR',null,2,'Dividen contoh Rp 80 per saham.'],
- [27,'idx','div','Ex dividen UNVR','UNVR',null,2,'Saham mulai diperdagangkan tanpa hak dividen.'],
- [28,'idx','rups','RUPSLB ADRO','ADRO','13:00',2,'Agenda: persetujuan aksi korporasi.'],
- [29,'idx','lap','Laporan keuangan kuartal III TLKM','TLKM','16:00',2,'Pendapatan seluler dan EBITDA jadi sorotan.'],
- [4,'kom','emas','Laporan cadangan emas bank sentral (WGC)','XAU','15:00',2,'Pembelian emas bank sentral memengaruhi permintaan fisik.'],
- [11,'kom','perak','Laporan pasokan dan permintaan perak','XAG','16:00',1,'Neraca pasokan industri dan perhiasan.'],
- [12,'kom','minyak','Pertemuan OPEC+','WTI','19:00',3,'Keputusan kuota produksi menggerakkan harga minyak.'],
- [25,'kom','emas','Laporan permintaan emas fisik','XAU','15:00',1,'Permintaan perhiasan dan batangan ritel.'],
- [2,'fx','USD','Data tenaga kerja non-pertanian (NFP)','','19:30',3,'Penciptaan lapangan kerja AS di luar sektor pertanian.',['187 rb','175 rb','192 rb'],'XAU'],
- [3,'fx','IDR','Rilis data inflasi (BPS)','','07:00',2,'Inflasi bulanan dan tahunan Indonesia.',['2,1%','2,2%','2,1%']],
- [8,'fx','IDR','Rapat Dewan Gubernur BI (BI-Rate)','','14:30',3,'Keputusan suku bunga acuan Bank Indonesia.',['5,75%','5,75%','5,75%']],
- [9,'fx','JPY','Neraca perdagangan Jepang','','06:50',1,'Selisih ekspor dan impor Jepang.',['0,3 trn','0,2 trn','0,4 trn']],
- [10,'fx','USD','Inflasi konsumen AS (CPI)','','19:30',3,'Perubahan harga konsumen tahunan di AS.',['2,9%','2,8%','2,9%'],'XAU'],
- [12,'fx','EUR','Inflasi zona euro (HICP)','','16:00',2,'Perkiraan awal inflasi zona euro.',['2,2%','2,1%','2,2%']],
- [14,'fx','GBP','PDB Inggris (bulanan)','','13:00',2,'Pertumbuhan ekonomi bulanan Inggris.',['0,1%','0,2%','0,1%']],
- [15,'fx','IDR','Neraca perdagangan (BPS)','','11:00',2,'Surplus atau defisit perdagangan Indonesia.',['3,3 mlr','3,0 mlr','3,5 mlr']],
- [17,'fx','EUR','Keputusan suku bunga ECB','','19:15',3,'Suku bunga acuan Bank Sentral Eropa.',['3,40%','3,40%','3,40%']],
- [20,'fx','JPY','Keputusan suku bunga BoJ','','10:00',3,'Suku bunga acuan Bank of Japan.',['0,50%','0,50%','0,50%']],
- [21,'fx','IDR','Rilis data PDB (BPS)','','11:00',3,'Pertumbuhan ekonomi Indonesia kuartalan.',['5,1%','5,0%','5,1%']],
- [23,'fx','GBP','Keputusan suku bunga BoE','','18:00',3,'Suku bunga acuan Bank of England.',['4,75%','4,75%','4,75%']],
- [26,'fx','USD','Notulen rapat FOMC','','01:00',2,'Catatan pembahasan rapat suku bunga The Fed.',null,'XAU'],
- [27,'fx','IDR','Lelang obligasi negara','','10:00',1,'Lelang SBN: imbal hasil dan permintaan investor.'],
- [28,'fx','USD','Keputusan suku bunga FOMC','','01:00',3,'Suku bunga acuan The Fed.',['4,50%','4,50%','4,25%'],'XAU'],
- [30,'fx','IDR','Cadangan devisa BI','','10:00',1,'Posisi cadangan devisa akhir bulan.',['148 mlr','149 mlr','150 mlr']]
-];
-// Berulang tiap pekan. Angka pertama = hari (1 Sen sampai 5 Jum)
-const WEEK=[
- [3,'kom','minyak','Persediaan minyak mentah AS (EIA)','WTI','21:30',2,'Perubahan stok mingguan memengaruhi arah harga WTI.',['-2,1 jt','-1,0 jt','+0,4 jt']],
- [4,'fx','USD','Klaim pengangguran mingguan AS','','19:30',2,'Indikator pasar tenaga kerja mingguan.',['219 rb','222 rb','216 rb'],'XAU'],
- [5,'kom','emas','Posisi spekulan emas (CFTC)','XAU','20:30',1,'Posisi beli dan jual spekulan di kontrak emas.',['141 rb','','138 rb']]
-];
-const HL={
- rups:e=>'Jelang RUPS '+e.sym+': dividen dan susunan pengurus jadi sorotan',
- div:e=>'Jadwal dividen '+e.sym+': catat tanggal pentingnya sebelum cum date',
- lap:e=>'Analis menanti laporan keuangan '+e.sym+', fokus ke pertumbuhan laba',
- aksi:e=>e.sym+' umumkan aksi korporasi, ini yang perlu dicek pemegang saham'
-};
-const headline=e=>HL[e.type]?HL[e.type](e):'Pasar menunggu: '+e.title;
-
-function dummy(y,m){
- const nd=new Date(y,m+1,0).getDate(),sh=(y*12+m)%5,n=new Date(),tk=ymd(n.getFullYear(),n.getMonth(),n.getDate()),ev=[];
- // akhir pekan digeser ke hari bursa terdekat
- const wk=d=>{const w=new Date(y,m,d).getDay();return w===6?d-1:w===0?(d+1<=nd?d+1:d-2):d};
- const add=(d,t)=>{const date=ymd(y,m,d),v=t[8];ev.push({id:'d'+ev.length,date,time:t[5],cat:t[1],type:t[2],title:t[3],sym:t[4],imp:t[6],detail:t[7],prev:v?v[0]:null,fc:v&&v[1]?v[1]:null,act:v&&date<=tk?v[2]:null,aff:t[9]||''})};
- FIX.forEach(t=>add(wk((t[0]-1+sh)%nd+1),t));
- for(let d=1;d<=nd;d++){const w=new Date(y,m,d).getDay();WEEK.forEach(t=>{if(t[0]===w)add(d,t)})}
- ev.sort(byTime);
- const news=[];
- ev.forEach((e,i)=>{if((e.cat==='idx'||e.imp>=2)&&(i%2===0||e.imp===3))news.push({id:'n'+i,date:e.date,time:e.time||'08:00',cat:e.cat,type:e.type,imp:e.imp,h:headline(e),src:'Contoh',sum:e.detail})});
- return{ev,news}
-}
 const byTime=(a,b)=>a.date<b.date?-1:a.date>b.date?1:(a.time||'')<(b.time||'')?-1:(a.time||'')>(b.time||'')?1:0;
 
 // Respons API dirapikan: baris yang rusak dibuang supaya satu data jelek tidak merusak seluruh bulan
@@ -95,17 +25,15 @@ function norm(j){
  return{ev,news}
 }
 const CACHE={};
-const ckey=(y,m)=>(apiOn()?'live:':'dummy:')+y+'-'+pad(m+1);
+const ckey=(y,m)=>y+'-'+pad(m+1);
 async function fetchMonth(y,m){
  const k=ckey(y,m);if(CACHE[k])return CACHE[k];
- let d;
- if(apiOn()){
-  let r;
-  try{r=await apiFetch('/api/calendar?month='+y+'-'+pad(m+1))}
-  catch(e){throw new Error(e.name==='AbortError'?'Timeout, server tidak menjawab':'Tidak terjangkau (cek URL, server, atau CORS)')}
-  if(!r.ok)throw new Error(apiHttpMsg(r.status));
-  try{d=norm(await r.json())}catch(e){throw new Error('Respons server bukan JSON yang valid')}
- }else d=dummy(y,m);
+ if(!apiOn())throw new Error('Alamat server belum diatur (Setting > API > Base URL)');
+ let r,d;
+ try{r=await apiFetch('/api/calendar?month='+y+'-'+pad(m+1))}
+ catch(e){throw new Error(e.name==='AbortError'?'Timeout, server tidak menjawab':'Tidak terjangkau (cek URL, server, atau CORS)')}
+ if(!r.ok)throw new Error(apiHttpMsg(r.status));
+ try{d=norm(await r.json())}catch(e){throw new Error('Respons server bukan JSON yang valid')}
  return CACHE[k]=d
 }
 
@@ -117,7 +45,7 @@ const arrow=d=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+d+'"/></s
 registerApp('kalender',{css:'apps/kalender/kalender.css',icon:()=>"<rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"3\"/><path d=\"M3 10h18M8 3v4M16 3v4\"/><text x=\"12\" y=\"18.2\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\" stroke=\"none\" font-weight=\"700\">"+new Date().getDate()+"</text>",t:'Kalender',w:980,h:620,flush:true,
 html:()=>`<div class="kl-w"><div class="kl">
  <section class="kl-c" aria-label="Kalender">
-  <div class="kl-h"><h2 class="kl-mon" aria-live="polite"></h2><span class="tag">${window.Live&&Live.on?'Live':'Data dummy'}</span>
+  <div class="kl-h"><h2 class="kl-mon" aria-live="polite"></h2><span class="tag">${window.Live&&Live.on?'Live':'Tidak live'}</span>
    <div class="kl-nav"><button type="button" class="kl-ib" data-mv="-1" aria-label="Bulan sebelumnya" title="Bulan sebelumnya">${arrow('M15 6l-6 6 6 6')}</button><button type="button" class="btn kl-td" data-today>Hari ini</button><button type="button" class="kl-ib" data-mv="1" aria-label="Bulan berikutnya" title="Bulan berikutnya">${arrow('M9 6l6 6-6 6')}</button></div></div>
   <div class="kl-wd" aria-hidden="true">${WD.map(x=>`<span>${x}</span>`).join('')}</div>
   <div class="kl-cal" role="group" aria-label="Pilih tanggal"></div>

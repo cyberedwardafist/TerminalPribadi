@@ -39,7 +39,7 @@ test('fault: status HTTP dipetakan ke penyebab yang tepat', async () => {
   assert.equal((await k(500)).kind, 'server');
   assert.match((await k(502, '', 'news')).title, /berita/i);
 });
-test('fault: mode dummy / tanpa token / respons kosong / bukan JSON', async () => {
+test('fault: tanpa alamat server / tanpa token / respons kosong / bukan JSON', async () => {
   const E = env(), x = (k, o) => E.Fault.explain(new E.ApiError(k, o), { what: 'heatmap' });
   assert.equal((await x('mode')).kind, 'mode'); assert.equal((await x('noauth')).kind, 'noauth');
   assert.equal((await x('empty')).kind, 'empty'); assert.equal((await x('parse')).kind, 'nobackend');

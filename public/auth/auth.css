@@ -60,8 +60,6 @@ form{width:100%}
 .panel .err,.panel .ok{text-shadow:none}
 .back{display:inline-block;margin:0 0 14px;color:var(--mute);font-size:13px;text-decoration:none}.back:hover{color:#fff;text-decoration:underline}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
-.dev{margin:0 0 12px;padding:10px 12px;border-radius:10px;border:1px dashed rgba(255,255,255,.3);font-size:13px;color:var(--mute)}
-.dev b{display:block;margin-top:2px;font:600 22px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.2em;color:var(--ink)}
 [hidden]{display:none!important}
 
 .srv{position:fixed;left:12px;bottom:12px;max-width:calc(100% - 24px);font-size:13px;color:var(--mute)}

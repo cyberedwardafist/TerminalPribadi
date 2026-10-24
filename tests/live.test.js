@@ -28,7 +28,7 @@ function browser(token, store = {}, opt = {}) {
   ctx.window = ctx;
   vm.runInContext(`var WATCH=[['BTCUSDT','Bitcoin',1,0,'cry'],['BBCA','BCA',1,0,'idx'],['EURUSD','EUR',1,0,'fx']];`, ctx);
   // stub global yang di aplikasi asli dibuat config.js / core.js / background.js
-  vm.runInContext(`var CFG=Object.assign({theme:'auto',sym:'BTCUSDT',tf:'1h',still:null,api:{mode:'live',base:'',key:''}},JSON.parse(localStorage.getItem('tc.cfg')||'{}'));
+  vm.runInContext(`var CFG=Object.assign({theme:'auto',sym:'BTCUSDT',tf:'1h',still:null,api:{base:'',key:''}},JSON.parse(localStorage.getItem('tc.cfg')||'{}'));
    var theme=null;function applyTheme(){theme=CFG.theme}
    var S={bg:localStorage.getItem('bg')||'angin',still:false,sym:'BTCUSDT',tf:'1h'};var Bg={loads:0,load(){this.loads++}};`, ctx);
   vm.runInContext(faultSrc, ctx);
@@ -83,7 +83,7 @@ test('jurnal: tulis-balik trade dan hapus', async () => {
   c.localStorage.setItem('tc.journal', JSON.stringify({ v: 1, trades: [] })); await wait(2200);
   assert.equal((await j('GET', '/api/journal/trades', null, token)).body.length, 0);
 });
-test('mode Dummy: tidak melakukan apa pun', async () => {
+test('tanpa token sesi server: tidak melakukan apa pun', async () => {
   const d = browser('');
   d.ctx.sessToken = () => ''; await d.ctx.Live.ready;
   assert.equal(d.ctx.Live.on, false);
@@ -117,7 +117,7 @@ test('pengaturan Umum/Background: lintas perangkat, gambar sendiri, blok api tid
   const run = (b, code) => vm.runInContext(code, b.ctx);
 
   // perangkat A: pengaturan sudah diubah secara lokal (+ rahasia di blok api) -> terunggah pertama kali
-  const a = browser(token, { 'tc.cfg': JSON.stringify({ theme: 'dark', sym: 'BBCA', tf: '5m', still: true, api: { mode: 'live', key: 'RAHASIA-API' } }), bg: 'custom', 'bg.img': dataUrl });
+  const a = browser(token, { 'tc.cfg': JSON.stringify({ theme: 'dark', sym: 'BBCA', tf: '5m', still: true, api: { key: 'RAHASIA-API' } }), bg: 'custom', 'bg.img': dataUrl });
   await a.ctx.Live.ready; await wait(600);
   let p = await prefs();
   assert.equal(p.theme, 'dark'); assert.equal(p.defaultSymbol, 'BBCA'); assert.equal(p.defaultTf, '5m'); assert.equal(p.background, 'custom'); assert.equal(p.reduceMotion, true);

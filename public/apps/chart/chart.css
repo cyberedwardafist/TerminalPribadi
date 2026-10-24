@@ -28,6 +28,7 @@ select.ct-b{appearance:none;padding-right:9px;color-scheme:dark light}
 .ct-main{flex:1;display:flex;min-height:0}
 .ct-rail{display:flex;flex-direction:column;gap:4px;padding:8px 5px;border-right:1px solid var(--line);flex:none}
 .ct-rail .ct-b{width:30px;height:30px;padding:0;display:grid;place-items:center}
+.ct-er{position:absolute;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;padding:16px;background:color-mix(in srgb,var(--bg,#111) 78%,transparent)}
 .ct-cv{flex:1;min-width:0;position:relative;touch-action:none}.ct-cv canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 
 /* popover */
@@ -115,5 +116,5 @@ select.ct-b{appearance:none;padding-right:9px;color-scheme:dark light}
 .ct-nm b{font-size:13px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ct-nm span{white-space:nowrap}.ct-dt{font-style:normal;color:var(--mute)}
 .ct-ds{padding:0 6px;border-radius:5px;font-size:10px;font-weight:700;line-height:16px;background:color-mix(in srgb,var(--acc) 22%,transparent);color:var(--acc)}
-.ct-ds[hidden]{display:none}.ct-ds[data-k=demo]{background:color-mix(in srgb,var(--dn) 20%,transparent);color:var(--dn)}
+.ct-ds[hidden]{display:none}
 .ct-nm{pointer-events:auto}

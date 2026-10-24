@@ -2,7 +2,7 @@
 <html lang="id"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Terminal Chart</title>
-<script>try{if(!localStorage.getItem("tc.session")&&!sessionStorage.getItem("tc.session"))location.replace("auth/login.html")}catch(e){}</script>
+<script>try{var _s=null;try{_s=JSON.parse(localStorage.getItem("tc.session")||sessionStorage.getItem("tc.session")||"null")}catch(e){}if(!_s||!_s.token){localStorage.removeItem("tc.session");sessionStorage.removeItem("tc.session");localStorage.removeItem("tc.users");location.replace("auth/login.html")}}catch(e){}</script>
 <link rel="stylesheet" href="core/base.css"><link rel="stylesheet" href="shared/ui.css"><link rel="stylesheet" href="shared/controls.css"><link rel="stylesheet" href="core/hello.css"></head><body>
 <script src="core/hello.js"></script>
 <canvas id="bg" aria-hidden="true"></canvas>
@@ -28,7 +28,7 @@
 <script src="shared/notif.js"></script>
 <script src="shared/ticker.js"></script>
 <script>
-// Daftar di bawah dimuat berurutan SETELAH Live.ready (di mode Live data server sudah ditulis ke localStorage; mode Dummy langsung jalan).
+// Daftar di bawah dimuat berurutan SETELAH Live.ready (data server sudah ditulis ke localStorage sebelum app dijalankan).
 // Satu folder per item dock. Urutan baris = urutan dock. Hapus satu baris untuk menyembunyikan app itu.
 (function(){var L=[
   // Satu folder per item dock. Urutan baris = urutan dock. Hapus satu baris untuk menyembunyikan app itu

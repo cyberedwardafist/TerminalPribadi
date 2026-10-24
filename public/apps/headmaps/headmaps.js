@@ -1,5 +1,5 @@
 // App "headmaps" (dock). Heatmap likuiditas/likuidasi LIVE ala CoinMarketCap/Coinglass: harga di sumbu Y, waktu di sumbu X, candle di atas heat, bubble trade besar.
-// Berdiri sendiri: tanpa server aplikasi (jalan juga di mode Dummy). Hanya memakai S.sym + open('chart') dari app lain.
+// Berdiri sendiri: data langsung dari Binance publik (tanpa server aplikasi). Hanya memakai S.sym + open('chart') dari app lain.
 //   Kripto (banyak koin, ketik simbol apa pun):
 //     klines  REST  fapi.binance.com (futures) -> cadangan data-api.binance.vision (spot)
 //     live    WS    <sym>@kline_<tf> + @aggTrade (bubble) + @depth@100ms (mode Order Book) + @forceOrder (likuidasi riil, futures saja)

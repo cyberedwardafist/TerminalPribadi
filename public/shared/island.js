@@ -38,14 +38,10 @@ const KD={watch:'watch',hub:'panel',panel:'panel',note:'note',ask:'ask'};
 let cur=null,q=[],seq=0,tm=0,rem=0,t0=0,bar=null,kd=null,prev=null,off=0,hov=false,armed=true,hideT=0;
 
 // ---------- data ticker ----------
-const buf={};
-function mkSeries(sym,p){let s=0;for(const c of sym)s=(s*31+c.charCodeAt(0))>>>0;const a=[];let v=p;for(let i=0;i<30;i++){s=(s*1664525+1013904223)>>>0;v*=1+((s/4294967296)-.5)*.012;a.push(v)}const k=p/a[29];return a.map(x=>x*k)}
-// Live: kuote nyata dari server (Live.extra). Dummy: deret acak yang diputar tiap 4 dtk (sama seperti data dummy app lain).
+// Kuote nyata dari server (Live.extra). Tanpa data server: 'menunggu data', tidak ada angka karangan.
 function quote(sym){const r=rows().find(x=>x[0]===sym);if(!r)return null;
  if(window.Live&&Live.on){const ex=Live.extra[sym];if(!ex||!(r[2]>0))return null;const sp=(ex.spark||[]).slice(-30);return{p:r[2],c:r[3],ser:sp.length>1?sp.concat([r[2]]):[]}}
- if(!(r[2]>0))return null;   // tanpa server harga = null (data nyata saja): island menampilkan 'menunggu data'
- const b=buf[sym]||(buf[sym]=mkSeries(sym,r[2])),last=b[b.length-1];return{p:last,c:r[3]+(last/r[2]-1)*100,ser:b}}
-const stepDummy=()=>{for(const s of wl){const b=buf[s];if(!b)continue;const l=b[b.length-1];b.push(l*(1+(Math.random()-.5)*.0016));b.shift()}};
+ return null}
 function resolve(tok){const t=String(tok).trim().toUpperCase().replace(/[^A-Z0-9.^-]/g,'');if(!t)return null;const R=rows();
  const ex=R.find(r=>r[0]===t)||R.find(r=>r[0]===t+'USDT');if(ex)return ex[0];const st=R.filter(r=>r[0].startsWith(t));return st.length===1?st[0][0]:null}
 function suggest(tok,skip){const t=String(tok||'').trim().toUpperCase();return rows().filter(r=>!skip.includes(r[0])&&(!t||r[0].includes(t)||r[1].toUpperCase().includes(t))).slice(0,6).map(r=>r[0])}
@@ -221,7 +217,6 @@ addEventListener('pointerdown',e=>{
 // ---------- pembaruan strip ----------
 const refresh=()=>{if(document.hidden||!cur||cur.kind!=='watch')return;box.innerHTML=watchHtml();fit()};
 addEventListener('tc:quotes',refresh);
-setInterval(()=>{if(window.Live&&Live.on||!wl.length)return;stepDummy();refresh()},4000);
 let rz=0;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(refresh,160)});
 addEventListener('storage',e=>{if(e.key==='tc.island'){wl=(jl('tc.island',{}).w||[]).filter(s=>resolve(s)===s);if(!cur||cur.kind==='watch')next()}});
 
