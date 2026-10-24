@@ -450,7 +450,7 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:1020,h:720,flush:1,
 
   // Satu form untuk beli & jual (juga ubah). o: {mode:'b'|'s', edit, ty, sym, key}
   function txForm(o){
-   const sell=o.mode==='s',e=o.edit;
+   const sell=o.mode==='s',e=o.edit,locked=!sell&&!e&&!!o.sym&&!!o.ty,lockS=sell&&!e&&!!o.lock;   // locked: "Beli lagi" dari satu aset
    let hsel=[],h0=null;
    if(sell){hsel=e?ledger(tx.filter(x=>x.id!==e.id)).hold:L.hold;h0=hsel.find(h=>h.key===(e?kOf(e):o.key))||hsel[0];if(!h0){say('Tidak ada aset yang bisa dijual',1);return}}
    let ty=sell?h0.ty:(e?e.ty:(o.ty||'saham')),uk=e&&isU(ty,e.u)?e.u:TY[ty].un[0][0],cu=e?e.cu:TY[ty].cur[0],fxTouched=!!e;
@@ -459,7 +459,9 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:1020,h:720,flush:1,
    const title=sell?(e?'Ubah penjualan':'Jual aset'):(e?'Ubah pembelian':'Tambah aset');
    const fm=openForm(`<form class="as-fm" novalidate aria-label="${title}">
     <header class="as-fh"><h3>${title}</h3><button type="button" class="as-ib" data-a="x" aria-label="Tutup">${Icon('x')}</button></header>
-    ${sell?`<div class="as-f"><span class="as-fl" id="as-hl">Aset yang dijual</span><input type="hidden" name="key" value="${esc(h0.key)}"><div class="as-hold" role="radiogroup" aria-labelledby="as-hl">${(e?[h0]:hsel).map(h=>{const c=cur(h),val=h.u*c.p,pl=val-h.cost;return`<button type="button" role="radio" class="as-hcd" data-key="${esc(h.key)}" aria-checked="${h.key===h0.key}"${e?' disabled':''}>${nm(h)}<span class="as-hct"><b>${esc(h.sym)}</b><small>${TY[h.ty].n} · ${qt(h.ty,h.u)}</small></span><span class="as-hcv"><b>${rp(val)}</b><small class="${cl(Math.round(pl))}">${rp(pl,1)}</small></span></button>`}).join('')}</div></div><div class="as-hvb" data-hv></div>`
+    ${sell&&!e&&!lockS&&new Set(hsel.map(h=>h.ty)).size>1?`<div class="as-f"><span class="as-fl" id="as-tfl">Jenis aset</span><div class="as-ty" role="radiogroup" aria-labelledby="as-tfl"><button type="button" role="radio" class="as-tc" data-tf="all" aria-checked="true"><span>${dotOf('all')}Semua aset</span><small>${hsel.length} aset dimiliki</small></button>${TK.filter(k=>hsel.some(h=>h.ty===k)).map(k=>`<button type="button" role="radio" class="as-tc" data-tf="${k}" aria-checked="false"><span>${dotOf(k)}${TY[k].n}</span><small>${hsel.filter(h=>h.ty===k).length} aset dimiliki</small></button>`).join('')}</div></div>`:''}
+    ${sell?`<div class="as-f"><span class="as-fl" id="as-hl">Aset yang dijual</span><input type="hidden" name="key" value="${esc(h0.key)}"><div class="as-hold${lockS?' one':''}" role="radiogroup" aria-labelledby="as-hl">${(e||lockS?[h0]:hsel).map(h=>{const c=cur(h),val=h.u*c.p,pl=val-h.cost;if(lockS)return`<div class="as-hcd" aria-current="true">${nm(h)}<span class="as-hct"><b>${esc(h.sym)}</b><small>${TY[h.ty].n} · ${qt(h.ty,h.u)}</small></span><span class="as-hcv"><b>${rp(val)}</b><small class="${cl(Math.round(pl))}">${rp(pl,1)}</small></span><button type="button" class="nb" data-a="unlockS">Ganti aset</button></div>`;return`<button type="button" role="radio" class="as-hcd" data-key="${esc(h.key)}" aria-checked="${h.key===h0.key}"${e?' disabled':''}>${nm(h)}<span class="as-hct"><b>${esc(h.sym)}</b><small>${TY[h.ty].n} · ${qt(h.ty,h.u)}</small></span><span class="as-hcv"><b>${rp(val)}</b><small class="${cl(Math.round(pl))}">${rp(pl,1)}</small></span></button>`}).join('')}</div></div><div class="as-hvb" data-hv></div>`
+     :locked?`<div class="as-f"><span class="as-fl">Aset yang ditambah</span>${(()=>{const h0b=L.hold.find(h=>h.key===ty+'|'+o.sym.toLowerCase()),c=h0b?cur(h0b):null,val=h0b?h0b.u*c.p:0,pl=h0b?val-h0b.cost:0;return`<div class="as-hold one"><div class="as-hcd" aria-current="true">${nm({sym:o.sym})}<span class="as-hct"><b>${esc(o.sym)}</b><small>${TY[ty].n}${h0b?' · '+qt(ty,h0b.u):''}</small></span>${h0b?`<span class="as-hcv"><b>${rp(val)}</b><small class="${cl(Math.round(pl))}">${rp(pl,1)}</small></span>`:''}<button type="button" class="nb" data-a="unlock">Ganti aset</button></div></div>`})()}<input type="hidden" name="sym" value="${esc(o.sym)}"></div>`
      :`<div class="as-f"><span class="as-fl" id="as-tyl">Jenis aset</span><div class="as-ty" role="radiogroup" aria-labelledby="as-tyl">${TK.map(k=>`<button type="button" role="radio" class="as-tc" data-ty="${k}" aria-checked="${k===ty}"><span>${dotOf(k)}${TY[k].n}</span><small>${TY[k].hint}</small></button>`).join('')}</div></div>
       <div class="as-f"><label class="as-fl" for="as-sym">Kode / nama aset</label><input class="as-in" id="as-sym" name="sym" value="${esc(e?e.sym:o.sym||'')}" autocomplete="off" maxlength="40"><div class="as-sg" data-sg></div></div>`}
     <div class="as-row2">
@@ -533,6 +535,7 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:1020,h:720,flush:1,
       else f.p.value=nfq.format(r8(c.p*u[3]))}}
     const k=kurs()||fxLast;if(k>0)f.fx.value=nfq.format(r8(k))};
    fillUnits();fillSg();initPrice();calc();
+   if(locked||sell)f.q.focus({preventScroll:true});
    const setFxFromDate=()=>{if(fxTouched||cu!=='USD'||!isD(f.d.value))return;const k=f.d.value>=today()?kurs():fxAt(f.d.value);if(k>0)f.fx.value=nfq.format(r8(k))};
    // ganti satuan: nilai yang sudah diketik ikut dikonversi supaya jumlah dasarnya tetap
    function setUnit(nu){
@@ -553,6 +556,11 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:1020,h:720,flush:1,
    fm.onclick=ev=>{
     const b=ev.target.closest('button');if(!b)return;
     if(b.dataset.ty){setType(b.dataset.ty);f.sym.focus();return}
+    if(b.dataset.tf){const tfk=b.dataset.tf;$$('[data-tf]',fm).forEach(x=>x.setAttribute('aria-checked',String(x===b)));
+     $$('[data-key]',fm).forEach(x=>{const hh=hsel.find(h=>h.key===x.dataset.key);x.hidden=tfk!=='all'&&hh.ty!==tfk});
+     if(curH().ty!==tfk&&tfk!=='all'){const first=$('[data-key]:not([hidden])',fm);if(first)first.click()}return}
+    if(b.dataset.a==='unlock'){closeForm();txForm({mode:'b',ty:o.ty});return}
+    if(b.dataset.a==='unlockS'){closeForm();txForm({mode:'s'});return}
     if(b.dataset.key){if(b.disabled)return;f.key.value=b.dataset.key;$$('[data-key]',fm).forEach(x=>x.setAttribute('aria-checked',String(x===b)));const h=curH();ty=h.ty;uk=defUnit(h);cu=TY[ty].cur[0];f.q.value='';f.p.value='';fillUnits();initPrice();calc();f.q.focus();return}
     if(b.dataset.u){setUnit(b.dataset.u);return}
     if(b.dataset.c){setCur(b.dataset.c);return}
@@ -646,9 +654,11 @@ registerApp('aset',{css:'apps/aset/aset.css',t:'Aset',w:1020,h:720,flush:1,
    if(act==='sd'){const on=root.classList.toggle('nosd');ui.side=!on;saveUi();b.setAttribute('aria-expanded',String(!on));return}
    if(act==='newtab'){tabPop(b);return}
    closePop();
-   if(act==='add')txForm({mode:'b',ty:D.ty||(ui.grp!=='all'?ui.grp:undefined)});
+   if(act==='add'){
+    if(!D.ty&&isAssetTab(ui.act)&&b.closest('.as-br')){const t=tx.find(x=>kOf(x)===ui.act);if(t){txForm({mode:'b',ty:t.ty,sym:t.sym});return}}   // di halaman satu aset: tambah langsung untuk aset itu
+    txForm({mode:'b',ty:D.ty||(ui.grp!=='all'?ui.grp:undefined)})}
    else if(act==='more'){const h=L.hold.find(x=>x.key===D.k)||(()=>{const t=tx.find(x=>kOf(x)===D.k);return t&&{ty:t.ty,sym:t.sym}})();if(h)txForm({mode:'b',ty:h.ty,sym:h.sym})}
-   else if(act==='sell')txForm({mode:'s',key:D.k||(isAssetTab(ui.act)?ui.act:undefined)});
+   else if(act==='sell'){const key=D.k||(isAssetTab(ui.act)&&!b.closest('.as-sd')?ui.act:undefined);txForm({mode:'s',key,lock:!!key})}   // dari satu aset (halaman/baris/tombol bar di halaman aset): langsung aset itu
    else if(act==='price')priceForm(D.k||(isAssetTab(ui.act)?ui.act:undefined));
    else if(act==='chart'){S.sym=S.go=D.s;open('chart')}
    else if(act==='dm'){

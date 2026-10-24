@@ -295,3 +295,8 @@
 .as-hold:has(.as-hcd:only-child){grid-template-columns:minmax(0,1fr)}
 .as-hvb{padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--ink) 4%,var(--win2));color:var(--ink)}
 @container as (max-width:720px){.as-hold{grid-template-columns:minmax(0,1fr)}}
+
+.as-hold.one{max-height:none;grid-template-columns:minmax(0,1fr)}
+.as-hcd[aria-current=true]{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 13%,var(--win2));cursor:default}
+.as-hcd .nb{margin:0 0 0 4px;flex:none}
+.as-hold [hidden]{display:none}
