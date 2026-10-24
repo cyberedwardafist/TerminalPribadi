@@ -6,10 +6,11 @@ import fs from 'node:fs';
 
 const win = {};
 vm.runInNewContext(fs.readFileSync(new URL('../public/apps/aset/aset.js', import.meta.url), 'utf8'), { window: win, registerApp() {}, Intl, Date, Math, JSON, Number, String, Array, Map, Object, localStorage: {} });
-const { ledger, series, num } = win.AsetCalc;
+const { ledger, series, num, norm, qt, eqTxt, priceLbl } = win.AsetCalc;
 
 let n = 0;
-const tx = (k, ty, sym, q, p, d = '2026-10-01') => ({ id: 't' + ++n, k, ty, sym, q, p, d, n: '', cre: n, upd: n });
+// q = jumlah dalam satuan tampil (saham = lot); disimpan sebagai satuan dasar (lembar), seperti norm() di app
+const tx = (k, ty, sym, q, p, d = '2026-10-01') => ({ id: 't' + ++n, k, ty, sym, q: ty === 'saham' ? q * 100 : q, u: ty === 'saham' ? 'lot' : 'koin', p, cu: 'IDR', pu: 0, fx: 0, d, n: '', cre: n, upd: n });
 const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-6, `${a} != ${b}`);
 
 test('contoh: BBCA 1 lot @6.000 = Rp 600.000; aset lain ditambahkan ke total', () => {
@@ -139,4 +140,70 @@ test('grafik: total hasil = belum terealisasi + terealisasi (BBCA turun 100.000,
   const p = last(S), hasil = p.val - p.cost + p.real;
   // sisa BBCA 1 lot: nilai 550.000 vs modal 600.000 = -50.000; emas +50.000; terealisasi +50.000
   near(p.real, 50_000); near(hasil, -50_000 + 50_000 + 50_000);
+});
+
+// ---------- satuan lot / lembar / koin, mata uang, migrasi ----------
+test('migrasi v2: saham q dalam lot -> lembar; aset lain tetap; tanpa mata uang -> IDR', () => {
+  const a = norm({ id: 'a', k: 'b', ty: 'saham', sym: 'BBCA', q: 2, p: 6000, d: '2026-10-01' });
+  assert.equal(a.q, 200); assert.equal(a.u, 'lot'); assert.equal(a.cu, 'IDR');
+  const b = norm({ id: 'b', k: 'b', ty: 'kripto', sym: 'BTC', q: 0.05, p: 1_000_000_000, d: '2026-10-01' });
+  assert.equal(b.q, 0.05); assert.equal(b.u, 'koin');
+  const c = norm({ id: 'c', k: 'b', ty: 'sahamx', sym: 'AAPL', q: 2.5, p: 3_000_000, d: '2026-10-01' });
+  assert.equal(c.q, 2.5); assert.equal(c.u, 'lembar');
+  // sudah v3 (ada u): tidak dikali dua kali
+  assert.equal(norm(a).q, 200); assert.equal(norm(norm(a)).q, 200);
+  assert.equal(norm({ ...a, u: 'lembar', q: 250 }).q, 250);
+});
+
+test('input dalam lembar atau lot menghasilkan modal yang sama; odd lot boleh', () => {
+  const lot = ledger([tx('b', 'saham', 'BBCA', 2, 6000)]), lembar = ledger([{ ...tx('b', 'saham', 'BBCA', 1, 6000), q: 200, u: 'lembar' }]);
+  near(lot.total, 1_200_000); near(lembar.total, 1_200_000);
+  const odd = ledger([{ ...tx('b', 'saham', 'BBCA', 1, 6000), q: 150, u: 'lembar' }]);
+  near(odd.total, 900_000); assert.equal(odd.hold[0].u, 150);
+  // campur lot + lembar pada aset yang sama
+  const mix = ledger([tx('b', 'saham', 'BBCA', 1, 6000), { ...tx('b', 'saham', 'BBCA', 1, 7000), q: 50, u: 'lembar' }]);
+  assert.equal(mix.hold[0].u, 150); near(mix.total, 600_000 + 350_000);
+});
+
+test('USD: harga US$ x kurs disimpan sebagai Rupiah, nilai asli US$ ikut tersimpan', () => {
+  const t = norm({ id: 'u', k: 'b', ty: 'kripto', sym: 'BTC', q: 0.05, u: 'koin', p: 65000 * 16000, cu: 'USD', pu: 65000, fx: 16000, d: '2026-10-01' });
+  assert.equal(t.cu, 'USD'); assert.equal(t.pu, 65000); assert.equal(t.fx, 16000);
+  const L = ledger([t]);
+  near(L.total, 0.05 * 65000 * 16000); near(L.hold[0].uavg, 65000);
+  // jenis yang tidak mendukung USD jatuh ke IDR
+  assert.equal(norm({ id: 'x', k: 'b', ty: 'saham', sym: 'BBCA', q: 100, u: 'lembar', p: 6000, cu: 'USD', pu: 1, fx: 1, d: '2026-10-01' }).cu, 'IDR');
+  // USD tanpa kurs tidak valid -> IDR
+  assert.equal(norm({ ...t, fx: 0 }).cu, 'IDR');
+});
+
+test('rata-rata US$ tertimbang, hilang bila ada pembelian Rupiah; jual sebagian menjaga rata-rata', () => {
+  const u = (q, pu, d) => norm({ id: 'u' + d + q, k: 'b', ty: 'kripto', sym: 'BTC', q, u: 'koin', p: pu * 16000, cu: 'USD', pu, fx: 16000, d });
+  const L = ledger([u(1, 60000, '2026-10-01'), u(1, 70000, '2026-10-02')]);
+  near(L.hold[0].uavg, 65000);
+  const L2 = ledger([u(1, 60000, '2026-10-01'), u(1, 70000, '2026-10-02'), norm({ id: 's', k: 's', ty: 'kripto', sym: 'BTC', q: 1, u: 'koin', p: 80000 * 16000, cu: 'USD', pu: 80000, fx: 16000, d: '2026-10-03' })]);
+  near(L2.hold[0].uavg, 65000); near(L2.real, (80000 - 65000) * 16000);
+  const L3 = ledger([u(1, 60000, '2026-10-01'), norm({ id: 'r', k: 'b', ty: 'kripto', sym: 'BTC', q: 1, u: 'koin', p: 1_000_000_000, d: '2026-10-02' })]);
+  assert.equal(L3.hold[0].uavg, null);
+});
+
+test('troy oz: 1 oz = 31,1035 gram; harga per oz', () => {
+  const t = norm({ id: 'g', k: 'b', ty: 'emas', sym: 'XAU', q: 2 * 31.1034768, u: 'oz', p: 2400 * 16000 / 31.1034768, cu: 'USD', pu: 2400 / 31.1034768, fx: 16000, d: '2026-10-01' });
+  near(ledger([t]).total, 2 * 2400 * 16000);
+  assert.equal(priceLbl('emas', 'oz'), 'Harga per troy oz'); assert.equal(priceLbl('emas', 'gram'), 'Harga per gram');
+  assert.equal(priceLbl('saham', 'lot'), 'Harga per lembar'); assert.equal(priceLbl('kripto', 'koin'), 'Harga per koin');
+});
+
+test('teks jumlah dan padanan satuan', () => {
+  assert.equal(qt('saham', 200).replace(/\s/g, ' '), '2 lot'); assert.equal(qt('saham', 150).replace(/\s/g, ' '), '150 lembar');
+  assert.equal(qt('saham', 200, true).replace(/\s/g, ' '), '2 lot · 200 lembar');
+  assert.equal(qt('kripto', 0.05).replace(/\s/g, ' '), '0,05 koin');
+  assert.equal(eqTxt('saham', 'lot', 2), '= 200 lembar'); assert.equal(eqTxt('saham', 'lembar', 300), '= 3 lot');
+  assert.match(eqTxt('saham', 'lembar', 150), /odd lot/); assert.equal(eqTxt('kripto', 'koin', 1), '');
+  assert.equal(eqTxt('emas', 'oz', 1), '= 31,1034768 gram');
+});
+
+test('grafik: aset USD dihitung dari harga transaksi Rupiah; nilai ikut harga sekarang', () => {
+  const t = norm({ id: 'u', k: 'b', ty: 'kripto', sym: 'BTC', q: 1, u: 'koin', p: 1_000_000_000, cu: 'USD', pu: 62500, fx: 16000, d: '2026-10-01' });
+  const S = series([t], {}, {}, { 'kripto|btc': 1_200_000_000 }, '2026-10-03');
+  near(S[0].val, 1_000_000_000); near(last(S).val, 1_200_000_000); near(last(S).cost, 1_000_000_000);
 });
