@@ -238,10 +238,10 @@ function pop(w){const p=$('.hdm-pop',w);p.hidden=!popOpen;if(!popOpen)return;
  <ol><li>Pasang MetaTrader 5 (Windows), login ke broker, tampilkan <b>XAUUSD</b> di Market Watch.</li><li>Di folder <code>mt5-bridge/</code>: <code>pip install -r requirements.txt</code></li><li>Jalankan <code>python mt5_bridge.py</code> (atau <code>start.bat</code>) dan biarkan terbuka.</li></ol>
  <p>Bridge hanya mengirim harga dan riwayat candle lewat WebSocket lokal. Chrome, Edge, dan Firefox mengizinkan <code>ws://127.0.0.1</code> dari halaman https; Safari tidak. Bila jam candle MT5 meleset, isi <code>MT5_UTC_OFFSET_HOURS</code> pada bridge.</p>`}
 // ---------- tab (ala Chart) ----------
-const hue=s=>{let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))%360;return h};
+const IC=(s,n)=>typeof SymIcon!=='undefined'?SymIcon.html(s,n):'';
 const modeName=k=>(MODES.find(m=>m[0]===k)||[,''])[1];
 function tabsUI(w){const tl=$('.hdm-tl',w);if(!tl)return;const many=H.tabs.length>1;
- tl.innerHTML=H.tabs.map(t=>{const x=t.id===H.act?H:t;return`<div class="hdm-tab${t.id===H.act?' on':''}" data-id="${t.id}" role="tab" aria-selected="${t.id===H.act}" draggable="true" title="${esc(x.sym)} · ${x.tf} · ${esc(modeName(x.mode))}"><i class="hdm-ic" style="background:hsl(${hue(x.sym)} 55% 42%)">${esc(x.sym[0])}</i><span>${esc(x.sym)} · ${x.tf}</span>${many?'<button class="hdm-x" aria-label="Tutup tab">×</button>':''}</div>`}).join('');
+ tl.innerHTML=H.tabs.map(t=>{const x=t.id===H.act?H:t;return`<div class="hdm-tab${t.id===H.act?' on':''}" data-id="${t.id}" role="tab" aria-selected="${t.id===H.act}" draggable="true" title="${esc(x.sym)} · ${x.tf} · ${esc(modeName(x.mode))}">${IC(x.sym,16)}<span>${esc(x.sym)} · ${x.tf}</span>${many?'<button class="hdm-x" aria-label="Tutup tab">×</button>':''}</div>`}).join('');
  const nb=$('.hdm-new',w);if(nb)nb.disabled=H.tabs.length>=MAXTAB}
 function loadTab(w,t){Object.assign(H,pickTab(fix({...t})));H.act=t.id;store();bars2(w);reset(w)}
 function actTab(w,id){const t=H.tabs.find(t=>t.id===id);if(!t||id===H.act)return;store();loadTab(w,t)}
@@ -266,7 +266,7 @@ function sideRows(w){const q=sq(w);let ls;
 function sideList(w){const el=$('.hdm-sl',w);if(!el)return;
  $$('.hdm-sv button',w).forEach(b=>b.setAttribute('aria-pressed',String(!sq(w)&&b.dataset.sv===H.sdv)));
  const ls=sideRows(w),q=sq(w);
- el.innerHTML=ls.length?ls.map(s=>{const on=H.fav.includes(s);return`<div class="hdm-sr${s===H.sym?' on':''}" data-s="${esc(s)}" role="button" tabindex="0" title="${esc(s)}"><button class="hdm-fv" data-fav="${esc(s)}" aria-pressed="${on}" aria-label="${on?'Hapus dari':'Tambah ke'} favorit">${Icon('star',on?'on':'')}</button><b>${esc(sname(s))}</b><span class="hdm-sv2"><span class="hdm-sp">–</span><span class="hdm-sc"></span></span></div>`}).join('')
+ el.innerHTML=ls.length?ls.map(s=>{const on=H.fav.includes(s);return`<div class="hdm-sr${s===H.sym?' on':''}" data-s="${esc(s)}" role="button" tabindex="0" title="${esc(s)}"><button class="hdm-fv" data-fav="${esc(s)}" aria-pressed="${on}" aria-label="${on?'Hapus dari':'Tambah ke'} favorit">${Icon('star',on?'on':'')}</button>${IC(s,18)}<b>${esc(sname(s))}</b><span class="hdm-sv2"><span class="hdm-sp">–</span><span class="hdm-sc"></span></span></div>`}).join('')
   :`<p class="hdm-se">${q?'Tidak ada simbol yang cocok.':H.sdv==='fav'?'Belum ada favorit. Klik bintang pada simbol di daftar Kripto atau MT5.':H.sdv==='cry'?'Memuat daftar kripto…':'Belum ada simbol MT5.'}</p>`;
  if(!q&&H.sdv==='mt5'&&MT.st!=='open')el.insertAdjacentHTML('beforeend','<p class="hdm-se">MT5 belum terhubung: jalankan mt5-bridge lalu cek alamat di pengaturan (ikon gir).</p>');
  sidePatch(w)}

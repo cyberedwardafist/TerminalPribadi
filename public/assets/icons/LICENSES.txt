@@ -1,0 +1,7 @@
+Ikon simbol yang dibundel:
+- coin/: cryptocurrency-icons (CC0) https://github.com/spothq/cryptocurrency-icons
+- brand/ aapl nvda tsla googl meta: simple-icons (CC0) https://simpleicons.org ; msft: logo 4 kotak resmi Microsoft; amzn: lencana sederhana buatan sendiri
+- flag/: flag-icons (MIT) https://github.com/lipis/flag-icons
+- comm/: simbol generik buatan sendiri
+Logo merek adalah milik pemiliknya masing-masing, dipakai hanya untuk identifikasi simbol.
+Saham IDX: logo diambil saat runtime dari favicon situs resmi emiten (tidak dibundel).

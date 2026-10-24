@@ -65,7 +65,8 @@ function rtBadge(w,T){
  if(T&&T.D&&T.D.live&&typeof RT!=='undefined'){const i=RT.info(T.sym,T.tf);
   if(i.live){txt=(RTN[i.leader]||i.leader)+(i.lag!=null&&i.lag<60000?' · '+(i.lag<1000?i.lag+' ms':(i.lag/1000).toFixed(1)+' dtk'):'');c='on'}
   else if(i.has){txt='menunggu tick\u2026';c='wait'}else txt='REST'}
- if(el.textContent!==txt)el.textContent=txt;if(el.dataset.c!==c)el.dataset.c=c}
+ if(el.textContent!==txt)el.textContent=txt;if(el.dataset.c!==c)el.dataset.c=c;
+ const ds=$('.ct-ds',w);if(ds&&T){const demo=!(T.D&&T.D.live),late=!demo&&c!=='on',v=demo?'DEMO':late?'D':'';if(ds.textContent!==v)ds.textContent=v;ds.hidden=!v;ds.dataset.k=demo?'demo':'late';ds.title=demo?'Data contoh (acak), bukan harga pasar. Aktifkan mode Live di Setting > API.':'Data tertunda / belum ada tick realtime dari sumber ini.'}}
 async function poll(w){      // dipanggil tiap 1 dtk
  const R=w._r;if(!w.isConnected){clearInterval(R.pt);if(R.roff)R.roff();R.roff=null;return}
  if(typeof RT!=='undefined')rtSync(w);const T=cur(w);rtBadge(w,T);
@@ -129,7 +130,7 @@ function setTf(w,tf){const T=cur(w);T.tf=tf;T.D=null;T.sel=null;S.tf=tf;sync(w);
 function setSym(w,sym){const T=cur(w);if(T.sym!==sym){T.sym=sym;T.D=null;T.sel=null;T.draft=null}S.sym=sym;sync(w);load(w,T);save(w);pullDrw(sym)}
 
 function sync(w){const R=w._r,T=cur(w),q=s=>$(s,w);
- $('.ct-tl',w).innerHTML=R.tabs.map(t=>`<div class="ct-tab${t.id===R.act?' on':''}" data-id="${t.id}" draggable="true" title="${esc(t.sym)} · ${t.tf}"><i class="ct-ic" style="background:hsl(${hue(t.sym)} 55% 42%)">${esc(t.sym[0])}</i><span>${esc(t.sym)} · ${t.tf}</span><button class="ct-x" aria-label="Tutup tab">×</button></div>`).join('');
+ $('.ct-tl',w).innerHTML=R.tabs.map(t=>`<div class="ct-tab${t.id===R.act?' on':''}" data-id="${t.id}" draggable="true" title="${esc(t.sym)} · ${t.tf}">${typeof SymIcon!=='undefined'?SymIcon.html(t.sym,16):''}<span>${esc(t.sym)} · ${t.tf}</span><button class="ct-x" aria-label="Tutup tab">×</button></div>`).join('');
  if(!T)return;q('.ct-sym').textContent=T.sym;q('[data-a=type]').value=T.type;
  $$('[data-tf]',w).forEach(b=>b.setAttribute('aria-pressed',b.dataset.tf===T.tf));
  $$('[data-sc]',w).forEach(b=>b.setAttribute('aria-pressed',b.dataset.sc===T.scale));
@@ -166,7 +167,7 @@ function symPicker(w,anchor,mode){
   ls.onclick=e=>{const b=e.target.closest('[data-s]');if(!b)return;closePop(w);mode==='new'?addTab(w,b.dataset.s):setSym(w,b.dataset.s);save(w)};
   inp.focus()})}
 function tabSearch(w,anchor){const R=w._r;
- pop(w,anchor,`<div class="ct-ls">${R.tabs.map(t=>`<div class="ct-r${t.id===R.act?' on':''}" data-id="${t.id}"><i class="ct-ic" style="background:hsl(${hue(t.sym)} 55% 42%)">${esc(t.sym[0])}</i><b>${esc(t.sym)}</b><span>${t.tf} · ${TYPES[t.type]}</span><button class="ct-x" aria-label="Tutup tab">×</button></div>`).join('')}</div>`,p=>{
+ pop(w,anchor,`<div class="ct-ls">${R.tabs.map(t=>`<div class="ct-r${t.id===R.act?' on':''}" data-id="${t.id}">${typeof SymIcon!=='undefined'?SymIcon.html(t.sym,16):''}<b>${esc(t.sym)}</b><span>${t.tf} · ${TYPES[t.type]}</span><button class="ct-x" aria-label="Tutup tab">×</button></div>`).join('')}</div>`,p=>{
   p.onclick=e=>{const r=e.target.closest('[data-id]');if(!r)return;const id=+r.dataset.id;if(e.target.closest('.ct-x')){closeTab(w,id);if(w._r.tabs.length)tabSearch(w,anchor);else closePop(w)}else{closePop(w);act(w,id)}}})}
 
 // ---------- panel indikator ----------
@@ -237,10 +238,12 @@ function fromSaved(w,s){const R=w._r,t={...mk(w,s.sym,s.tf),type:TYPES[s.type]?s
 
 // ---------- legenda ----------
 function legend(w){const T=cur(w),box=$('.ct-lg',w);if(!T||!box)return;
- const key=T.sym+T.tf+T.type+T.ind.map(i=>i.id+i.on+instName(i)).join();if(w._lk===key)return;w._lk=key;
- box.innerHTML=`<div class="ct-lh"><b>${esc(T.sym)} · ${T.tf} · ${TYPES[T.type]}</b><span class="ct-ohlc"></span><span class="ct-rt"></span></div>`+T.ind.map(i=>`<div class="ct-li${i.on?'':' off'}${(defOf(i)||{}).overlay===false?' sub':''}" data-iid="${i.id}"><span class="ct-ln">${esc(instName(i))}</span><span class="ct-lv"></span><span class="ct-la"><button data-ia="eye" title="${i.on?'Sembunyikan':'Tampilkan'}" aria-label="Sembunyikan">${Icon(i.on?'eye':'eyeoff')}</button><button data-ia="set" title="Pengaturan" aria-label="Pengaturan">${Icon('gear')}</button><button data-ia="rm" title="Hapus" aria-label="Hapus">${Icon('x')}</button></span></div>`).join('')}
+ const nm=typeof SymName!=='undefined'?SymName.info(T.sym):{name:T.sym,ex:'',full:true};if(!nm.full&&typeof SymName!=='undefined')SymName.load(T.sym,()=>{w._lk=null;if(w.isConnected)legend(w)});
+ const key=T.sym+T.tf+T.type+nm.name+nm.ex+T.ind.map(i=>i.id+i.on+instName(i)).join();if(w._lk===key)return;w._lk=key;
+ const tfl=typeof SymName!=='undefined'?SymName.tf(T.tf):T.tf,dot='<i class="ct-dt">·</i>';
+ box.innerHTML=`<div class="ct-lh"><span class="ct-nm" title="${esc(nm.name)} (${esc(T.sym)})${nm.full?'':' · nama belum terverifikasi'}">${typeof SymIcon!=='undefined'?SymIcon.html(T.sym,18):''}<b>${esc(nm.name)}</b>${dot}<span>${esc(tfl)}</span>${nm.ex?dot+'<span>'+esc(nm.ex)+'</span>':''}</span><span class="ct-ds" hidden></span><span class="ct-ohlc"></span><span class="ct-rt"></span></div>`+T.ind.map(i=>`<div class="ct-li${i.on?'':' off'}${(defOf(i)||{}).overlay===false?' sub':''}" data-iid="${i.id}"><span class="ct-ln">${esc(instName(i))}</span><span class="ct-lv"></span><span class="ct-la"><button data-ia="eye" title="${i.on?'Sembunyikan':'Tampilkan'}" aria-label="Sembunyikan">${Icon(i.on?'eye':'eyeoff')}</button><button data-ia="set" title="Pengaturan" aria-label="Pengaturan">${Icon('gear')}</button><button data-ia="rm" title="Hapus" aria-label="Hapus">${Icon('x')}</button></span></div>`).join('')}
 function updLegend(w,T,res){const box=$('.ct-lg',w),G=w._g;if(!box||!res||!G)return;const{hv,R,V,F}=res,k=V[hv],pk=V[hv-1]||k,ch=k.c-pk.c,up=k.c>=k.o;
- const o=$('.ct-ohlc',box);if(o){o.className='ct-ohlc '+(up?'up':'dn');o.textContent=`O ${F(k.o)}  H ${F(k.h)}  L ${F(k.l)}  C ${F(k.c)}  ${ch>=0?'+':'−'}${F(Math.abs(ch))} (${pc(ch/pk.c*100)})`}
+ const o=$('.ct-ohlc',box);if(o){o.className='ct-ohlc '+(up?'up':'dn');o.textContent=`O${F(k.o)} H${F(k.h)} L${F(k.l)} C${F(k.c)} ${ch>=0?'+':'−'}${F(Math.abs(ch))} (${pc(ch/pk.c*100)})`}
  for(const row of $$('.ct-li',box)){const inst=T.ind.find(i=>i.id===row.dataset.iid),r=R.find(x=>x.i===inst),vl=$('.ct-lv',row);
   if(!inst||!vl)continue;
   if(!r){vl.textContent=inst.on?'…':'';}

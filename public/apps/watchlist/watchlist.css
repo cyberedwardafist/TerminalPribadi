@@ -46,3 +46,5 @@
 @media (prefers-reduced-motion:reduce){.flu,.fld{animation:none}.wl-sd{transition:none}}
 
 .wl-fs:empty{display:none}.wl-fs{flex:none}.wl-na{color:var(--mute)}
+
+.wl-sy{display:flex;align-items:center;gap:9px}.wl-sy>div{min-width:0}

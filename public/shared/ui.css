@@ -46,3 +46,10 @@ label{display:flex;gap:8px;align-items:center;padding:4px 0}
 .ic{width:1em;height:1em;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.14em;pointer-events:none}
 .ic.on{fill:currentColor}
 .ic-f{width:.8em;height:.8em;fill:currentColor;stroke:currentColor;stroke-width:1.5;vertical-align:0}
+
+/* Ikon simbol (shared/symicon.js): lingkaran huruf berwarna di bawah, gambar logo di atas */
+.si{position:relative;flex:none;display:inline-grid;place-items:center;width:var(--s,16px);height:var(--s,16px);border-radius:50%;background:hsl(var(--h,210) 55% 42%);color:#fff;font:700 calc(var(--s,16px)*.56)/1 system-ui,sans-serif;font-style:normal;vertical-align:middle;overflow:hidden}
+.si b{font:inherit}.si.ok{background:transparent}.si.ok b{visibility:hidden}
+.si-i{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;user-select:none}
+.si.fav.ok{background:#fff}.si.fav .si-i{padding:14%;box-sizing:border-box;object-fit:contain;border-radius:0}
+.si.two{overflow:visible}.si.two .si-i{inset:auto;width:70%;height:70%;box-shadow:0 0 0 1.5px var(--win,#222)}.si.two .si-a{left:0;top:0}.si.two .si-b{right:0;bottom:0}
