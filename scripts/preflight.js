@@ -21,6 +21,7 @@ if ((E.JWT_SECRET || '').length >= 32) ok('JWT_SECRET minimal 32 karakter');
 else fail('JWT_SECRET kosong atau kurang dari 32 karakter', `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`);
 if (/^dev-(dev-)+/.test(E.JWT_SECRET || '')) warn('JWT_SECRET memakai nilai contoh dev', 'Buat yang acak untuk produksi');
 (E.CRON_SECRET || '').length >= 16 ? ok('CRON_SECRET terisi') : warn('CRON_SECRET kosong / <16 karakter', 'Tanpa ini cron harian (alert, berita, kalender) ditolak: alert harga tidak pernah dievaluasi di server');
+(E.ADMIN_TOKEN || '').length >= 16 ? ok('ADMIN_TOKEN terisi (untuk health?deep=1 dan /api/admin/*)') : warn('ADMIN_TOKEN kosong / <16 karakter', 'Aman: endpoint admin dan /api/health?deep=1 terkunci total. Isi bila ingin memakainya');
 E.RATE_LIMIT === 'off' ? fail('RATE_LIMIT=off', 'Hanya untuk uji lokal. Hapus dari produksi') : ok('Pembatas laju aktif');
 if (E.ALLOWED_ORIGINS) ok(`ALLOWED_ORIGINS: ${E.ALLOWED_ORIGINS}`); else warn('ALLOWED_ORIGINS kosong (semua origin diizinkan)', 'Aman bila frontend dan API satu domain; isi bila frontend di domain lain');
 
@@ -63,7 +64,8 @@ if (i > 0 && process.argv[i + 1]) {
   const base = process.argv[i + 1].replace(/\/+$/, '');
   console.log(`\n== 5. Deploy: ${base} ==`);
   try {
-    const { r, ms } = await get(base + '/api/health?deep=1'), j = await r.json().catch(() => ({}));
+    const adm = (E.ADMIN_TOKEN || '').length >= 16;
+    const { r, ms } = await get(base + '/api/health' + (adm ? '?deep=1' : ''), adm ? { headers: { 'x-admin-token': E.ADMIN_TOKEN } } : {}), j = await r.json().catch(() => ({}));
     r.ok && j.ok ? ok(`/api/health?deep=1 sehat (${ms} ms), database ${j.db}`) : fail(`/api/health?deep=1 HTTP ${r.status}: ${j.db_hint || JSON.stringify(j).slice(0, 160)}`, 'Cek Environment Variables di Vercel lalu Redeploy');
     const cf = j.config || {};
     if (cf.jwt_secret === false) fail('Deploy: JWT_SECRET belum diisi / <32 karakter');

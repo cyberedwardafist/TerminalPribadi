@@ -90,7 +90,7 @@ notes.js   notes (GET POST PUT/:id DELETE/:id) · journal/trades (idem) · GET j
            journal/images (GET POST, GET/DELETE /:id) · POST import
 chart.js   chart/layout (GET PUT) · chart/layouts (GET POST, GET/PUT/DELETE /:id) · chart/drawings (GET, GET/PUT/DELETE /:symbol)
            chart/templates (GET POST, GET/DELETE /:id) · indicators (GET POST, GET/PUT/DELETE /:id, POST /:id/fork)
-system.js  GET health(?deep=1) · cron/{alerts,news,calendar,warm,cleanup,daily} · POST admin/{refresh,calendar,mail-test}
+system.js  GET health (?deep=1 wajib header x-admin-token) · cron/{alerts,news,calendar,warm,cleanup,daily} · POST admin/{refresh,calendar,mail-test}
 ```
 Urutan rute: `indicators/builtin|compute` sebelum `indicators/:id`; `news/saved` sebelum `news/:id`.
 

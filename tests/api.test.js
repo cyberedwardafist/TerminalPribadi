@@ -15,6 +15,7 @@ const call = async (method, path, body, headers = {}) => {
   const text = await res.text(); let j; try { j = JSON.parse(text); } catch { j = text; }
   return { status: res.status, body: j, headers: res.headers };
 };
+const ADM = { 'x-admin-token': 'a'.repeat(20) };
 const lastCode = () => /(\d{6})/.exec(outbox.at(-1).text)[1];
 
 test('auth: daftar -> OTP -> verifikasi -> login -> me', async () => {
@@ -229,7 +230,7 @@ test('pengaturan + CORS + 404/405', async () => {
   const o = await call('OPTIONS', '/api/candles'); assert.equal(o.status, 204); assert.equal(o.headers.get('access-control-allow-origin'), '*');
   assert.equal((await call('PATCH', '/api/health')).status, 405);
   assert.equal((await call('GET', '/api/tidak-ada')).status, 404);
-  assert.equal((await call('GET', '/api/health?deep=1')).body.db, 'ok');
+  assert.equal((await call('GET', '/api/health?deep=1', undefined, ADM)).body.db, 'ok');
 });
 
 // ===================== Umum/Background, perbaikan hasil audit =====================
@@ -329,7 +330,9 @@ test('evaluateAlerts: alert di atas 1000 baris tetap diperiksa', async () => {
 });
 
 test('health?deep=1: status DB dan konfigurasi (tanpa nilai rahasia)', async () => {
-  const r = await call('GET', '/api/health?deep=1');
+  assert.equal((await call('GET', '/api/health?deep=1')).status, 403);   // tanpa token admin: ditolak
+  assert.equal((await call('GET', '/api/health')).status, 200);        // versi biasa tetap publik
+  const r = await call('GET', '/api/health?deep=1', undefined, ADM);
   assert.equal(r.status, 200); assert.equal(r.body.db, 'ok');
   assert.equal(r.body.config.jwt_secret, true); assert.equal(r.body.config.mail_provider, 'memory');
   assert.ok(!JSON.stringify(r.body).includes('c'.repeat(20)) && !JSON.stringify(r.body).includes('j'.repeat(48)));
@@ -340,7 +343,7 @@ test('galat konfigurasi Supabase -> 503 jelas (bukan 500 generik) dan petunjuk d
   try {
     const r = await call('POST', '/api/auth/register', { name: 'Ani', username: 'ani.x', email: 'ani@mail.id', password: 'rahasia123' });
     assert.equal(r.status, 503); assert.match(r.body.message, /Database belum siap/);
-    const h = await call('GET', '/api/health?deep=1');
+    const h = await call('GET', '/api/health?deep=1', undefined, ADM);
     assert.equal(h.status, 503); assert.match(h.body.db_hint, /Key ditolak/);
   } finally { db.setFetch((...a) => fetch(...a)); }
 });
